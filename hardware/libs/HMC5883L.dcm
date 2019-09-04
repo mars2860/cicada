@@ -1,0 +1,9 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP HMC5883L
+D Digital compass
+K compass
+F http://www.farnell.com/datasheets/1683374.pdf
+$ENDCMP
+#
+#End Doc Library

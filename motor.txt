@@ -1,0 +1,25 @@
+Coreless Motor 816
+
+The motors in the Syma X5HW drone are coreless motors with directional metal brushes. You can run them in reverse by reversing the polarity, but they run better forward. The life of metal brush inside the coreless motor can be severely limited if operated in reverse direction for extended period of times.
+Technical Specifications
+
+    Brand: Chinese
+    Item name: Coreless Motor
+    Motor Length: 16.5 mm
+    Motor Diameter: 8.0 mm
+    Motor Shaft diameter: 1.0 mm
+    Gear Diameter: 3.0mm
+    Weight: ~3.9 grams (including motor, gear and wires) ~3.5 gram (without gear)
+    Voltage: 5V max
+    Current: 1.8A max @ 3.7V
+    No Load Current : ~0.1A @3.7V
+    Stall Current: ~2A @ 3.7V, ~2.2A @4.2V
+    No Load Speed: ~41500 RPM @ 3.7V, ~46500 RPM @ 4.2V
+    Battery: 1S LiPO battery
+    Max Power: 7.4W
+    Wire length: ~100mm
+    Internal resistance: ~0.5 ohms
+    Usage: for Syma X5HW (Please do your research Art of Circuits is not responsible for fitting issues with type of your drone)
+
+    1x CCW Brushless Motor (Called motor – A comes with white and black wires)
+    1x CW Brushless Motor (Called motor – B comes with red and blue wires)

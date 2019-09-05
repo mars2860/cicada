@@ -20,8 +20,7 @@ public class CopterCommander implements Runnable
 		return mSingleton;
 	}
 	
-	private int mCopterPort;
-	private String mCopterAddress;
+	private int mCopterCmdPort;
 	private InetAddress mCopterInetAddress;
 	private DatagramSocket mSocket;
 	private Thread mSender;
@@ -32,23 +31,22 @@ public class CopterCommander implements Runnable
 	
 	private CopterCommander() 
 	{
-		mCopterPort = 4210;
-		mCopterAddress = "192.168.1.33";
 		mCmds = new ArrayList<AbstractCopterCmd>();
 		mListMutex = new Semaphore(1);
 		objSenderSync = new Object();
-		mSender = new Thread(this);
-		mSender.setName("CopterCommanderSender");
 	};
 	
-	public void start() throws UnknownHostException, SocketException
+	public void start(String ip, int cmdPort) throws UnknownHostException, SocketException
 	{
 		if(mSocket != null)
 			this.stop();
 		
-		mCopterInetAddress = InetAddress.getByName(mCopterAddress);
+		mCopterCmdPort = cmdPort;
+		mCopterInetAddress = InetAddress.getByName(ip);
 		mSocket = new DatagramSocket();
 		mSenderRun = true;
+		mSender = new Thread(this);
+		mSender.setName("CopterCommanderSender");
 		mSender.start();
 	}
 	
@@ -64,7 +62,8 @@ public class CopterCommander implements Runnable
 				objSenderSync.notify();
 				///System.out.println("Wait until thread stops");
 				// Wait until sender stops its work
-				objSenderSync.wait();
+				if(mSender != null && mSender.isAlive())
+					objSenderSync.wait();
 				//System.out.println("End to wait for thread stop");
 			}
 		}
@@ -138,7 +137,7 @@ public class CopterCommander implements Runnable
 			if(cmd != null)
 			{
 				byte buf[] = cmd.getPacketData();
-				DatagramPacket packet = new DatagramPacket(buf, buf.length, mCopterInetAddress, mCopterPort);
+				DatagramPacket packet = new DatagramPacket(buf, buf.length, mCopterInetAddress, mCopterCmdPort);
 				try
 				{
 					//System.out.println("Send command");

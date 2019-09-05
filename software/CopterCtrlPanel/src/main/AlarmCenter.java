@@ -1,9 +1,11 @@
 package main;
 
+import java.util.Observable;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-public class AlarmCenter
+
+public class AlarmCenter extends Observable
 {
 	private static AlarmCenter mSingleton;
 	
@@ -28,7 +30,12 @@ public class AlarmCenter
 	{
 		synchronized(mMapMutex)
 		{
-			mAlarms.add(alarm);
+			if(mAlarms.add(alarm))
+			{
+				this.setChanged();
+				this.notifyObservers();
+				this.clearChanged();
+			}
 		}
 	}
 	
@@ -36,18 +43,30 @@ public class AlarmCenter
 	{
 		synchronized(mMapMutex)
 		{
-			mAlarms.remove(alarm);
+			if(mAlarms.remove(alarm))
+			{
+				this.setChanged();
+				this.notifyObservers();
+				this.clearChanged();
+			}
 		}
 	}
 	
 	public String getAlarmText()
 	{
-		Alarm alarm;
+		Alarm alarm = null;
 		String text = Text.get("SYSTEM_OK");
 		
 		synchronized(mMapMutex)
 		{
-			alarm = mAlarms.first();
+			try
+			{
+				alarm = mAlarms.first();
+			}
+			catch(Exception e)
+			{
+				// nothing
+			}
 		}
 		
 		if(alarm != null)
@@ -55,5 +74,4 @@ public class AlarmCenter
 		
 		return text;
 	}
-
 }

@@ -17,8 +17,19 @@ public class TextBundle extends ListResourceBundle
             
             // UI
             {"APP_TITLE", "Control pult (C) Anton Sysoev (anton.sysoev.ru68@gmail.com)"},
+            
             {"MOTORS", "Motors"},
-            {"MOTORS_ENABLED", "Motors enabled"}
+            {"MOTORS_ENABLED", "Motors enabled"},
+            
+            {"SETTINGS", "Settings"},
+            {"IP_ADDRESS", "IP Address"},
+            {"CMD_PORT", "Port 1"},
+            {"TELEMETRY_PORT", "Port 2"},
+            {"VIDEO_PORT", "Port 3"},
+            {"START", "START"},
+            {"STOP", "STOP"},
+            
+            {"ALARMS", "Alarms"},
         // END OF MATERIAL TO LOCALIZE
         };
     }

@@ -13,7 +13,11 @@ public class TextBundle extends ListResourceBundle
             {"SYSTEM_OK", "The system is ok"},
             {"INVALID_HOST", "Invalid host name"},
             {"SOCKET_NOT_OPEN", "Can't open socket"},
+
+            // ALARMS
             {"COPTER_NOT_FOUND", "The copter is not found"},
+            {"COPTER_SEND_ERROR", "Can't send data to copter"},
+            {"COPTER_RECEIVE_ERROR", "Can't receive data from copter"},
             
             // UI
             {"APP_TITLE", "Control pult (C) Anton Sysoev (anton.sysoev.ru68@gmail.com)"},

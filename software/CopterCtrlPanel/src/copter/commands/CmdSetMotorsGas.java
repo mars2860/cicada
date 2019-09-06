@@ -1,4 +1,4 @@
-package commands;
+package copter.commands;
 
 public class CmdSetMotorsGas extends AbstractCopterCmd
 {

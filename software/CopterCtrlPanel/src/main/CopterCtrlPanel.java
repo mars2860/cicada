@@ -30,9 +30,11 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import commands.CmdSetMotorsGas;
-import commands.CmdSwitchMotors;
-import commands.CopterCommander;
+import copter.AlarmCenter;
+import copter.CopterCommander;
+import copter.CopterTelemetry;
+import copter.commands.CmdSetMotorsGas;
+import copter.commands.CmdSwitchMotors;
 import helper.NumericDocument;
 import net.miginfocom.swing.MigLayout;
 
@@ -126,23 +128,23 @@ public class CopterCtrlPanel implements WindowListener
 			pnlSettings.add(new JLabel(Text.get("LANGUAGE")));
 			pnlSettings.add(mcbLocale, "span,grow,wrap");
 			
-			JPanel pnlOkCancel = new JPanel(new MigLayout("","[grow][70!][70!]"));
+			JPanel pnlOkCancel = new JPanel(new MigLayout("insets 0 0 0 0","[80!]"));
 			JButton btnOk = new JButton(Text.get("OK"));
 			JButton btnCancel = new JButton(Text.get("CANCEL"));
 			
 			btnOk.addActionListener(new OnBtnOk());
 			btnCancel.addActionListener(new OnBtnCancel());
 			
-			pnlOkCancel.add(new JPanel(), "grow");
-			pnlOkCancel.add(btnOk,"grow");
+			pnlOkCancel.add(btnOk,"grow,wrap");
 			pnlOkCancel.add(btnCancel,"grow");
 			
-			pnlSettings.add(pnlOkCancel, "span, grow");
+			pnlSettings.add(new JPanel(),"h 10!,span,wrap");
+			pnlSettings.add(pnlOkCancel, "span, align right");
 
 			this.setLayout(new MigLayout("","[grow]","[grow]"));
 			this.setTitle(Text.get("SETTINGS"));
 			this.setResizable(false);
-			this.setSize(200, 200);
+			this.setSize(160, 240);
 			this.setLocationRelativeTo(null);
 			this.add(pnlSettings, "grow");
 		}
@@ -224,6 +226,18 @@ public class CopterCtrlPanel implements WindowListener
 		public void update(Observable o, Object arg)
 		{
 			mlbAlarmText.setText(AlarmCenter.instance().getAlarmText());
+		
+			switch(AlarmCenter.instance().getAlarmLevel())
+			{
+			case 0:
+				mlbAlarmIcon.setIcon(mIconOk);
+				break;
+			case 1:
+			default:
+				mlbAlarmIcon.setIcon(mIconError);
+				break;
+				
+			}
 		}
 	}
 	
@@ -250,6 +264,7 @@ public class CopterCtrlPanel implements WindowListener
 	private CmdSetMotorsGas mCmdSetGas = new CmdSetMotorsGas();
 	
 	private ImageIcon mIconOk;
+	private ImageIcon mIconError;
 		
 	public CopterCtrlPanel() {}
 	
@@ -290,7 +305,7 @@ public class CopterCtrlPanel implements WindowListener
 	
 	private JPanel createAlarmPanel()
 	{
-		JPanel pnlAlarm = new JPanel(new MigLayout("","[][grow]","[]"));
+		JPanel pnlAlarm = new JPanel(new MigLayout("","[]10[grow]","[]"));
 		pnlAlarm.setBorder(new TitledBorder(Text.get("ALARMS")));
 		
 		mlbAlarmIcon = new JLabel();
@@ -340,9 +355,11 @@ public class CopterCtrlPanel implements WindowListener
 	
 	private void loadImages()
 	{
-		java.net.URL url = this.getClass().getResource("images/ok.png");
+		java.net.URL okUrl = this.getClass().getResource("images/ok.png");
+		mIconOk = new ImageIcon(new ImageIcon(okUrl).getImage().getScaledInstance(32,32,Image.SCALE_SMOOTH));
 		
-		mIconOk = new ImageIcon(new ImageIcon(url).getImage().getScaledInstance(32,32,Image.SCALE_SMOOTH));
+		java.net.URL errUrl = this.getClass().getResource("images/error.png");
+		mIconError = new ImageIcon(new ImageIcon(errUrl).getImage().getScaledInstance(32,32,Image.SCALE_SMOOTH));
 	}
 	
 	public void start()
@@ -363,20 +380,24 @@ public class CopterCtrlPanel implements WindowListener
 		try
 		{
 			CopterCommander.instance().start(mCopterIp, mCopterCmdPort);
+			CopterTelemetry.instance().start(mCopterIp, mCopterTelemetryPort);
 		}
 		catch(UnknownHostException e)
 		{
 			showErrorMsg(Text.get("INVALID_HOST"));
+			e.printStackTrace();
 		}
 		catch(SocketException e)
 		{
 			showErrorMsg(Text.get("SOCKET_NOT_OPEN"));
+			e.printStackTrace();
 		}
 	}
 	
 	public void stop()
 	{
 		CopterCommander.instance().stop();
+		CopterTelemetry.instance().stop();
 		
 		this.saveSettings();
 		

@@ -1,8 +1,10 @@
-package main;
+package copter;
 
 import java.util.Observable;
 import java.util.SortedSet;
 import java.util.TreeSet;
+
+import main.Text;
 
 
 public class AlarmCenter extends Observable
@@ -18,17 +20,17 @@ public class AlarmCenter extends Observable
 	}
 	
 	private SortedSet<Alarm> mAlarms;
-	private Object mMapMutex;
+	private Object mMutex;
 	
 	private AlarmCenter()
 	{
 		mAlarms = new TreeSet<Alarm>();
-		mMapMutex = new Object();
+		mMutex = new Object();
 	}
 	
 	public void setAlarm(Alarm alarm)
 	{
-		synchronized(mMapMutex)
+		synchronized(mMutex)
 		{
 			if(mAlarms.add(alarm))
 			{
@@ -41,7 +43,7 @@ public class AlarmCenter extends Observable
 	
 	public void clearAlarm(Alarm alarm)
 	{
-		synchronized(mMapMutex)
+		synchronized(mMutex)
 		{
 			if(mAlarms.remove(alarm))
 			{
@@ -52,12 +54,25 @@ public class AlarmCenter extends Observable
 		}
 	}
 	
+	public int getAlarmLevel()
+	{
+		int level = 0;
+		
+		synchronized(mMutex)
+		{
+			if(mAlarms.isEmpty() == false)
+				level = 1;
+		}
+		
+		return level;
+	}
+	
 	public String getAlarmText()
 	{
 		Alarm alarm = null;
 		String text = Text.get("SYSTEM_OK");
 		
-		synchronized(mMapMutex)
+		synchronized(mMutex)
 		{
 			try
 			{

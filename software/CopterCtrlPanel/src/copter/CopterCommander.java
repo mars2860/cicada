@@ -1,5 +1,6 @@
-package commands;
+package copter;
 
+import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -7,6 +8,8 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.concurrent.Semaphore;
+
+import copter.commands.AbstractCopterCmd;
 
 public class CopterCommander implements Runnable
 {
@@ -46,7 +49,7 @@ public class CopterCommander implements Runnable
 		mSocket = new DatagramSocket();
 		mSenderRun = true;
 		mSender = new Thread(this);
-		mSender.setName("CopterCommanderSender");
+		mSender.setName("CopterCommandSender");
 		mSender.start();
 	}
 	
@@ -54,17 +57,19 @@ public class CopterCommander implements Runnable
 	{
 		mSenderRun = false;
 		
+		//System.out.println("Commander thread has started");
+		
 		try
 		{
 			synchronized(objSenderSync)
 			{
-				// Unblock sender thread
+				// Unblock commander thread
 				objSenderSync.notify();
-				///System.out.println("Wait until thread stops");
-				// Wait until sender stops its work
+				//System.out.println("Wait until commander thread stops");
+				// Wait until commander thread stops its work
 				if(mSender != null && mSender.isAlive())
 					objSenderSync.wait();
-				//System.out.println("End to wait for thread stop");
+				//System.out.println("End to wait for commander thread stop");
 			}
 		}
 		catch(Exception e)
@@ -76,6 +81,8 @@ public class CopterCommander implements Runnable
 		{
 			mSocket.close();
 		}
+		
+		AlarmCenter.instance().clearAlarm(Alarm.COPTER_SEND_ERROR);
 	}
 	
 	public void addCmd(AbstractCopterCmd cmd)
@@ -95,7 +102,7 @@ public class CopterCommander implements Runnable
 			synchronized(objSenderSync)
 			{
 				// Resume sender thread
-				//System.out.println("Notify thread about new command");
+				//System.out.println("Notify commander thread about new command");
 				objSenderSync.notify();
 			}
 		}
@@ -138,15 +145,17 @@ public class CopterCommander implements Runnable
 			{
 				byte buf[] = cmd.getPacketData();
 				DatagramPacket packet = new DatagramPacket(buf, buf.length, mCopterInetAddress, mCopterCmdPort);
+				//System.out.println("Send command");
 				try
 				{
-					//System.out.println("Send command");
 					mSocket.send(packet);
 				}
-				catch(Exception e)
+				catch(IOException e)
 				{
+					AlarmCenter.instance().setAlarm(Alarm.COPTER_SEND_ERROR);
 					e.printStackTrace();
 				}
+				
 				cmd = null;
 				cmdIdx = 0;
 			}
@@ -169,7 +178,7 @@ public class CopterCommander implements Runnable
 		
 		synchronized(objSenderSync)
 		{
-			//System.out.println("Notify thread is stopped");
+			//System.out.println("Notify commander thread is stopped");
 			objSenderSync.notify();
 		}
 	}

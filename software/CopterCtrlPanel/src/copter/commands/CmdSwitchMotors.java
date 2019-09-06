@@ -1,4 +1,4 @@
-package commands;
+package copter.commands;
 
 /** Switch on/off led on ESP07 */
 public class CmdSwitchMotors extends AbstractCopterCmd

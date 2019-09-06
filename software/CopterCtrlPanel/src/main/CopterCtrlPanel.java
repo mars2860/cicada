@@ -18,6 +18,7 @@ import java.util.Properties;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -160,7 +161,7 @@ public class CopterCtrlPanel implements WindowListener
 		}
 	}
 	
-	private class OnBtnSwitchMotors implements ActionListener
+	private class OnMotorsEnabled implements ActionListener
 	{
 		private boolean state;
 		
@@ -212,10 +213,10 @@ public class CopterCtrlPanel implements WindowListener
 				
 				CopterCommander.instance().addCmd(mCmdSetGas);
 				
-				mgas0.setValue(value);
-				mgas1.setValue(value);
-				mgas2.setValue(value);
-				mgas3.setValue(value);
+				mgas0.setGas(value);
+				mgas1.setGas(value);
+				mgas2.setGas(value);
+				mgas3.setGas(value);
 	        }
 		}	
 	}
@@ -257,10 +258,11 @@ public class CopterCtrlPanel implements WindowListener
 	private JLabel mlbAlarmIcon;
 	private JLabel mlbAlarmText;
 	
-	private JSlider mgas0;
-	private JSlider mgas1;
-	private JSlider mgas2;
-	private JSlider mgas3;
+	private JCheckBox mcbMotorsEnabled;
+	private MotorGasSlider mgas0;
+	private MotorGasSlider mgas1;
+	private MotorGasSlider mgas2;
+	private MotorGasSlider mgas3;
 	private CmdSetMotorsGas mCmdSetGas = new CmdSetMotorsGas();
 	
 	private ImageIcon mIconOk;
@@ -279,15 +281,10 @@ public class CopterCtrlPanel implements WindowListener
 		mMainFrame.addWindowListener(this);
 		
 		mMainFrame.setLayout(new MigLayout("","[grow][]"));
-		
-		JButton btnEspLedToggle = new JButton(Text.get("MOTORS_ENABLED"));
-		btnEspLedToggle.addActionListener(new OnBtnSwitchMotors());
 
 		mMainFrame.add(this.createAlarmPanel(),"grow");
 		mMainFrame.add(this.createSettingsPanel(),"grow,wrap");
 		mMainFrame.add(this.createMotorsPanel());
-		
-		mMainFrame.add(btnEspLedToggle);
 	}
 	
 	private JPanel createSettingsPanel()
@@ -324,26 +321,23 @@ public class CopterCtrlPanel implements WindowListener
 	{
 		JPanel pnlMotorsGas = new JPanel(new MigLayout());
 		pnlMotorsGas.setBorder(new TitledBorder(Text.get("MOTORS")));
-		pnlMotorsGas.add(new JLabel("M1"));
-		pnlMotorsGas.add(new JLabel("M2"));
-		pnlMotorsGas.add(new JLabel("M3"));
-		pnlMotorsGas.add(new JLabel("M4"));
-		pnlMotorsGas.add(new JLabel("COM"),"wrap");
 		
-		mgas0 = new JSlider(JSlider.VERTICAL, 0, 255, 0);
-		mgas1 = new JSlider(JSlider.VERTICAL, 0, 255, 0);
-		mgas2 = new JSlider(JSlider.VERTICAL, 0, 255, 0);
-		mgas3 = new JSlider(JSlider.VERTICAL, 0, 255, 0);
-		JSlider mgasCom = new JSlider(JSlider.VERTICAL, 0, 255, 0);
-		
-		mgas0.setPaintLabels(true);
-		
+		mcbMotorsEnabled = new JCheckBox(Text.get("MOTORS_ENABLED"));
+		mcbMotorsEnabled.addActionListener(new OnMotorsEnabled());
+
+		mgas0 = new MotorGasSlider("M1");
+		mgas1 = new MotorGasSlider("M2");
+		mgas2 = new MotorGasSlider("M3");
+		mgas3 = new MotorGasSlider("M4");
+		MotorGasSlider mgasCom = new MotorGasSlider("COM");
+				
 		mgas0.addChangeListener(new MotorGasChanged(0));
 		mgas1.addChangeListener(new MotorGasChanged(1));
 		mgas2.addChangeListener(new MotorGasChanged(2));
 		mgas3.addChangeListener(new MotorGasChanged(3));
 		mgasCom.addChangeListener(new SetAllMotorGas());
 		
+		pnlMotorsGas.add(mcbMotorsEnabled,"span,wrap");
 		pnlMotorsGas.add(mgas0);
 		pnlMotorsGas.add(mgas1);
 		pnlMotorsGas.add(mgas2);

@@ -18,6 +18,9 @@ public class TextBundle extends ListResourceBundle
             // UI
             {"APP_TITLE", "Control pult (C) Anton Sysoev (anton.sysoev.ru68@gmail.com)"},
             
+            {"OK", "OK"},
+            {"CANCEL", "Cancel"},
+            
             {"MOTORS", "Motors"},
             {"MOTORS_ENABLED", "Motors enabled"},
             
@@ -26,6 +29,7 @@ public class TextBundle extends ListResourceBundle
             {"CMD_PORT", "Port 1"},
             {"TELEMETRY_PORT", "Port 2"},
             {"VIDEO_PORT", "Port 3"},
+            {"LANGUAGE", "Lang"},
             {"START", "START"},
             {"STOP", "STOP"},
             

@@ -9,12 +9,12 @@ public class TextBundle_ru extends ListResourceBundle
         return new Object[][]
         {
         // LOCALIZE THIS
-        	{"ERROR", "Ошибка"},
-            {"SYSTEM_OK", "Все системы в норме"},
+        	{"ERROR", "РћС€РёР±РєР°"},
+            {"SYSTEM_OK", "Р’СЃРµ СЃРёСЃС‚РµРјС‹ РІ РЅРѕСЂРјРµ"},
             
         // UI
-            {"APP_TITLE", "Пульт управления (C) Антон Сысоев (anton.sysoev.ru68@gmail.com)"},
-            {"MOTORS", "Двигатели"}
+            {"APP_TITLE", "РџСѓР»СЊС‚ СѓРїСЂР°РІР»РµРЅРёСЏ (C) РђРЅС‚РѕРЅ РЎС‹СЃРѕРµРІ (anton.sysoev.ru68@gmail.com)"},
+            {"MOTORS", "Р”РІРёРіР°С‚РµР»Рё"}
         // END OF MATERIAL TO LOCALIZE
         };
     }

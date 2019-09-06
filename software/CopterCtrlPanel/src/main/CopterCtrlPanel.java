@@ -5,22 +5,27 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
-
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Locale;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.Properties;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.JTextField;
-import javax.swing.JToggleButton;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -33,38 +38,123 @@ import net.miginfocom.swing.MigLayout;
 
 public class CopterCtrlPanel implements WindowListener
 {
-	private class OnBtnStartStop implements ActionListener
+	private class SettingsDlg extends JDialog
+	{
+		private static final long serialVersionUID = 5506867286826277615L;
+		
+		private JIpTextField mtfCopterIp;
+		private JTextField mtfCopterCmdPort;
+		private JTextField mtfCopterTelemetryPort;
+		private JTextField mtfCopterVideoPort;
+		private JComboBox<Locale> mcbLocale;
+		
+		private class OnBtnOk implements ActionListener
+		{
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				CopterCtrlPanel.this.mCopterIp = mtfCopterIp.getIpAddressString();
+				CopterCtrlPanel.this.mCopterCmdPort = Integer.parseInt(mtfCopterCmdPort.getText());
+				CopterCtrlPanel.this.mCopterTelemetryPort = Integer.parseInt(mtfCopterTelemetryPort.getText());
+				CopterCtrlPanel.this.mCopterVideoPort = Integer.parseInt(mtfCopterVideoPort.getText());
+				
+				Locale locale = (Locale)mcbLocale.getSelectedItem();
+				Locale.setDefault(locale);
+				
+				SettingsDlg.this.setVisible(false);
+				
+				CopterCtrlPanel.this.stop();
+				CopterCtrlPanel.this.start();
+			}
+		}
+		
+		private class OnBtnCancel implements ActionListener
+		{
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				SettingsDlg.this.setVisible(false);
+			}
+		}
+		
+		public SettingsDlg()
+		{
+			super(mMainFrame, true);
+			this.createUI();
+		}
+		
+		private void createUI()
+		{
+			JPanel pnlSettings = new JPanel(new MigLayout("","[40!][40!][40!]"));
+
+			mtfCopterIp = new JIpTextField();
+			mtfCopterCmdPort = new JTextField();
+			mtfCopterTelemetryPort = new JTextField();
+			mtfCopterVideoPort = new JTextField();
+				
+			mtfCopterCmdPort.setDocument(new NumericDocument(0, false));
+			mtfCopterTelemetryPort.setDocument(new NumericDocument(0, false));
+			mtfCopterVideoPort.setDocument(new NumericDocument(0, false));
+				
+			mtfCopterCmdPort.setHorizontalAlignment(JTextField.RIGHT);
+			mtfCopterTelemetryPort.setHorizontalAlignment(JTextField.RIGHT);
+			mtfCopterVideoPort.setHorizontalAlignment(JTextField.RIGHT);
+				
+			mtfCopterIp.setText(CopterCtrlPanel.this.mCopterIp);
+			mtfCopterCmdPort.setText(Integer.toString(CopterCtrlPanel.this.mCopterCmdPort));
+			mtfCopterTelemetryPort.setText(Integer.toString(CopterCtrlPanel.this.mCopterTelemetryPort));
+			mtfCopterVideoPort.setText(Integer.toString(CopterCtrlPanel.this.mCopterVideoPort));
+			
+			pnlSettings.add(new JLabel(Text.get("IP_ADDRESS")),"span,grow,wrap");
+			pnlSettings.add(mtfCopterIp, "span,grow,wrap");
+			
+			pnlSettings.add(new JLabel(Text.get("CMD_PORT")));
+			pnlSettings.add(new JLabel(Text.get("TELEMETRY_PORT")));
+			pnlSettings.add(new JLabel(Text.get("VIDEO_PORT")),"wrap");
+			
+			pnlSettings.add(mtfCopterCmdPort, "grow");
+			pnlSettings.add(mtfCopterTelemetryPort, "grow");
+			pnlSettings.add(mtfCopterVideoPort, "grow, wrap");
+			
+			mcbLocale = new JComboBox<Locale>();
+			
+			mcbLocale.addItem(new Locale("en"));
+			mcbLocale.addItem(new Locale("ru"));
+			
+			mcbLocale.setSelectedItem(Locale.getDefault());
+			
+			pnlSettings.add(new JLabel(Text.get("LANGUAGE")));
+			pnlSettings.add(mcbLocale, "span,grow,wrap");
+			
+			JPanel pnlOkCancel = new JPanel(new MigLayout("","[grow][70!][70!]"));
+			JButton btnOk = new JButton(Text.get("OK"));
+			JButton btnCancel = new JButton(Text.get("CANCEL"));
+			
+			btnOk.addActionListener(new OnBtnOk());
+			btnCancel.addActionListener(new OnBtnCancel());
+			
+			pnlOkCancel.add(new JPanel(), "grow");
+			pnlOkCancel.add(btnOk,"grow");
+			pnlOkCancel.add(btnCancel,"grow");
+			
+			pnlSettings.add(pnlOkCancel, "span, grow");
+
+			this.setLayout(new MigLayout("","[grow]","[grow]"));
+			this.setTitle(Text.get("SETTINGS"));
+			this.setResizable(false);
+			this.setSize(200, 200);
+			this.setLocationRelativeTo(null);
+			this.add(pnlSettings, "grow");
+		}
+	}
+	
+	private class OnBtnSettings implements ActionListener
 	{
 		@Override
-		public void actionPerformed(ActionEvent evt)
+		public void actionPerformed(ActionEvent e)
 		{
-			JToggleButton btn = (JToggleButton)evt.getSource();
-			
-			if(btn.isSelected())
-			{
-				btn.setText(Text.get("STOP"));
-				
-				try
-				{
-					CopterCommander.instance().start(	mtfCopterIp.getIpAddressString(),
-														Integer.parseInt(mtfCopterCmdPort.getText()));
-				}
-				catch(UnknownHostException e)
-				{
-					showErrorMsg(Text.get("INVALID_HOST"));
-				}
-				catch(SocketException e)
-				{
-					showErrorMsg(Text.get("SOCKET_NOT_OPEN"));
-				}
-			}
-			else
-			{
-				btn.setText(Text.get("START"));
-				
-				CopterCommander.instance().stop();
-			}
-			
+			SettingsDlg dlg = new SettingsDlg();
+			dlg.setVisible(true);
 		}
 	}
 	
@@ -141,13 +231,14 @@ public class CopterCtrlPanel implements WindowListener
 	public static final int COPTER_DEFAULT_CMD_PORT = 4210;
 	public static final int COPTER_DEFAULT_TELEMETRY_PORT = 4211;
 	public static final int COPTER_DEFAULT_VIDEO_PORT = 4212;
+	public static final String SETTINGS_FILENAME = "settings.properties";
 	
 	private JFrame mMainFrame;
 	
-	private JIpTextField mtfCopterIp;
-	private JTextField mtfCopterCmdPort;
-	private JTextField mtfCopterTelemetryPort;
-	private JTextField mtfCopterVideoPort;
+	private String mCopterIp;
+	private int mCopterCmdPort;
+	private int mCopterTelemetryPort;
+	private int mCopterVideoPort;
 	
 	private JLabel mlbAlarmIcon;
 	private JLabel mlbAlarmText;
@@ -177,8 +268,8 @@ public class CopterCtrlPanel implements WindowListener
 		JButton btnEspLedToggle = new JButton(Text.get("MOTORS_ENABLED"));
 		btnEspLedToggle.addActionListener(new OnBtnSwitchMotors());
 
-		mMainFrame.add(this.createAlarmPanel(),"growx");
-		mMainFrame.add(this.createSettingsPanel(),"wrap");
+		mMainFrame.add(this.createAlarmPanel(),"grow");
+		mMainFrame.add(this.createSettingsPanel(),"grow,wrap");
 		mMainFrame.add(this.createMotorsPanel());
 		
 		mMainFrame.add(btnEspLedToggle);
@@ -186,42 +277,13 @@ public class CopterCtrlPanel implements WindowListener
 	
 	private JPanel createSettingsPanel()
 	{
-		JPanel pnlSettings = new JPanel(new MigLayout("","[40!][40!][40!][80!]"));
+		JPanel pnlSettings = new JPanel(new MigLayout("","[grow, center]","[grow, center]"));
 		pnlSettings.setBorder(new TitledBorder(Text.get("SETTINGS")));
 
-		mtfCopterIp = new JIpTextField();
-		mtfCopterCmdPort = new JTextField();
-		mtfCopterTelemetryPort = new JTextField();
-		mtfCopterVideoPort = new JTextField();
-			
-		mtfCopterCmdPort.setDocument(new NumericDocument(0, false));
-		mtfCopterTelemetryPort.setDocument(new NumericDocument(0, false));
-		mtfCopterVideoPort.setDocument(new NumericDocument(0, false));
-			
-		mtfCopterCmdPort.setHorizontalAlignment(JTextField.RIGHT);
-		mtfCopterTelemetryPort.setHorizontalAlignment(JTextField.RIGHT);
-		mtfCopterVideoPort.setHorizontalAlignment(JTextField.RIGHT);
-			
-		mtfCopterIp.setText(COPTER_DEFAULT_IP);
-		mtfCopterCmdPort.setText(Integer.toString(COPTER_DEFAULT_CMD_PORT));
-		mtfCopterTelemetryPort.setText(Integer.toString(COPTER_DEFAULT_TELEMETRY_PORT));
-		mtfCopterVideoPort.setText(Integer.toString(COPTER_DEFAULT_VIDEO_PORT));
+		JButton btnSettings = new JButton(Text.get("SETTINGS"));
+		btnSettings.addActionListener(new OnBtnSettings());
 		
-		JToggleButton btnStartStop = new JToggleButton(Text.get("START"));
-		btnStartStop.addActionListener(new OnBtnStartStop());
-			
-		pnlSettings.add(new JLabel(Text.get("IP_ADDRESS")),"span,wrap");
-		pnlSettings.add(mtfCopterIp, "spanx 3,growx");
-		
-		pnlSettings.add(btnStartStop,"spany 3, grow, wrap");
-		
-		pnlSettings.add(new JLabel(Text.get("CMD_PORT")));
-		pnlSettings.add(new JLabel(Text.get("TELEMETRY_PORT")));
-		pnlSettings.add(new JLabel(Text.get("VIDEO_PORT")),"wrap");
-		
-		pnlSettings.add(mtfCopterCmdPort, "growx");
-		pnlSettings.add(mtfCopterTelemetryPort, "growx");
-		pnlSettings.add(mtfCopterVideoPort, "growx");
+		pnlSettings.add(btnSettings);
 
 		return pnlSettings;
 	}
@@ -285,17 +347,30 @@ public class CopterCtrlPanel implements WindowListener
 	
 	public void start()
 	{
-		if(mMainFrame == null)
+		if(mMainFrame != null)
+			return;
+		
+		this.loadSettings();
+		this.loadImages();
+		Text.load();
+		this.createUI();
+			
+		mMainFrame.setVisible(true);
+			
+		AlarmCenter.instance().deleteObservers();
+		AlarmCenter.instance().addObserver(new OnAlarmUpdate());
+			
+		try
 		{
-			Locale.setDefault(Locale.US);
-			Text.load();
-			this.loadImages();
-			this.createUI();
-			
-			mMainFrame.setVisible(true);
-			
-			AlarmCenter.instance().deleteObservers();
-			AlarmCenter.instance().addObserver(new OnAlarmUpdate());
+			CopterCommander.instance().start(mCopterIp, mCopterCmdPort);
+		}
+		catch(UnknownHostException e)
+		{
+			showErrorMsg(Text.get("INVALID_HOST"));
+		}
+		catch(SocketException e)
+		{
+			showErrorMsg(Text.get("SOCKET_NOT_OPEN"));
 		}
 	}
 	
@@ -303,10 +378,74 @@ public class CopterCtrlPanel implements WindowListener
 	{
 		CopterCommander.instance().stop();
 		
+		this.saveSettings();
+		
 		if(mMainFrame != null)
 		{
 			mMainFrame.setVisible(false);
 			mMainFrame = null;
+		}
+	}
+	
+	private void loadSettings()
+	{
+		mCopterIp = COPTER_DEFAULT_IP;
+		mCopterCmdPort = COPTER_DEFAULT_CMD_PORT;
+		mCopterTelemetryPort = COPTER_DEFAULT_TELEMETRY_PORT;
+		mCopterVideoPort = COPTER_DEFAULT_VIDEO_PORT;
+		
+		Properties prop = new Properties();
+		
+		try
+		{
+			prop.load(new FileInputStream(SETTINGS_FILENAME));
+			
+			String lang = prop.getProperty("Language","en");
+			Locale locale = new Locale(lang);
+			Locale.setDefault(locale);
+			
+			mCopterIp = prop.getProperty("CopterIp", mCopterIp);
+			
+			String value = prop.getProperty("CopterCmdPort", Integer.toString(mCopterCmdPort));
+			mCopterCmdPort = Integer.parseInt(value);
+			
+			value = prop.getProperty("CopterTelemetryPort", Integer.toString(mCopterTelemetryPort));
+			mCopterTelemetryPort = Integer.parseInt(value);
+			
+			value = prop.getProperty("CopterVideoPort", Integer.toString(mCopterVideoPort));
+			mCopterVideoPort = Integer.parseInt(value);
+		}
+		catch (FileNotFoundException e)
+		{
+			e.printStackTrace();
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}	
+	}
+	
+	private void saveSettings()
+	{
+		Properties prop = new Properties();
+		
+		prop.setProperty("Language", Locale.getDefault().getLanguage());
+		prop.setProperty("CopterIp", mCopterIp);
+		prop.setProperty("CopterCmdPort", Integer.toString(mCopterCmdPort));
+		prop.setProperty("CopterTelemetryPort", Integer.toString(mCopterTelemetryPort));
+		prop.setProperty("CopterVideoPort", Integer.toString(mCopterVideoPort));
+		
+		try
+		{
+			prop.store(new FileOutputStream(SETTINGS_FILENAME), null);
+		}
+		catch(FileNotFoundException e)
+		{
+			e.printStackTrace();
+		}
+		catch(IOException e)
+		{
+			e.printStackTrace();
 		}
 	}
 	
@@ -318,6 +457,8 @@ public class CopterCtrlPanel implements WindowListener
 	public static void main(String[] args)
 	{
 		CopterCtrlPanel app = new CopterCtrlPanel();
+		
+		Locale.setDefault(Locale.US);
 		
 		app.start();
 	}

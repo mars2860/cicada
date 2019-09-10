@@ -11,6 +11,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.text.DecimalFormat;
 import java.util.Locale;
 import java.util.Observable;
 import java.util.Observer;
@@ -242,6 +243,22 @@ public class CopterCtrlPanel implements WindowListener
 		}
 	}
 	
+	private class OnTelemetryUpdate implements Observer
+	{
+		@Override
+		public void update(Observable o, Object arg)
+		{
+			DecimalFormat fmt1 = new DecimalFormat();
+			fmt1.setMaximumFractionDigits(2);
+			fmt1.setMinimumFractionDigits(0);
+			
+			String batState = fmt1.format(CopterTelemetry.instance().getBatteryVoltage()) + "V/" + 
+								fmt1.format(CopterTelemetry.instance().getBatteryPercent()) + "%";
+			
+			mlbBattery.setText(batState);
+		}
+	}
+	
 	public static final String COPTER_DEFAULT_IP = "192.168.1.33";
 	public static final int COPTER_DEFAULT_CMD_PORT = 4210;
 	public static final int COPTER_DEFAULT_TELEMETRY_PORT = 4211;
@@ -257,6 +274,7 @@ public class CopterCtrlPanel implements WindowListener
 	
 	private JLabel mlbAlarmIcon;
 	private JLabel mlbAlarmText;
+	private JLabel mlbBattery;
 	
 	private JCheckBox mcbMotorsEnabled;
 	private MotorGasSlider mgas0;
@@ -267,6 +285,7 @@ public class CopterCtrlPanel implements WindowListener
 	
 	private ImageIcon mIconOk;
 	private ImageIcon mIconError;
+	private ImageIcon mIconBat;
 		
 	public CopterCtrlPanel() {}
 	
@@ -284,6 +303,7 @@ public class CopterCtrlPanel implements WindowListener
 
 		mMainFrame.add(this.createAlarmPanel(),"grow");
 		mMainFrame.add(this.createSettingsPanel(),"grow,wrap");
+		mMainFrame.add(this.createStatusPanel(),"span,grow,wrap");
 		mMainFrame.add(this.createMotorsPanel());
 	}
 	
@@ -347,6 +367,20 @@ public class CopterCtrlPanel implements WindowListener
 		return pnlMotorsGas;
 	}
 	
+	private JPanel createStatusPanel()
+	{
+		JPanel pnlStatus = new JPanel(new MigLayout("","","[center]"));
+		pnlStatus.setBorder(new TitledBorder("STATUS"));
+
+		mlbBattery = new JLabel();
+		mlbBattery.setHorizontalAlignment(JLabel.CENTER);
+		
+		pnlStatus.add(new JLabel(mIconBat));
+		pnlStatus.add(mlbBattery,"w 80!");
+		
+		return pnlStatus;
+	}
+	
 	private void loadImages()
 	{
 		java.net.URL okUrl = this.getClass().getResource("images/ok.png");
@@ -354,6 +388,9 @@ public class CopterCtrlPanel implements WindowListener
 		
 		java.net.URL errUrl = this.getClass().getResource("images/error.png");
 		mIconError = new ImageIcon(new ImageIcon(errUrl).getImage().getScaledInstance(32,32,Image.SCALE_SMOOTH));
+		
+		java.net.URL batUrl = this.getClass().getResource("images/battery.png");
+		mIconBat = new ImageIcon(new ImageIcon(batUrl).getImage().getScaledInstance(16,16,Image.SCALE_SMOOTH));
 	}
 	
 	public void start()
@@ -370,6 +407,9 @@ public class CopterCtrlPanel implements WindowListener
 			
 		AlarmCenter.instance().deleteObservers();
 		AlarmCenter.instance().addObserver(new OnAlarmUpdate());
+		
+		CopterTelemetry.instance().deleteObservers();
+		CopterTelemetry.instance().addObserver(new OnTelemetryUpdate());
 			
 		try
 		{

@@ -25,6 +25,8 @@ public class TextBundle extends ListResourceBundle
             {"OK", "OK"},
             {"CANCEL", "Cancel"},
             
+            {"STATUS", "Status"},
+            
             {"MOTORS", "Motors"},
             {"MOTORS_ENABLED", "Motors enabled"},
             

@@ -8,7 +8,7 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 
-public class CopterTelemetry implements Runnable
+public class CopterTelemetry extends java.util.Observable implements Runnable
 {
 	private static CopterTelemetry mSingleton;
 	
@@ -28,10 +28,15 @@ public class CopterTelemetry implements Runnable
 	private Thread mTelemetryThread;
 	private boolean mTelemetryRun;
 	private Object objTelemetrySync;
+	private Object objDataSync;
+	
+	private float mBatteryVoltage;
+	private float mBatteryPercent;
 	
 	private CopterTelemetry()
 	{
 		objTelemetrySync = new Object();
+		objDataSync = new Object();
 	}
 	
 	public void start(String ip, int port) throws UnknownHostException, SocketException
@@ -81,12 +86,35 @@ public class CopterTelemetry implements Runnable
 		AlarmCenter.instance().clearAlarm(Alarm.COPTER_NOT_FOUND);
 		AlarmCenter.instance().clearAlarm(Alarm.COPTER_RECEIVE_ERROR);
 	}
+	
+	public float getBatteryVoltage()
+	{
+		float voltage = 0;
+		
+		synchronized(objDataSync)
+		{
+			voltage = mBatteryVoltage;
+		}
+		
+		return voltage;
+	}
+	
+	public float getBatteryPercent()
+	{
+		float percent = 0;
+		
+		synchronized(objDataSync)
+		{
+			percent = mBatteryPercent;
+		}
+		
+		return percent;
+	}
 
 	@Override
 	public void run()
 	{	
 		byte[] receiveData = new byte[1024];
-		
 		
 		while(mTelemetryRun)
 		{
@@ -99,7 +127,27 @@ public class CopterTelemetry implements Runnable
 				if(receivePacket.getAddress().equals(mCopterInetAddress))
 				{
 					AlarmCenter.instance().clearAlarm(Alarm.COPTER_NOT_FOUND);
-					AlarmCenter.instance().clearAlarm(Alarm.COPTER_RECEIVE_ERROR);	
+					AlarmCenter.instance().clearAlarm(Alarm.COPTER_RECEIVE_ERROR);
+					
+					int pos = 0;
+					// Battery voltage
+					int lb = receivePacket.getData()[pos++] & 0xFF;
+					int hb = receivePacket.getData()[pos++] & 0xFF;
+					synchronized(objDataSync)
+					{
+						mBatteryVoltage = ((float)((hb << 8) | lb)) * 0.00125f;
+					}
+					// Battery percent
+					lb = receivePacket.getData()[pos++] & 0xFF;
+					hb = receivePacket.getData()[pos++] & 0xFF;
+					synchronized(objDataSync)
+					{
+						mBatteryPercent = (float)(hb) + ((float)(lb))/256.f;
+					}
+					
+					this.setChanged();
+					this.notifyObservers();
+					this.clearChanged();
 				}
 			}
 			catch(SocketTimeoutException e)

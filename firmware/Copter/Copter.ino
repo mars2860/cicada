@@ -2,6 +2,9 @@
 #include <ESP8266mDNS.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
+#include "MAX1704X.h"
+
+// Install https://github.com/enjoyneering/ESP8266-I2C-Driver
 
 //----------------------------------------------------------------
 // HARDWARE
@@ -16,15 +19,20 @@
 // SETTINGS
 
 #ifndef STASSID
-#define STASSID "liftelectronica"
-#define STAPSK  "cosmos327"
+  #define STASSID "liftelectronica"
+  #define STAPSK  "cosmos327"
 #endif
 
 IPAddress ip(192,168,1,33);
 IPAddress gateway(192,168,1,1);
 IPAddress subnet(255,255,255,0);
+IPAddress host(192,168,1,2);
+
+unsigned int cmdPort = 4210;          // local port to receive commands
+unsigned int telemetryPort = 4211;    // local port to send telemetry data
 
 #define LED_FLASH_TIME 1000
+#define TELEMETRY_UPDATE_TIME 250
 
 #define MOTORS_PWM_FREQ           1024UL
 #define MOTORS_PWM_RESOLUTION     256UL
@@ -42,7 +50,6 @@ const char* ssid = STASSID;
 const char* password = STAPSK;
 
 WiFiUDP udp;
-unsigned int localUdpPort = 4210;   // local port to listen on
 uint8_t udpPacket[255];             // buffer for udp packets
 
 uint32_t ledTimer;
@@ -55,6 +62,8 @@ volatile uint32_t pwmStepTicks;              // ticks of timer to next pwm step
 volatile uint32_t pwmPeriodTicks;            // ticks of timer per one pwm period
 volatile uint32_t pwmNext = 0;               // ticks to next pwm timer interrupt
 volatile uint32_t pwmTimer = 0;              // count ticks from pwm period start
+
+volatile uint32_t telemetryTimer = 0;
 
 class Motor
 {
@@ -91,6 +100,16 @@ class Motor
       gasTicks = gas * pwmStepTicks;
     }
 } motor[4];
+
+class MAX17040: public MAX1704X
+{
+  public:
+  MAX17040(): MAX1704X(1.25) {}
+  uint16_t readRegister16(uint8_t registerId)
+  {
+    return MAX1704X::readRegister16(registerId);
+  }
+} FuelGauge;
 
 //--------------------------------------------------------------
 // FUNCTIONS
@@ -258,13 +277,16 @@ void setup()
   timer1_write(pwmPeriodTicks);
 
   ledTimer = millis();
+  telemetryTimer = millis();
   
   /*Serial.println("pwmPeriodTicks = ");
   Serial.print(pwmPeriodTicks);
   Serial.print(", pwmStepTicks = ");
   Serial.println(pwmStepTicks);*/
 
-  udp.begin(localUdpPort);
+  FuelGauge.begin();
+
+  udp.begin(cmdPort);
 }
 
 void loop()
@@ -293,6 +315,25 @@ void loop()
          
         break;
     }
+  }
+
+  if(millis() - telemetryTimer >= TELEMETRY_UPDATE_TIME)
+  {
+    telemetryTimer = millis();
+
+    uint16_t pos = 0;
+    // Read battery voltage
+    uint16_t temp = FuelGauge.adc();
+    udpPacket[pos++] = temp;
+    udpPacket[pos++] = temp>>8;
+    // Read battery percetn
+    temp = FuelGauge.readRegister16(REGISTER_SOC);
+    udpPacket[pos++] = temp;
+    udpPacket[pos++] = temp>>8;
+
+    udp.beginPacket(host, telemetryPort);
+    udp.write(udpPacket, pos);
+    udp.endPacket();
   }
 
   //Serial.print("pwmNext = "); Serial.println(pwmNext);

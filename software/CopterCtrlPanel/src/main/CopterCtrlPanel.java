@@ -162,6 +162,16 @@ public class CopterCtrlPanel implements WindowListener
 		}
 	}
 	
+	private class OnBtnSensors implements ActionListener
+	{
+		@Override
+		public void actionPerformed(ActionEvent e)
+		{
+			SensorsDlg dlg = new SensorsDlg(mMainFrame);
+			dlg.setVisible(true);
+		}
+	}
+	
 	private class OnMotorsEnabled implements ActionListener
 	{
 		private boolean state;
@@ -256,6 +266,7 @@ public class CopterCtrlPanel implements WindowListener
 								fmt1.format(CopterTelemetry.instance().getBatteryPercent()) + "%";
 			
 			mlbBattery.setText(batState);
+			mlbWifiLevel.setText(Integer.toString(CopterTelemetry.instance().getWifiLevel()));
 		}
 	}
 	
@@ -275,6 +286,7 @@ public class CopterCtrlPanel implements WindowListener
 	private JLabel mlbAlarmIcon;
 	private JLabel mlbAlarmText;
 	private JLabel mlbBattery;
+	private JLabel mlbWifiLevel;
 	
 	private JCheckBox mcbMotorsEnabled;
 	private MotorGasSlider mgas0;
@@ -286,6 +298,7 @@ public class CopterCtrlPanel implements WindowListener
 	private ImageIcon mIconOk;
 	private ImageIcon mIconError;
 	private ImageIcon mIconBat;
+	private ImageIcon mIconWifi;
 		
 	public CopterCtrlPanel() {}
 	
@@ -309,13 +322,17 @@ public class CopterCtrlPanel implements WindowListener
 	
 	private JPanel createSettingsPanel()
 	{
-		JPanel pnlSettings = new JPanel(new MigLayout("","[grow, center]","[grow, center]"));
+		JPanel pnlSettings = new JPanel(new MigLayout("","","[grow, center]"));
 		pnlSettings.setBorder(new TitledBorder(Text.get("SETTINGS")));
 
 		JButton btnSettings = new JButton(Text.get("SETTINGS"));
 		btnSettings.addActionListener(new OnBtnSettings());
 		
+		JButton btnSensors = new JButton(Text.get("SENSORS"));
+		btnSensors.addActionListener(new OnBtnSensors());
+		
 		pnlSettings.add(btnSettings);
+		pnlSettings.add(btnSensors);
 
 		return pnlSettings;
 	}
@@ -370,13 +387,18 @@ public class CopterCtrlPanel implements WindowListener
 	private JPanel createStatusPanel()
 	{
 		JPanel pnlStatus = new JPanel(new MigLayout("","","[center]"));
-		pnlStatus.setBorder(new TitledBorder("STATUS"));
+		pnlStatus.setBorder(new TitledBorder(Text.get("STATUS")));
 
 		mlbBattery = new JLabel();
 		mlbBattery.setHorizontalAlignment(JLabel.CENTER);
 		
+		mlbWifiLevel = new JLabel();
+		mlbWifiLevel.setHorizontalAlignment(JLabel.CENTER);
+		
 		pnlStatus.add(new JLabel(mIconBat));
 		pnlStatus.add(mlbBattery,"w 80!");
+		pnlStatus.add(new JLabel(mIconWifi));
+		pnlStatus.add(mlbWifiLevel,"w 20!");
 		
 		return pnlStatus;
 	}
@@ -391,6 +413,9 @@ public class CopterCtrlPanel implements WindowListener
 		
 		java.net.URL batUrl = this.getClass().getResource("images/battery.png");
 		mIconBat = new ImageIcon(new ImageIcon(batUrl).getImage().getScaledInstance(16,16,Image.SCALE_SMOOTH));
+		
+		java.net.URL wifiUrl = this.getClass().getResource("images/wifi.png");
+		mIconWifi = new ImageIcon(new ImageIcon(wifiUrl).getImage().getScaledInstance(16,16,Image.SCALE_SMOOTH));
 	}
 	
 	public void start()

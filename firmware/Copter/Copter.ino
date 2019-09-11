@@ -2,9 +2,16 @@
 #include <ESP8266mDNS.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
-#include "MAX1704X.h"
+#include <Wire.h>
 
-// Install https://github.com/enjoyneering/ESP8266-I2C-Driver
+#include "MAX1704X.h"
+#include "I2Cdev.h"
+#include "MPU6050_6Axis_MotionApps20.h"
+
+// Install:
+// 1. https://github.com/enjoyneering/ESP8266-I2C-Driver
+// 2. https://github.com/porrey/MAX1704X
+// 3. https://github.com/jrowberg/i2cdevlib
 
 //----------------------------------------------------------------
 // HARDWARE
@@ -64,6 +71,15 @@ volatile uint32_t pwmNext = 0;               // ticks to next pwm timer interrup
 volatile uint32_t pwmTimer = 0;              // count ticks from pwm period start
 
 volatile uint32_t telemetryTimer = 0;
+
+MPU6050 mpu;      // 6-axis sensor
+
+int16_t ax;
+int16_t ay;
+int16_t az;
+int16_t gx;
+int16_t gy;
+int16_t gz;
 
 class Motor
 {
@@ -171,9 +187,6 @@ void setup()
   pinMode(HC595_CLOCK, OUTPUT);
   pinMode(CAM_SD, OUTPUT);
 
-  // Clear HC595
-  escaperUpdate(0xAA);
-
   Serial.begin(115200);
  
   Serial.println("Booting");
@@ -276,6 +289,8 @@ void setup()
   timer1_enable(TIM_DIV16, TIM_EDGE, TIM_SINGLE);
   timer1_write(pwmPeriodTicks);
 
+  // Process timers
+
   ledTimer = millis();
   telemetryTimer = millis();
   
@@ -284,7 +299,10 @@ void setup()
   Serial.print(", pwmStepTicks = ");
   Serial.println(pwmStepTicks);*/
 
-  FuelGauge.begin();
+  Wire.begin();
+  Wire.setClock(400000);
+
+  mpu.initialize();
 
   udp.begin(cmdPort);
 }
@@ -326,10 +344,36 @@ void loop()
     uint16_t temp = FuelGauge.adc();
     udpPacket[pos++] = temp;
     udpPacket[pos++] = temp>>8;
-    // Read battery percetn
+    // Read battery percent
     temp = FuelGauge.readRegister16(REGISTER_SOC);
     udpPacket[pos++] = temp;
     udpPacket[pos++] = temp>>8;
+    // Read Wifi Level
+    int32_t st32 = WiFi.RSSI();
+    udpPacket[pos++] = st32;
+    udpPacket[pos++] = st32 >> 8;
+    udpPacket[pos++] = st32 >> 16;
+    udpPacket[pos++] = st32 >> 24;
+    // Read IMU data
+    mpu.getMotion6(&ax,&ay,&az,&gx,&gy,&gz);
+   
+    udpPacket[pos++] = ax;
+    udpPacket[pos++] = ax >> 8;
+    
+    udpPacket[pos++] = ay;
+    udpPacket[pos++] = ay >> 8;
+    
+    udpPacket[pos++] = az;
+    udpPacket[pos++] = az >> 8;
+    
+    udpPacket[pos++] = gx;
+    udpPacket[pos++] = gx >> 8;
+    
+    udpPacket[pos++] = gy;
+    udpPacket[pos++] = gy >> 8;
+    
+    udpPacket[pos++] = gz;
+    udpPacket[pos++] = gz >> 8;
 
     udp.beginPacket(host, telemetryPort);
     udp.write(udpPacket, pos);

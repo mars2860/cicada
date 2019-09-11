@@ -30,6 +30,7 @@ public class TextBundle extends ListResourceBundle
             {"MOTORS", "Motors"},
             {"MOTORS_ENABLED", "Motors enabled"},
             
+            {"SENSORS", "Sensors"},
             {"SETTINGS", "Settings"},
             {"IP_ADDRESS", "IP Address"},
             {"CMD_PORT", "Port 1"},

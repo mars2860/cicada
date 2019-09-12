@@ -7,6 +7,7 @@
 #include "MAX1704X.h"
 #include "I2Cdev.h"
 #include "MPU6050_6Axis_MotionApps20.h"
+#include "QMC5883L.h"
 
 // Install:
 // 1. https://github.com/enjoyneering/ESP8266-I2C-Driver
@@ -73,6 +74,7 @@ volatile uint32_t pwmTimer = 0;              // count ticks from pwm period star
 volatile uint32_t telemetryTimer = 0;
 
 MPU6050 mpu;      // 6-axis sensor
+QMC5883L mag;     // magnetometer
 
 int16_t ax;
 int16_t ay;
@@ -80,6 +82,10 @@ int16_t az;
 int16_t gx;
 int16_t gy;
 int16_t gz;
+int16_t mx;
+int16_t my;
+int16_t mz;
+int16_t mt;
 
 class Motor
 {
@@ -303,6 +309,7 @@ void setup()
   Wire.setClock(400000);
 
   mpu.initialize();
+  mag.init();
 
   udp.begin(cmdPort);
 }
@@ -374,6 +381,41 @@ void loop()
     
     udpPacket[pos++] = gz;
     udpPacket[pos++] = gz >> 8;
+    // Read magnetometer data
+    mag.readRaw(&mx, &my, &mz, &mt);
+
+    udpPacket[pos++] = mx;
+    udpPacket[pos++] = mx >> 8;
+
+    udpPacket[pos++] = my;
+    udpPacket[pos++] = my >> 8;
+
+    udpPacket[pos++] = mz;
+    udpPacket[pos++] = mz >> 8;
+    // Get IMU calibration settings
+    int16_t it16 = mpu.getXAccelOffset();
+    udpPacket[pos++] = it16;
+    udpPacket[pos++] = it16 >> 8;
+
+    it16 = mpu.getYAccelOffset();
+    udpPacket[pos++] = it16;
+    udpPacket[pos++] = it16 >> 8;
+
+    it16 = mpu.getZAccelOffset();
+    udpPacket[pos++] = it16;
+    udpPacket[pos++] = it16 >> 8;
+
+    it16 = mpu.getXGyroOffset();
+    udpPacket[pos++] = it16;
+    udpPacket[pos++] = it16 >> 8;
+
+    it16 = mpu.getYGyroOffset();
+    udpPacket[pos++] = it16;
+    udpPacket[pos++] = it16 >> 8;
+
+    it16 = mpu.getZGyroOffset();
+    udpPacket[pos++] = it16;
+    udpPacket[pos++] = it16 >> 8;
 
     udp.beginPacket(host, telemetryPort);
     udp.write(udpPacket, pos);

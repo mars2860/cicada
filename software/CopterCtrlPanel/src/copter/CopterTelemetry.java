@@ -41,6 +41,15 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 	private int mGyroX;
 	private int mGyroY;
 	private int mGyroZ;
+	private int mMagnetX;
+	private int mMagnetY;
+	private int mMagnetZ;
+	private int mAccelOffsetX;
+	private int mAccelOffsetY;
+	private int mAccelOffsetZ;
+	private int mGyroOffsetX;
+	private int mGyroOffsetY;
+	private int mGyroOffsetZ;
 	
 	private CopterTelemetry()
 	{
@@ -203,6 +212,114 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 		
 		return result;
 	}
+	
+	public int getMagnetX()
+	{
+		int result = 0;
+		
+		synchronized(objDataSync)
+		{
+			result = mMagnetX;
+		}
+		
+		return result;
+	}
+	
+	public int getMagnetY()
+	{
+		int result = 0;
+		
+		synchronized(objDataSync)
+		{
+			result = mMagnetY;
+		}
+		
+		return result;
+	}
+	
+	public int getMagnetZ()
+	{
+		int result = 0;
+		
+		synchronized(objDataSync)
+		{
+			result = mMagnetZ;
+		}
+		
+		return result;
+	}
+	
+	public int getAccelOffsetX()
+	{
+		int result = 0;
+		
+		synchronized(objDataSync)
+		{
+			result = mAccelOffsetX;
+		}
+		
+		return result;
+	}
+	
+	public int getAccelOffsetY()
+	{
+		int result = 0;
+		
+		synchronized(objDataSync)
+		{
+			result = mAccelOffsetY;
+		}
+		
+		return result;
+	}
+	
+	public int getAccelOffsetZ()
+	{
+		int result = 0;
+		
+		synchronized(objDataSync)
+		{
+			result = mAccelOffsetZ;
+		}
+		
+		return result;
+	}
+	
+	public int getGyroOffsetX()
+	{
+		int result = 0;
+		
+		synchronized(objDataSync)
+		{
+			result = mGyroOffsetX;
+		}
+		
+		return result;
+	}
+	
+	public int getGyroOffsetY()
+	{
+		int result = 0;
+		
+		synchronized(objDataSync)
+		{
+			result = mGyroOffsetY;
+		}
+		
+		return result;
+	}
+	
+	public int getGyroOffsetZ()
+	{
+		int result = 0;
+		
+		synchronized(objDataSync)
+		{
+			result = mGyroOffsetZ;
+		}
+		
+		return result;
+	}
 
 	@Override
 	public void run()
@@ -236,9 +353,22 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 						mAccelX = this.getInt16t(receivePacket);
 						mAccelY = this.getInt16t(receivePacket);
 						mAccelZ = this.getInt16t(receivePacket);
+						// Gyro data
 						mGyroX = this.getInt16t(receivePacket);
 						mGyroY = this.getInt16t(receivePacket);
 						mGyroZ = this.getInt16t(receivePacket);
+						// Magnet data
+						mMagnetX = this.getInt16t(receivePacket);
+						mMagnetY = this.getInt16t(receivePacket);
+						mMagnetZ = this.getInt16t(receivePacket);
+						// Accel offsets
+						mAccelOffsetX = this.getInt16t(receivePacket);
+						mAccelOffsetY = this.getInt16t(receivePacket);
+						mAccelOffsetZ = this.getInt16t(receivePacket);
+						// Gyro offsets
+						mGyroOffsetX = this.getInt16t(receivePacket);
+						mGyroOffsetY = this.getInt16t(receivePacket);
+						mGyroOffsetZ = this.getInt16t(receivePacket);
 					}
 
 					this.setChanged();

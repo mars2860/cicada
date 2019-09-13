@@ -3,11 +3,19 @@ package main;
 import java.util.Observable;
 import java.util.Observer;
 
+import javax.swing.ButtonGroup;
+import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
+import ChartDirector.Chart;
+import ChartDirector.ChartViewer;
+import ChartDirector.XYChart;
 import copter.CopterTelemetry;
 import net.miginfocom.swing.MigLayout;
 
@@ -57,6 +65,53 @@ public class SensorsDlg extends JDialog
 			text = ": " + Integer.toString(CopterTelemetry.instance().getMagnetZ());// + "/" +
 			//Integer.toString(CopterTelemetry.instance().getGyroOffsetX());
 			mlbMz.setText(text);
+			
+			if(mcbCollectData.isSelected())
+			{
+				if(mDataCount < MAX_DATA_COUNT)
+				{
+					mAccelX[mDataCount] = CopterTelemetry.instance().getAccelX();
+					mAccelY[mDataCount] = CopterTelemetry.instance().getAccelY();
+					mAccelZ[mDataCount] = CopterTelemetry.instance().getAccelZ();
+				
+					mMagnetX[mDataCount] = CopterTelemetry.instance().getMagnetX();
+					mMagnetY[mDataCount] = CopterTelemetry.instance().getMagnetY();
+					mMagnetZ[mDataCount] = CopterTelemetry.instance().getMagnetZ();
+				}
+				
+				mDataCount++;
+				if(mDataCount >= MAX_DATA_COUNT)
+					mcbCollectData.setSelected(false);
+			}
+			
+			text = ": " + Integer.toString(mDataCount);
+			mlbDataCount.setText(text);
+		}
+	}
+	
+	private class OnCollectData implements ChangeListener
+	{
+		@Override
+		public void stateChanged(ChangeEvent e)
+		{
+			if(mcbCollectData.isSelected())
+			{
+				mDataCount = 0;
+			}
+			else
+			{
+				SensorsDlg.this.drawData();
+			}
+			
+		}
+	}
+	
+	private class OnChangeShowedData implements ChangeListener
+	{
+		@Override
+		public void stateChanged(ChangeEvent e)
+		{
+			SensorsDlg.this.drawData();
 		}
 	}
 	
@@ -71,18 +126,39 @@ public class SensorsDlg extends JDialog
 	private JLabel mlbMx;
 	private JLabel mlbMy;
 	private JLabel mlbMz;
+	private ChartViewer mChartViewer;
+	private JCheckBox mcbCollectData;
+	private JLabel mlbDataCount;
+	private JRadioButton mrbAccel;
+	private JRadioButton mrbMagnet;
+	
+	private static final int MAX_DATA_COUNT = 256;
+	
+	private int mDataCount;
+	private double mAccelX[];
+	private double mAccelY[];
+	private double mAccelZ[];
+	private double mMagnetX[];
+	private double mMagnetY[];
+	private double mMagnetZ[];
 	
 	public SensorsDlg(JFrame owner)
 	{
 		super(owner,true);
 		
 		mObserver = new OnTelemetryUpdate();
+		mAccelX = new double[MAX_DATA_COUNT];
+		mAccelY = new double[MAX_DATA_COUNT];
+		mAccelZ = new double[MAX_DATA_COUNT];
+		mMagnetX = new double[MAX_DATA_COUNT];
+		mMagnetY = new double[MAX_DATA_COUNT];
+		mMagnetZ = new double[MAX_DATA_COUNT];
 		
 		this.setTitle(Text.get("SENSORS"));
-		this.setSize(460, 300);
+		this.setSize(680, 550);
 		this.setLocationRelativeTo(null);
-		this.setResizable(true);
-		this.setLayout(new MigLayout());
+		this.setResizable(false);
+		this.setLayout(new MigLayout("","[][80!]"));
 		
 		mlbAx = new JLabel();
 		mlbAx.setHorizontalAlignment(JLabel.LEFT);
@@ -103,8 +179,25 @@ public class SensorsDlg extends JDialog
 		mlbMz = new JLabel();
 		mlbMz.setHorizontalAlignment(JLabel.LEFT);
 		
+		mChartViewer = new ChartViewer();
+		mcbCollectData = new JCheckBox(Text.get("COLLECT_DATA"));
+		mlbDataCount = new JLabel();
+		mrbAccel = new JRadioButton(Text.get("SHOW_ACCEL"));
+		mrbMagnet = new JRadioButton(Text.get("SHOW_MAGNET"));
+		
+		ButtonGroup group = new ButtonGroup();
+		group.add(mrbAccel);
+		group.add(mrbMagnet);
+		
+		mrbAccel.setSelected(true);
+		mcbCollectData.addChangeListener(new OnCollectData());
+		mrbAccel.addChangeListener(new OnChangeShowedData());
+		mrbMagnet.addChangeListener(new OnChangeShowedData());
+		
 		this.add(new JLabel("AccelX/Off"));
-		this.add(mlbAx,"wrap");
+		this.add(mlbAx);
+		
+		this.add(mChartViewer,"spany,wrap");
 		
 		this.add(new JLabel("AccelY/Off"));
 		this.add(mlbAy,"wrap");
@@ -131,6 +224,16 @@ public class SensorsDlg extends JDialog
 		this.add(mlbMy,"wrap");
 		this.add(new JLabel("MagnetZ"));
 		this.add(mlbMz,"wrap");
+		
+		this.add(new JPanel(),"h 10!,wrap");
+		
+		this.add(new JLabel(Text.get("DATA_COUNT")));
+		this.add(mlbDataCount,"wrap");
+		this.add(mcbCollectData,"spanx 2, wrap");
+		this.add(mrbAccel,"spanx 2, wrap");
+		this.add(mrbMagnet,"spanx 2, wrap");
+		
+		this.drawData();
 	}
 	
 	@Override
@@ -142,5 +245,41 @@ public class SensorsDlg extends JDialog
 			CopterTelemetry.instance().deleteObserver(mObserver);
 		
 		super.setVisible(b);
+	}
+	
+	private void drawData()
+	{
+        // Create a XYChart object of size 250 x 250 pixels
+        XYChart c = new XYChart(500, 500);
+        // Set the plotarea at (30, 20) and of size 200 x 200 pixels
+        c.setPlotArea(60, 45, 410, 410, -1, -1, 0xc0c0c0, 0xc0c0c0, -1);
+        c.addLegend(60, 5, false);
+        // Set scale for axis
+        c.xAxis().setTitle("X/Y");
+        c.xAxis().setMargin(0,0);
+        
+        c.yAxis().setTitle("Y/Z");
+        c.yAxis().setMargin(0,0);
+
+        if(mrbAccel.isSelected())
+        {
+        	c.xAxis().setLinearScale(-18432, 18432, 2048);
+        	c.yAxis().setLinearScale(-18432, 18432, 2048);
+        	
+        	c.addScatterLayer(mAccelX, mAccelY, "AccelXY", Chart.CircleShape, 5);
+        	c.addScatterLayer(mAccelX, mAccelZ, "AccelXZ", Chart.CircleShape, 5);
+        	c.addScatterLayer(mAccelY, mAccelZ, "AccelYZ", Chart.CircleShape, 5);
+        }
+        else if(mrbMagnet.isSelected())
+        {
+        	c.xAxis().setLinearScale(-13312, 13312, 1024);
+        	c.yAxis().setLinearScale(-13312, 13312, 1024);
+        	
+        	c.addScatterLayer(mMagnetX, mMagnetY, "MagnetXY", Chart.CircleShape, 5);
+        	c.addScatterLayer(mMagnetX, mMagnetZ, "MagnetXZ", Chart.CircleShape, 5);
+        	c.addScatterLayer(mMagnetY, mMagnetZ, "MagnetYZ", Chart.CircleShape, 5);
+        }
+        
+        mChartViewer.setChart(c);
 	}
 }

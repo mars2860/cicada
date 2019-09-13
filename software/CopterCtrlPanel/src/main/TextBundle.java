@@ -41,6 +41,10 @@ public class TextBundle extends ListResourceBundle
             {"STOP", "STOP"},
             
             {"ALARMS", "Alarms"},
+            {"COLLECT_DATA", "Collect Data"},
+            {"DATA_COUNT", "Data Count"},
+            {"SHOW_ACCEL", "Show accel"},
+            {"SHOW_MAGNET", "Show magnet"},
         // END OF MATERIAL TO LOCALIZE
         };
     }

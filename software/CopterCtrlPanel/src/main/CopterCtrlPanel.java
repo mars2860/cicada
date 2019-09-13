@@ -5,17 +5,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.text.DecimalFormat;
 import java.util.Locale;
 import java.util.Observable;
 import java.util.Observer;
-import java.util.Properties;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -57,10 +52,10 @@ public class CopterCtrlPanel implements WindowListener
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
-				CopterCtrlPanel.this.mCopterIp = mtfCopterIp.getIpAddressString();
-				CopterCtrlPanel.this.mCopterCmdPort = Integer.parseInt(mtfCopterCmdPort.getText());
-				CopterCtrlPanel.this.mCopterTelemetryPort = Integer.parseInt(mtfCopterTelemetryPort.getText());
-				CopterCtrlPanel.this.mCopterVideoPort = Integer.parseInt(mtfCopterVideoPort.getText());
+				Settings.instance().setCopterIp(mtfCopterIp.getIpAddressString());
+				Settings.instance().setCopterCmdPort(Integer.parseInt(mtfCopterCmdPort.getText()));
+				Settings.instance().setCopterTelemetryPort(Integer.parseInt(mtfCopterTelemetryPort.getText()));
+				Settings.instance().setmCopterVideoPort(Integer.parseInt(mtfCopterVideoPort.getText()));
 				
 				Locale locale = (Locale)mcbLocale.getSelectedItem();
 				Locale.setDefault(locale);
@@ -104,10 +99,10 @@ public class CopterCtrlPanel implements WindowListener
 			mtfCopterTelemetryPort.setHorizontalAlignment(JTextField.RIGHT);
 			mtfCopterVideoPort.setHorizontalAlignment(JTextField.RIGHT);
 				
-			mtfCopterIp.setText(CopterCtrlPanel.this.mCopterIp);
-			mtfCopterCmdPort.setText(Integer.toString(CopterCtrlPanel.this.mCopterCmdPort));
-			mtfCopterTelemetryPort.setText(Integer.toString(CopterCtrlPanel.this.mCopterTelemetryPort));
-			mtfCopterVideoPort.setText(Integer.toString(CopterCtrlPanel.this.mCopterVideoPort));
+			mtfCopterIp.setText(Settings.instance().getCopterIp());
+			mtfCopterCmdPort.setText(Integer.toString(Settings.instance().getCopterCmdPort()));
+			mtfCopterTelemetryPort.setText(Integer.toString(Settings.instance().getCopterTelemetryPort()));
+			mtfCopterVideoPort.setText(Integer.toString(Settings.instance().getCopterVideoPort()));
 			
 			pnlSettings.add(new JLabel(Text.get("IP_ADDRESS")),"span,grow,wrap");
 			pnlSettings.add(mtfCopterIp, "span,grow,wrap");
@@ -269,19 +264,8 @@ public class CopterCtrlPanel implements WindowListener
 			mlbWifiLevel.setText(Integer.toString(CopterTelemetry.instance().getWifiLevel()));
 		}
 	}
-	
-	public static final String COPTER_DEFAULT_IP = "192.168.1.33";
-	public static final int COPTER_DEFAULT_CMD_PORT = 4210;
-	public static final int COPTER_DEFAULT_TELEMETRY_PORT = 4211;
-	public static final int COPTER_DEFAULT_VIDEO_PORT = 4212;
-	public static final String SETTINGS_FILENAME = "settings.properties";
-	
+
 	private JFrame mMainFrame;
-	
-	private String mCopterIp;
-	private int mCopterCmdPort;
-	private int mCopterTelemetryPort;
-	private int mCopterVideoPort;
 	
 	private JLabel mlbAlarmIcon;
 	private JLabel mlbAlarmText;
@@ -423,7 +407,7 @@ public class CopterCtrlPanel implements WindowListener
 		if(mMainFrame != null)
 			return;
 		
-		this.loadSettings();
+		Settings.instance().load();
 		this.loadImages();
 		Text.load();
 		this.createUI();
@@ -438,8 +422,8 @@ public class CopterCtrlPanel implements WindowListener
 			
 		try
 		{
-			CopterCommander.instance().start(mCopterIp, mCopterCmdPort);
-			CopterTelemetry.instance().start(mCopterIp, mCopterTelemetryPort);
+			CopterCommander.instance().start(Settings.instance().getCopterIp(), Settings.instance().getCopterCmdPort());
+			CopterTelemetry.instance().start(Settings.instance().getCopterIp(), Settings.instance().getCopterTelemetryPort());
 		}
 		catch(UnknownHostException e)
 		{
@@ -458,74 +442,12 @@ public class CopterCtrlPanel implements WindowListener
 		CopterCommander.instance().stop();
 		CopterTelemetry.instance().stop();
 		
-		this.saveSettings();
+		Settings.instance().save();
 		
 		if(mMainFrame != null)
 		{
 			mMainFrame.setVisible(false);
 			mMainFrame = null;
-		}
-	}
-	
-	private void loadSettings()
-	{
-		mCopterIp = COPTER_DEFAULT_IP;
-		mCopterCmdPort = COPTER_DEFAULT_CMD_PORT;
-		mCopterTelemetryPort = COPTER_DEFAULT_TELEMETRY_PORT;
-		mCopterVideoPort = COPTER_DEFAULT_VIDEO_PORT;
-		
-		Properties prop = new Properties();
-		
-		try
-		{
-			prop.load(new FileInputStream(SETTINGS_FILENAME));
-			
-			String lang = prop.getProperty("Language","en");
-			Locale locale = new Locale(lang);
-			Locale.setDefault(locale);
-			
-			mCopterIp = prop.getProperty("CopterIp", mCopterIp);
-			
-			String value = prop.getProperty("CopterCmdPort", Integer.toString(mCopterCmdPort));
-			mCopterCmdPort = Integer.parseInt(value);
-			
-			value = prop.getProperty("CopterTelemetryPort", Integer.toString(mCopterTelemetryPort));
-			mCopterTelemetryPort = Integer.parseInt(value);
-			
-			value = prop.getProperty("CopterVideoPort", Integer.toString(mCopterVideoPort));
-			mCopterVideoPort = Integer.parseInt(value);
-		}
-		catch (FileNotFoundException e)
-		{
-			e.printStackTrace();
-		}
-		catch (IOException e)
-		{
-			e.printStackTrace();
-		}	
-	}
-	
-	private void saveSettings()
-	{
-		Properties prop = new Properties();
-		
-		prop.setProperty("Language", Locale.getDefault().getLanguage());
-		prop.setProperty("CopterIp", mCopterIp);
-		prop.setProperty("CopterCmdPort", Integer.toString(mCopterCmdPort));
-		prop.setProperty("CopterTelemetryPort", Integer.toString(mCopterTelemetryPort));
-		prop.setProperty("CopterVideoPort", Integer.toString(mCopterVideoPort));
-		
-		try
-		{
-			prop.store(new FileOutputStream(SETTINGS_FILENAME), null);
-		}
-		catch(FileNotFoundException e)
-		{
-			e.printStackTrace();
-		}
-		catch(IOException e)
-		{
-			e.printStackTrace();
 		}
 	}
 	

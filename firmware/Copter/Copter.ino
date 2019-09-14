@@ -358,10 +358,10 @@ void loop()
         memcpy(&magnetScale[0], &udpPacket[7], 12);
         break;
       case CMD_SELF_CALIB_ACCEL:
-        mpu.CalibrateAccel(10);
+        mpu.CalibrateAccel(6);
         break;
       case CMD_SELF_CALIB_GYRO:
-        mpu.CalibrateGyro(10);
+        mpu.CalibrateGyro(6);
         break;
     }
   }

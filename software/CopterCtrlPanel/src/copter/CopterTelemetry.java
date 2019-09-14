@@ -44,12 +44,18 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 	private int mMagnetX;
 	private int mMagnetY;
 	private int mMagnetZ;
-	private int mAccelOffsetX;
-	private int mAccelOffsetY;
-	private int mAccelOffsetZ;
-	private int mGyroOffsetX;
-	private int mGyroOffsetY;
-	private int mGyroOffsetZ;
+	private int mAccelXOffset;
+	private int mAccelYOffset;
+	private int mAccelZOffset;
+	private int mGyroXOffset;
+	private int mGyroYOffset;
+	private int mGyroZOffset;
+	private int mMagnetXOffset;
+	private int mMagnetYOffset;
+	private int mMagnetZOffset;
+	private float mMagnetXScale;
+	private float mMagnetYScale;
+	private float mMagnetZScale;
 	
 	private CopterTelemetry()
 	{
@@ -249,73 +255,145 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 		return result;
 	}
 	
-	public int getAccelOffsetX()
+	public int getAccelXOffset()
 	{
 		int result = 0;
 		
 		synchronized(objDataSync)
 		{
-			result = mAccelOffsetX;
+			result = mAccelXOffset;
 		}
 		
 		return result;
 	}
 	
-	public int getAccelOffsetY()
+	public int getAccelYOffset()
 	{
 		int result = 0;
 		
 		synchronized(objDataSync)
 		{
-			result = mAccelOffsetY;
+			result = mAccelYOffset;
 		}
 		
 		return result;
 	}
 	
-	public int getAccelOffsetZ()
+	public int getAccelZOffset()
 	{
 		int result = 0;
 		
 		synchronized(objDataSync)
 		{
-			result = mAccelOffsetZ;
+			result = mAccelZOffset;
 		}
 		
 		return result;
 	}
 	
-	public int getGyroOffsetX()
+	public int getGyroXOffset()
 	{
 		int result = 0;
 		
 		synchronized(objDataSync)
 		{
-			result = mGyroOffsetX;
+			result = mGyroXOffset;
 		}
 		
 		return result;
 	}
 	
-	public int getGyroOffsetY()
+	public int getGyroYOffset()
 	{
 		int result = 0;
 		
 		synchronized(objDataSync)
 		{
-			result = mGyroOffsetY;
+			result = mGyroYOffset;
 		}
 		
 		return result;
 	}
 	
-	public int getGyroOffsetZ()
+	public int getGyroZOffset()
 	{
 		int result = 0;
 		
 		synchronized(objDataSync)
 		{
-			result = mGyroOffsetZ;
+			result = mGyroZOffset;
+		}
+		
+		return result;
+	}
+	
+	public int getMagnetXOffset()
+	{
+		int result = 0;
+		
+		synchronized(objDataSync)
+		{
+			result = mMagnetXOffset;
+		}
+		
+		return result;
+	}
+	
+	public int getMagnetYOffset()
+	{
+		int result = 0;
+		
+		synchronized(objDataSync)
+		{
+			result = mMagnetYOffset;
+		}
+		
+		return result;
+	}
+	
+	public int getMagnetZOffset()
+	{
+		int result = 0;
+		
+		synchronized(objDataSync)
+		{
+			result = mMagnetZOffset;
+		}
+		
+		return result;
+	}
+	
+	public float getMagnetXScale()
+	{
+		float result = 0;
+		
+		synchronized(objDataSync)
+		{
+			result = mMagnetXScale;
+		}
+		
+		return result;
+	}
+	
+	public float getMagnetYScale()
+	{
+		float result = 0;
+		
+		synchronized(objDataSync)
+		{
+			result = mMagnetYScale;
+		}
+		
+		return result;
+	}
+	
+	public float getMagnetZScale()
+	{
+		float result = 0;
+		
+		synchronized(objDataSync)
+		{
+			result = mMagnetZScale;
 		}
 		
 		return result;
@@ -362,13 +440,21 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 						mMagnetY = this.getInt16t(receivePacket);
 						mMagnetZ = this.getInt16t(receivePacket);
 						// Accel offsets
-						mAccelOffsetX = this.getInt16t(receivePacket);
-						mAccelOffsetY = this.getInt16t(receivePacket);
-						mAccelOffsetZ = this.getInt16t(receivePacket);
+						mAccelXOffset = this.getInt16t(receivePacket);
+						mAccelYOffset = this.getInt16t(receivePacket);
+						mAccelZOffset = this.getInt16t(receivePacket);
 						// Gyro offsets
-						mGyroOffsetX = this.getInt16t(receivePacket);
-						mGyroOffsetY = this.getInt16t(receivePacket);
-						mGyroOffsetZ = this.getInt16t(receivePacket);
+						mGyroXOffset = this.getInt16t(receivePacket);
+						mGyroYOffset = this.getInt16t(receivePacket);
+						mGyroZOffset = this.getInt16t(receivePacket);
+						// Magnet offsets
+						mMagnetXOffset = this.getInt16t(receivePacket);
+						mMagnetYOffset = this.getInt16t(receivePacket);
+						mMagnetZOffset = this.getInt16t(receivePacket);
+						// Magnet scales
+						mMagnetXScale = this.getFloat(receivePacket);
+						mMagnetYScale = this.getFloat(receivePacket);
+						mMagnetZScale = this.getFloat(receivePacket);
 					}
 
 					this.setChanged();
@@ -424,6 +510,16 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 		
 		result = packet.getData()[mParsePos++] & 0xFF;
 		result |= (packet.getData()[mParsePos++] & 0xFF) << 8;
+		
+		return result;
+	}
+	
+	private float getFloat(DatagramPacket packet)
+	{
+		float result = 0;
+		
+		int bits = this.getInt32t(packet);
+		result = Float.intBitsToFloat(bits);
 		
 		return result;
 	}

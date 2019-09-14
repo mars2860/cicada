@@ -149,10 +149,15 @@ public class CopterCommander implements Runnable
 				try
 				{
 					mSocket.send(packet);
+					// give time to copter to process a command
+					Thread.sleep(100);
 				}
 				catch(IOException e)
 				{
 					AlarmCenter.instance().setAlarm(Alarm.COPTER_SEND_ERROR);
+					e.printStackTrace();
+				} catch (InterruptedException e)
+				{
 					e.printStackTrace();
 				}
 				

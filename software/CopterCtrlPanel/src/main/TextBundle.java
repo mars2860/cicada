@@ -30,6 +30,7 @@ public class TextBundle extends ListResourceBundle
             {"MOTORS", "Motors"},
             {"MOTORS_ENABLED", "Motors enabled"},
             
+            {"CONNECT", "Connect"},
             {"SENSORS", "Sensors"},
             {"SETTINGS", "Settings"},
             {"IP_ADDRESS", "IP Address"},
@@ -39,12 +40,25 @@ public class TextBundle extends ListResourceBundle
             {"LANGUAGE", "Lang"},
             {"START", "START"},
             {"STOP", "STOP"},
+            {"NET", "Net"},
+            {"CALIBRATION", "Calibration"},
             
             {"ALARMS", "Alarms"},
             {"COLLECT_DATA", "Collect Data"},
             {"DATA_COUNT", "Data Count"},
             {"SHOW_ACCEL", "Show accel"},
             {"SHOW_MAGNET", "Show magnet"},
+            {"CALIBRATE_ACCEL", "Calibrate A"},
+            {"SELF_CALIBRATE_ACCEL", "Self Calib A"},
+            {"SELF_CALIBRATE_GYRO", "Self Calib G"},
+            {"CALIBRATE_GYRO", "Calibrate G"},
+            {"CALIBRATE_MAGNET", "Calibrate M"},
+            {"RESET_CALIBRATION", "Reset calibration"},
+            {"SAVE_CALIBRATION", "Save calibration"},
+            {"CALIBRATE_INSTRUCTION_1", "Before put the copter on the flat (it would be better to put on the water level) and after set the collect data checkbox"},
+            {"CALIBRATE_INSTRUCTION_2", "Before set the collect data checkbox and after rotate the copter in all directions"},
+            {"WAIT_CALIBRATION", "The copter will be disconnected for one minute to process sensor calibration"},
+            
         // END OF MATERIAL TO LOCALIZE
         };
     }

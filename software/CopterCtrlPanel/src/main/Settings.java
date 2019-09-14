@@ -38,9 +38,9 @@ public class Settings
 	private int mMagnetXOffset;
 	private int mMagnetYOffset;
 	private int mMagnetZOffset;
-	private double mMagnetXScale;
-	private double mMagnetYScale;
-	private double mMagnetZScale;
+	private float mMagnetXScale;
+	private float mMagnetYScale;
+	private float mMagnetZScale;
 	
 	private Settings()
 	{
@@ -143,14 +143,14 @@ public class Settings
 			value = prop.getProperty("MagnetZOffset", Integer.toString(0));
 			mMagnetZOffset = Integer.parseInt(value);
 			
-			value = prop.getProperty("MagnetXScale", Double.toString(1));
-			mMagnetXScale = Double.parseDouble(value);
+			value = prop.getProperty("MagnetXScale", Float.toString(1.f));
+			mMagnetXScale = Float.parseFloat(value);
 			
-			value = prop.getProperty("MagnetYScale", Double.toString(1));
-			mMagnetYScale = Double.parseDouble(value);
+			value = prop.getProperty("MagnetYScale", Float.toString(1.f));
+			mMagnetYScale = Float.parseFloat(value);
 			
-			value = prop.getProperty("MagnetZScale", Double.toString(1));
-			mMagnetZScale = Double.parseDouble(value);
+			value = prop.getProperty("MagnetZScale", Double.toString(1.f));
+			mMagnetZScale = Float.parseFloat(value);
 		}
 		catch (FileNotFoundException e)
 		{
@@ -287,37 +287,37 @@ public class Settings
 		return mMagnetZOffset;
 	}
 
-	public void setmMagnetZOffset(int offset)
+	public void setMagnetZOffset(int offset)
 	{
 		this.mMagnetZOffset = offset;
 	}
 
-	public double getMagnetXScale()
+	public float getMagnetXScale()
 	{
 		return mMagnetXScale;
 	}
 
-	public void setMagnetXScale(double scale)
+	public void setMagnetXScale(float scale)
 	{
 		this.mMagnetXScale = scale;
 	}
 
-	public double getMagnetYScale()
+	public float getMagnetYScale()
 	{
 		return mMagnetYScale;
 	}
 
-	public void setMagnetYScale(double scale)
+	public void setMagnetYScale(float scale)
 	{
 		this.mMagnetYScale = scale;
 	}
 
-	public double getMagnetZScale()
+	public float getMagnetZScale()
 	{
 		return mMagnetZScale;
 	}
 
-	public void setMagnetZScale(double scale)
+	public void setMagnetZScale(float scale)
 	{
 		this.mMagnetZScale = scale;
 	}

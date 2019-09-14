@@ -34,7 +34,7 @@
 IPAddress ip(192,168,1,33);
 IPAddress gateway(192,168,1,1);
 IPAddress subnet(255,255,255,0);
-IPAddress host(192,168,1,2);
+IPAddress host;
 
 unsigned int cmdPort = 4210;          // local port to receive commands
 unsigned int telemetryPort = 4211;    // local port to send telemetry data
@@ -50,6 +50,11 @@ unsigned int telemetryPort = 4211;    // local port to send telemetry data
 
 #define CMD_SWITCH_MOTORS         100
 #define CMD_SET_MOTORS_GAS        101
+#define CMD_SET_ACCEL_OFFSET      102
+#define CMD_SET_GYRO_OFFSET       103
+#define CMD_SET_MAGNET_CALIB      104
+#define CMD_SELF_CALIB_ACCEL      105
+#define CMD_SELF_CALIB_GYRO       106
 
 //---------------------------------------------------------------
 // VARIABLES
@@ -57,8 +62,9 @@ unsigned int telemetryPort = 4211;    // local port to send telemetry data
 const char* ssid = STASSID;
 const char* password = STAPSK;
 
+#define TELEMETRY_MAX_PACKET_SIZE 255
 WiFiUDP udp;
-uint8_t udpPacket[255];             // buffer for udp packets
+uint8_t udpPacket[TELEMETRY_MAX_PACKET_SIZE];             // buffer for udp packets
 
 uint32_t ledTimer;
 
@@ -76,16 +82,9 @@ volatile uint32_t telemetryTimer = 0;
 MPU6050 mpu;      // 6-axis sensor
 QMC5883L mag;     // magnetometer
 
-int16_t ax;
-int16_t ay;
-int16_t az;
-int16_t gx;
-int16_t gy;
-int16_t gz;
-int16_t mx;
-int16_t my;
-int16_t mz;
-int16_t mt;
+int16_t magnetOffset[3] = {0,0,0};
+float magnetScale[3] = {1.f,1.f,1.f};
+int16_t magnet[3];
 
 class Motor
 {
@@ -138,6 +137,10 @@ class MAX17040: public MAX1704X
 
 // Updates escaper outputs. Each bit of state represents one channel state
 void ICACHE_RAM_ATTR escaperUpdate(uint8_t state);
+// Writes data to telemetry packet at given position. Returns new position to write
+uint16_t writeTelemetryPacket(uint16_t pos, byte *packet, void *value, size_t valueSize);
+// Reads magnetometer and applies calibration to raw data
+void readMagnet(int16_t *mx, int16_t *my, int16_t *mz);
 
 //void processEspLed();
 
@@ -181,17 +184,18 @@ void ICACHE_RAM_ATTR onTimerISR()
 
 void setup()
 {
+  // GPIO config
+  pinMode(HC595_LATCH, OUTPUT);
+  digitalWrite(HC595_LATCH, HIGH);  // Disable OE pin of HC595
+  pinMode(HC595_DATA, OUTPUT);
+  pinMode(HC595_CLOCK, OUTPUT);
+  pinMode(CAM_SD, OUTPUT);
+
   // GPIO reset
   digitalWrite(HC595_DATA, LOW);
   digitalWrite(HC595_LATCH, HIGH);  // Disable OE pin of HC595
   digitalWrite(HC595_CLOCK, LOW);
   digitalWrite(CAM_SD, LOW);
-  
-  // GPIO config
-  pinMode(HC595_DATA, OUTPUT);
-  pinMode(HC595_LATCH, OUTPUT);
-  pinMode(HC595_CLOCK, OUTPUT);
-  pinMode(CAM_SD, OUTPUT);
 
   Serial.begin(115200);
  
@@ -321,7 +325,9 @@ void loop()
   if(udp.parsePacket())
   {
     udp.read(udpPacket, sizeof(udpPacket));
+    host = udp.remoteIP();
     uint8_t cmd = udpPacket[0];
+    int16_t dx,dy,dz;
     switch(cmd)
     {
       case CMD_SWITCH_MOTORS:
@@ -329,93 +335,90 @@ void loop()
         break;
       case CMD_SET_MOTORS_GAS:
         for(uint8_t i = 0; i < 4; i++)
-        {
           motor[i].setGas(udpPacket[1 + i]);
-
-          /*Serial.print("m");
-          Serial.print(i);
-          Serial.print(" = ");
-          Serial.println(motor[i].gas);*/
-        }
-         
+        break;
+      case CMD_SET_ACCEL_OFFSET:
+        memcpy(&dx, &udpPacket[1], sizeof(int16_t));
+        memcpy(&dy, &udpPacket[3], sizeof(int16_t));
+        memcpy(&dz, &udpPacket[5], sizeof(int16_t));
+        mpu.setXAccelOffset(dx);
+        mpu.setYAccelOffset(dy);
+        mpu.setZAccelOffset(dz);
+        break;
+      case CMD_SET_GYRO_OFFSET:
+        memcpy(&dx, &udpPacket[1], sizeof(int16_t));
+        memcpy(&dy, &udpPacket[3], sizeof(int16_t));
+        memcpy(&dz, &udpPacket[5], sizeof(int16_t));
+        mpu.setXGyroOffset(dx);
+        mpu.setYGyroOffset(dy);
+        mpu.setZGyroOffset(dz);
+        break;
+      case CMD_SET_MAGNET_CALIB:
+        memcpy(&magnetOffset[0], &udpPacket[1], 6);
+        memcpy(&magnetScale[0], &udpPacket[7], 12);
+        break;
+      case CMD_SELF_CALIB_ACCEL:
+        mpu.CalibrateAccel(10);
+        break;
+      case CMD_SELF_CALIB_GYRO:
+        mpu.CalibrateGyro(10);
         break;
     }
   }
 
-  if(millis() - telemetryTimer >= TELEMETRY_UPDATE_TIME)
+  if(millis() - telemetryTimer >= TELEMETRY_UPDATE_TIME && host.isSet())
   {
     telemetryTimer = millis();
 
     uint16_t pos = 0;
     // Read battery voltage
-    uint16_t temp = FuelGauge.adc();
-    udpPacket[pos++] = temp;
-    udpPacket[pos++] = temp>>8;
+    uint16_t val16 = FuelGauge.adc();
+    pos = writeTelemetryPacket(pos, udpPacket, &val16, sizeof(val16));
     // Read battery percent
-    temp = FuelGauge.readRegister16(REGISTER_SOC);
-    udpPacket[pos++] = temp;
-    udpPacket[pos++] = temp>>8;
+    val16 = FuelGauge.readRegister16(REGISTER_SOC);
+    pos = writeTelemetryPacket(pos, udpPacket, &val16, sizeof(val16));
     // Read Wifi Level
-    int32_t st32 = WiFi.RSSI();
-    udpPacket[pos++] = st32;
-    udpPacket[pos++] = st32 >> 8;
-    udpPacket[pos++] = st32 >> 16;
-    udpPacket[pos++] = st32 >> 24;
+    int32_t val32 = WiFi.RSSI();
+    pos = writeTelemetryPacket(pos, udpPacket, &val32, sizeof(val32));
     // Read IMU data
+    int16_t ax,ay,az,gx,gy,gz;
     mpu.getMotion6(&ax,&ay,&az,&gx,&gy,&gz);
-   
-    udpPacket[pos++] = ax;
-    udpPacket[pos++] = ax >> 8;
-    
-    udpPacket[pos++] = ay;
-    udpPacket[pos++] = ay >> 8;
-    
-    udpPacket[pos++] = az;
-    udpPacket[pos++] = az >> 8;
-    
-    udpPacket[pos++] = gx;
-    udpPacket[pos++] = gx >> 8;
-    
-    udpPacket[pos++] = gy;
-    udpPacket[pos++] = gy >> 8;
-    
-    udpPacket[pos++] = gz;
-    udpPacket[pos++] = gz >> 8;
+    pos = writeTelemetryPacket(pos, udpPacket, &ax, sizeof(ax));
+    pos = writeTelemetryPacket(pos, udpPacket, &ay, sizeof(ay));
+    pos = writeTelemetryPacket(pos, udpPacket, &az, sizeof(az));
+    pos = writeTelemetryPacket(pos, udpPacket, &gx, sizeof(gx));
+    pos = writeTelemetryPacket(pos, udpPacket, &gy, sizeof(gy));
+    pos = writeTelemetryPacket(pos, udpPacket, &gz, sizeof(gz));
     // Read magnetometer data
-    mag.readRaw(&mx, &my, &mz, &mt);
-
-    udpPacket[pos++] = mx;
-    udpPacket[pos++] = mx >> 8;
-
-    udpPacket[pos++] = my;
-    udpPacket[pos++] = my >> 8;
-
-    udpPacket[pos++] = mz;
-    udpPacket[pos++] = mz >> 8;
+    readMagnet(&ax, &ay, &az);
+    pos = writeTelemetryPacket(pos, udpPacket, &ax, sizeof(ax));
+    pos = writeTelemetryPacket(pos, udpPacket, &ay, sizeof(ay));
+    pos = writeTelemetryPacket(pos, udpPacket, &az, sizeof(az));
     // Get IMU calibration settings
-    int16_t it16 = mpu.getXAccelOffset();
-    udpPacket[pos++] = it16;
-    udpPacket[pos++] = it16 >> 8;
+    ax = mpu.getXAccelOffset();
+    pos = writeTelemetryPacket(pos, udpPacket, &ax, sizeof(ax));
 
-    it16 = mpu.getYAccelOffset();
-    udpPacket[pos++] = it16;
-    udpPacket[pos++] = it16 >> 8;
+    ax = mpu.getYAccelOffset();
+    pos = writeTelemetryPacket(pos, udpPacket, &ax, sizeof(ax));
 
-    it16 = mpu.getZAccelOffset();
-    udpPacket[pos++] = it16;
-    udpPacket[pos++] = it16 >> 8;
+    ax = mpu.getZAccelOffset();
+    pos = writeTelemetryPacket(pos, udpPacket, &ax, sizeof(ax));
 
-    it16 = mpu.getXGyroOffset();
-    udpPacket[pos++] = it16;
-    udpPacket[pos++] = it16 >> 8;
+    ax = mpu.getXGyroOffset();
+    pos = writeTelemetryPacket(pos, udpPacket, &ax, sizeof(ax));
 
-    it16 = mpu.getYGyroOffset();
-    udpPacket[pos++] = it16;
-    udpPacket[pos++] = it16 >> 8;
+    ax = mpu.getYGyroOffset();
+    pos = writeTelemetryPacket(pos, udpPacket, &ax, sizeof(ax));
 
-    it16 = mpu.getZGyroOffset();
-    udpPacket[pos++] = it16;
-    udpPacket[pos++] = it16 >> 8;
+    ax = mpu.getZGyroOffset();
+    pos = writeTelemetryPacket(pos, udpPacket, &ax, sizeof(ax));
+    // Get magnetometer calibration
+    pos = writeTelemetryPacket(pos, udpPacket, &magnetOffset[0], sizeof(magnetOffset[0]));
+    pos = writeTelemetryPacket(pos, udpPacket, &magnetOffset[1], sizeof(magnetOffset[1]));
+    pos = writeTelemetryPacket(pos, udpPacket, &magnetOffset[2], sizeof(magnetOffset[2]));
+    pos = writeTelemetryPacket(pos, udpPacket, &magnetScale[0], sizeof(magnetScale[0]));
+    pos = writeTelemetryPacket(pos, udpPacket, &magnetScale[1], sizeof(magnetScale[1]));
+    pos = writeTelemetryPacket(pos, udpPacket, &magnetScale[2], sizeof(magnetScale[2]));
 
     udp.beginPacket(host, telemetryPort);
     udp.write(udpPacket, pos);
@@ -451,6 +454,34 @@ void ICACHE_RAM_ATTR escaperUpdate(uint8_t state)
   {
     digitalWrite(HC595_LATCH, HIGH);
   }
+}
+
+uint16_t writeTelemetryPacket(uint16_t pos, byte *packet, void *value, size_t valueSize)
+{
+  if(pos + valueSize >= TELEMETRY_MAX_PACKET_SIZE)
+    return pos;
+
+  memcpy(&packet[pos], value, valueSize);
+  pos += valueSize;
+  return pos;
+}
+
+void readMagnet(int16_t *mx, int16_t *my, int16_t *mz)
+{
+  int16_t mt;
+  mag.readRaw(mx, my, mz, &mt);
+
+  float x = *mx - magnetOffset[0];
+  float y = *my - magnetOffset[1];
+  float z = *mz - magnetOffset[2];
+
+  x *= magnetScale[0];
+  y *= magnetScale[1];
+  z *= magnetScale[2];
+
+  *mx = x;
+  *my = y;
+  *mz = z;
 }
 
 /*

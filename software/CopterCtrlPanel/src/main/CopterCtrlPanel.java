@@ -3,6 +3,8 @@ package main;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.net.SocketException;
@@ -27,9 +29,13 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import copter.Alarm;
 import copter.AlarmCenter;
 import copter.CopterCommander;
 import copter.CopterTelemetry;
+import copter.commands.CmdCalibrateAccel;
+import copter.commands.CmdCalibrateGyro;
+import copter.commands.CmdCalibrateMagnet;
 import copter.commands.CmdSetMotorsGas;
 import copter.commands.CmdSwitchMotors;
 import helper.NumericDocument;
@@ -84,7 +90,10 @@ public class CopterCtrlPanel implements WindowListener
 		
 		private void createUI()
 		{
-			JPanel pnlSettings = new JPanel(new MigLayout("","[40!][40!][40!]"));
+			DecimalFormat fmt = new DecimalFormat();
+			fmt.setMaximumFractionDigits(2);
+			
+			JPanel pnlSettings = new JPanel(new MigLayout());
 
 			mtfCopterIp = new JIpTextField();
 			mtfCopterCmdPort = new JTextField();
@@ -104,17 +113,6 @@ public class CopterCtrlPanel implements WindowListener
 			mtfCopterTelemetryPort.setText(Integer.toString(Settings.instance().getCopterTelemetryPort()));
 			mtfCopterVideoPort.setText(Integer.toString(Settings.instance().getCopterVideoPort()));
 			
-			pnlSettings.add(new JLabel(Text.get("IP_ADDRESS")),"span,grow,wrap");
-			pnlSettings.add(mtfCopterIp, "span,grow,wrap");
-			
-			pnlSettings.add(new JLabel(Text.get("CMD_PORT")));
-			pnlSettings.add(new JLabel(Text.get("TELEMETRY_PORT")));
-			pnlSettings.add(new JLabel(Text.get("VIDEO_PORT")),"wrap");
-			
-			pnlSettings.add(mtfCopterCmdPort, "grow");
-			pnlSettings.add(mtfCopterTelemetryPort, "grow");
-			pnlSettings.add(mtfCopterVideoPort, "grow, wrap");
-			
 			mcbLocale = new JComboBox<Locale>();
 			
 			mcbLocale.addItem(new Locale("en"));
@@ -122,9 +120,65 @@ public class CopterCtrlPanel implements WindowListener
 			
 			mcbLocale.setSelectedItem(Locale.getDefault());
 			
-			pnlSettings.add(new JLabel(Text.get("LANGUAGE")));
-			pnlSettings.add(mcbLocale, "span,grow,wrap");
+			JPanel pnlNet = new JPanel(new MigLayout("","[40!][40!][40!]"));
+			pnlNet.setBorder(new TitledBorder(Text.get("NET")));
 			
+			pnlNet.add(new JLabel(Text.get("IP_ADDRESS")),"span,grow,wrap");
+			pnlNet.add(mtfCopterIp, "span,grow,wrap");
+			
+			pnlNet.add(new JLabel(Text.get("CMD_PORT")));
+			pnlNet.add(new JLabel(Text.get("TELEMETRY_PORT")));
+			pnlNet.add(new JLabel(Text.get("VIDEO_PORT")),"wrap");
+			
+			pnlNet.add(mtfCopterCmdPort, "grow");
+			pnlNet.add(mtfCopterTelemetryPort, "grow");
+			pnlNet.add(mtfCopterVideoPort, "grow, wrap");
+			
+			JPanel pnlCalibration = new JPanel(new MigLayout());
+			pnlCalibration.setBorder(new TitledBorder(Text.get("CALIBRATION")));
+
+			pnlCalibration.add(new JLabel("AccelXOffset"));
+			String text = ": " + Integer.toString(Settings.instance().getAccelXOffset());
+			pnlCalibration.add(new JLabel(text));
+			pnlCalibration.add(new JLabel("GyroXOffset"));
+			text = ": " + Integer.toString(Settings.instance().getGyroXOffset());
+			pnlCalibration.add(new JLabel(text),"wrap");
+			
+			pnlCalibration.add(new JLabel("AccelYOffset"));
+			text = ": " + Integer.toString(Settings.instance().getAccelYOffset());
+			pnlCalibration.add(new JLabel(text));
+			pnlCalibration.add(new JLabel("GyroYOffset"));
+			text = ": " + Integer.toString(Settings.instance().getGyroYOffset());
+			pnlCalibration.add(new JLabel(text),"wrap");
+			
+			pnlCalibration.add(new JLabel("AccelZOffset"));
+			text = ": " + Integer.toString(Settings.instance().getAccelZOffset());
+			pnlCalibration.add(new JLabel(text));
+			pnlCalibration.add(new JLabel("GyroZOffset"));
+			text = ": " + Integer.toString(Settings.instance().getGyroZOffset());
+			pnlCalibration.add(new JLabel(text),"wrap");
+			
+			pnlCalibration.add(new JLabel("MagnetXOffset"));
+			text = ": " + Integer.toString(Settings.instance().getMagnetXOffset());
+			pnlCalibration.add(new JLabel(text));
+			pnlCalibration.add(new JLabel("MagnetXScale"));
+			text = ": " + fmt.format(Settings.instance().getMagnetXScale());
+			pnlCalibration.add(new JLabel(text),"wrap");
+			
+			pnlCalibration.add(new JLabel("MagnetYOffset"));
+			text = ": " + Integer.toString(Settings.instance().getMagnetYOffset());
+			pnlCalibration.add(new JLabel(text));
+			pnlCalibration.add(new JLabel("MagnetYScale"));
+			text = ": " + fmt.format(Settings.instance().getMagnetYScale());
+			pnlCalibration.add(new JLabel(text),"wrap");
+			
+			pnlCalibration.add(new JLabel("MagnetZOffset"));
+			text = ": " + Integer.toString(Settings.instance().getMagnetZOffset());
+			pnlCalibration.add(new JLabel(text));
+			pnlCalibration.add(new JLabel("MagnetZScale"));
+			text = ": " + fmt.format(Settings.instance().getMagnetZScale());
+			pnlCalibration.add(new JLabel(text),"wrap");
+
 			JPanel pnlOkCancel = new JPanel(new MigLayout("insets 0 0 0 0","[80!]"));
 			JButton btnOk = new JButton(Text.get("OK"));
 			JButton btnCancel = new JButton(Text.get("CANCEL"));
@@ -135,13 +189,18 @@ public class CopterCtrlPanel implements WindowListener
 			pnlOkCancel.add(btnOk,"grow,wrap");
 			pnlOkCancel.add(btnCancel,"grow");
 			
+			pnlSettings.add(pnlCalibration,"span,grow,wrap");
+			pnlSettings.add(pnlNet,"span,grow,wrap");
+			pnlSettings.add(new JLabel(Text.get("LANGUAGE")));
+			pnlSettings.add(mcbLocale, "span,w 80!,wrap");
+			
 			pnlSettings.add(new JPanel(),"h 10!,span,wrap");
 			pnlSettings.add(pnlOkCancel, "span, align right");
 
 			this.setLayout(new MigLayout("","[grow]","[grow]"));
 			this.setTitle(Text.get("SETTINGS"));
-			this.setResizable(false);
-			this.setSize(160, 240);
+			this.setResizable(true);
+			this.setSize(310, 450);
 			this.setLocationRelativeTo(null);
 			this.add(pnlSettings, "grow");
 		}
@@ -167,15 +226,13 @@ public class CopterCtrlPanel implements WindowListener
 		}
 	}
 	
-	private class OnMotorsEnabled implements ActionListener
+	private class OnMotorsEnabled implements ItemListener
 	{
-		private boolean state;
-		
 		@Override
-		public void actionPerformed(ActionEvent e)
+		public void itemStateChanged(ItemEvent e)
 		{
-			state = !state;
-			CopterCommander.instance().addCmd(new CmdSwitchMotors(state));
+			boolean state = mcbMotorsEnabled.isSelected();
+			CopterCommander.instance().addCmd(new CmdSwitchMotors(state));	
 		}
 	}
 	
@@ -264,6 +321,44 @@ public class CopterCtrlPanel implements WindowListener
 			mlbWifiLevel.setText(Integer.toString(CopterTelemetry.instance().getWifiLevel()));
 		}
 	}
+	
+	private class OnBtnConnect implements ActionListener
+	{
+		@Override
+		public void actionPerformed(ActionEvent e)
+		{
+			int dx = Settings.instance().getAccelXOffset();
+			int dy = Settings.instance().getAccelYOffset();
+			int dz = Settings.instance().getAccelZOffset();
+			
+			CmdCalibrateAccel cmd1 = new CmdCalibrateAccel(dx,dy,dz);
+			
+			dx = Settings.instance().getGyroXOffset();
+			dy = Settings.instance().getGyroYOffset();
+			dz = Settings.instance().getGyroZOffset();
+			
+			CmdCalibrateGyro cmd2 = new CmdCalibrateGyro(dx,dy,dz);
+			
+			dx = Settings.instance().getMagnetXOffset();
+			dy = Settings.instance().getMagnetYOffset();
+			dz = Settings.instance().getMagnetZOffset();
+			float sx = Settings.instance().getMagnetXScale();
+			float sy = Settings.instance().getMagnetYScale();
+			float sz = Settings.instance().getMagnetZScale();
+			
+			CmdCalibrateMagnet cmd3 = new CmdCalibrateMagnet(dx,dy,dz,sx,sy,sz);
+			
+			CopterCommander.instance().addCmd(cmd1);
+			CopterCommander.instance().addCmd(cmd1);
+			CopterCommander.instance().addCmd(cmd1);
+			CopterCommander.instance().addCmd(cmd2);
+			CopterCommander.instance().addCmd(cmd2);
+			CopterCommander.instance().addCmd(cmd2);
+			CopterCommander.instance().addCmd(cmd3);
+			CopterCommander.instance().addCmd(cmd3);
+			CopterCommander.instance().addCmd(cmd3);
+		}
+	}
 
 	private JFrame mMainFrame;
 	
@@ -308,6 +403,9 @@ public class CopterCtrlPanel implements WindowListener
 	{
 		JPanel pnlSettings = new JPanel(new MigLayout("","","[grow, center]"));
 		pnlSettings.setBorder(new TitledBorder(Text.get("SETTINGS")));
+		
+		JButton btnConnect = new JButton(Text.get("CONNECT"));
+		btnConnect.addActionListener(new OnBtnConnect());
 
 		JButton btnSettings = new JButton(Text.get("SETTINGS"));
 		btnSettings.addActionListener(new OnBtnSettings());
@@ -315,8 +413,9 @@ public class CopterCtrlPanel implements WindowListener
 		JButton btnSensors = new JButton(Text.get("SENSORS"));
 		btnSensors.addActionListener(new OnBtnSensors());
 		
-		pnlSettings.add(btnSettings);
+		pnlSettings.add(btnConnect);
 		pnlSettings.add(btnSensors);
+		pnlSettings.add(btnSettings);
 
 		return pnlSettings;
 	}
@@ -344,7 +443,7 @@ public class CopterCtrlPanel implements WindowListener
 		pnlMotorsGas.setBorder(new TitledBorder(Text.get("MOTORS")));
 		
 		mcbMotorsEnabled = new JCheckBox(Text.get("MOTORS_ENABLED"));
-		mcbMotorsEnabled.addActionListener(new OnMotorsEnabled());
+		mcbMotorsEnabled.addItemListener(new OnMotorsEnabled());
 
 		mgas0 = new MotorGasSlider("M1");
 		mgas1 = new MotorGasSlider("M2");
@@ -419,6 +518,8 @@ public class CopterCtrlPanel implements WindowListener
 		
 		CopterTelemetry.instance().deleteObservers();
 		CopterTelemetry.instance().addObserver(new OnTelemetryUpdate());
+		
+		AlarmCenter.instance().setAlarm(Alarm.COPTER_NOT_FOUND);
 			
 		try
 		{

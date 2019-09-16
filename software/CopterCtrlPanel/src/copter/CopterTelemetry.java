@@ -56,6 +56,10 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 	private float mMagnetXScale;
 	private float mMagnetYScale;
 	private float mMagnetZScale;
+	private float mYaw;
+	private float mPitch;
+	private float mRoll;
+	private int mHeading;
 	
 	private CopterTelemetry()
 	{
@@ -398,6 +402,54 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 		
 		return result;
 	}
+	
+	public float getYaw()
+	{
+		float result = 0;
+		
+		synchronized(objDataSync)
+		{
+			result = (float)Math.toDegrees(mYaw);
+		}
+		
+		return result;
+	}
+	
+	public float getPitch()
+	{
+		float result = 0;
+		
+		synchronized(objDataSync)
+		{
+			result = (float)Math.toDegrees(mPitch);
+		}
+		
+		return result;
+	}
+	
+	public float getRoll()
+	{
+		float result = 0;
+		
+		synchronized(objDataSync)
+		{
+			result = (float)Math.toDegrees(mRoll);
+		}
+		
+		return result;
+	}
+	
+	public int getHeading()
+	{
+		int result = 0;
+		
+		synchronized(objDataSync)
+		{
+			result = mHeading;
+		}
+		
+		return result;
+	}
 
 	@Override
 	public void run()
@@ -455,6 +507,12 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 						mMagnetXScale = this.getFloat(receivePacket);
 						mMagnetYScale = this.getFloat(receivePacket);
 						mMagnetZScale = this.getFloat(receivePacket);
+						// Yaw, Pitch, Roll
+						mYaw = this.getFloat(receivePacket);
+						mPitch = this.getFloat(receivePacket);
+						mRoll = this.getFloat(receivePacket);
+						// Heading
+						mHeading = this.getInt16t(receivePacket);
 					}
 
 					this.setChanged();

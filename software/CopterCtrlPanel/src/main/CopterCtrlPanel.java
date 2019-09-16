@@ -1,5 +1,7 @@
 package main;
 
+import java.awt.Color;
+import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -7,6 +9,8 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.awt.geom.AffineTransform;
+import java.awt.image.BufferedImage;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.text.DecimalFormat;
@@ -319,6 +323,19 @@ public class CopterCtrlPanel implements WindowListener
 			
 			mlbBattery.setText(batState);
 			mlbWifiLevel.setText(Integer.toString(CopterTelemetry.instance().getWifiLevel()));
+			
+			float yaw = CopterTelemetry.instance().getYaw();
+			float pitch = CopterTelemetry.instance().getPitch();
+			float roll = CopterTelemetry.instance().getRoll();
+			
+			mlbYawValue.setText(fmt1.format(yaw));
+			mlbPitchValue.setText(fmt1.format(pitch));
+			mlbRollValue.setText(fmt1.format(roll));
+			mlbHeading.setText(fmt1.format(CopterTelemetry.instance().getHeading()));
+			
+			mlbYaw.setIcon(rotateImageIcon(mIconYaw, yaw));
+			mlbPitch.setIcon(rotateImageIcon(mIconPitch, pitch));
+			mlbRoll.setIcon(rotateImageIcon(mIconRoll, roll));
 		}
 	}
 	
@@ -366,6 +383,13 @@ public class CopterCtrlPanel implements WindowListener
 	private JLabel mlbAlarmText;
 	private JLabel mlbBattery;
 	private JLabel mlbWifiLevel;
+	private JLabel mlbYaw;
+	private JLabel mlbYawValue;
+	private JLabel mlbPitch;
+	private JLabel mlbPitchValue;
+	private JLabel mlbRoll;
+	private JLabel mlbRollValue;
+	private JLabel mlbHeading;
 	
 	private JCheckBox mcbMotorsEnabled;
 	private MotorGasSlider mgas0;
@@ -378,6 +402,10 @@ public class CopterCtrlPanel implements WindowListener
 	private ImageIcon mIconError;
 	private ImageIcon mIconBat;
 	private ImageIcon mIconWifi;
+	private ImageIcon mIconYaw;
+	private ImageIcon mIconPitch;
+	private ImageIcon mIconRoll;
+	private ImageIcon mIconHeading;
 		
 	public CopterCtrlPanel() {}
 	
@@ -478,10 +506,34 @@ public class CopterCtrlPanel implements WindowListener
 		mlbWifiLevel = new JLabel();
 		mlbWifiLevel.setHorizontalAlignment(JLabel.CENTER);
 		
+		mlbYawValue = new JLabel();
+		mlbYawValue.setHorizontalAlignment(JLabel.CENTER);
+		
+		mlbPitchValue = new JLabel();
+		mlbPitchValue.setHorizontalAlignment(JLabel.CENTER);
+		
+		mlbRollValue = new JLabel();
+		mlbRollValue.setHorizontalAlignment(JLabel.CENTER);
+		
+		mlbHeading = new JLabel();
+		mlbHeading.setHorizontalAlignment(JLabel.CENTER);
+		
+		mlbYaw = new JLabel(mIconYaw);
+		mlbPitch = new JLabel(mIconPitch);
+		mlbRoll = new JLabel(mIconRoll);
+		
 		pnlStatus.add(new JLabel(mIconBat));
 		pnlStatus.add(mlbBattery,"w 80!");
 		pnlStatus.add(new JLabel(mIconWifi));
-		pnlStatus.add(mlbWifiLevel,"w 20!");
+		pnlStatus.add(mlbWifiLevel,"w 30!");
+		pnlStatus.add(mlbYaw);
+		pnlStatus.add(mlbYawValue,"w 60!");
+		pnlStatus.add(mlbPitch);
+		pnlStatus.add(mlbPitchValue,"w 60!");
+		pnlStatus.add(mlbRoll);
+		pnlStatus.add(mlbRollValue,"w 60!");
+		pnlStatus.add(new JLabel(mIconHeading));
+		pnlStatus.add(mlbHeading,"w 30!");
 		
 		return pnlStatus;
 	}
@@ -494,11 +546,26 @@ public class CopterCtrlPanel implements WindowListener
 		java.net.URL errUrl = this.getClass().getResource("images/error.png");
 		mIconError = new ImageIcon(new ImageIcon(errUrl).getImage().getScaledInstance(32,32,Image.SCALE_SMOOTH));
 		
+		int statusIconWidth = 24;
+		int statusIconHeight = 24;
+		
 		java.net.URL batUrl = this.getClass().getResource("images/battery.png");
-		mIconBat = new ImageIcon(new ImageIcon(batUrl).getImage().getScaledInstance(16,16,Image.SCALE_SMOOTH));
+		mIconBat = new ImageIcon(new ImageIcon(batUrl).getImage().getScaledInstance(statusIconWidth,statusIconHeight,Image.SCALE_SMOOTH));
 		
 		java.net.URL wifiUrl = this.getClass().getResource("images/wifi.png");
-		mIconWifi = new ImageIcon(new ImageIcon(wifiUrl).getImage().getScaledInstance(16,16,Image.SCALE_SMOOTH));
+		mIconWifi = new ImageIcon(new ImageIcon(wifiUrl).getImage().getScaledInstance(statusIconWidth,statusIconHeight,Image.SCALE_SMOOTH));
+		
+		java.net.URL yawUrl = this.getClass().getResource("images/yaw.png");
+		mIconYaw = new ImageIcon(new ImageIcon(yawUrl).getImage().getScaledInstance(statusIconWidth,statusIconHeight,Image.SCALE_SMOOTH));
+		
+		java.net.URL pitchUrl = this.getClass().getResource("images/pitch.png");
+		mIconPitch = new ImageIcon(new ImageIcon(pitchUrl).getImage().getScaledInstance(statusIconWidth,statusIconHeight,Image.SCALE_SMOOTH));
+		
+		java.net.URL rollUrl = this.getClass().getResource("images/roll.png");
+		mIconRoll = new ImageIcon(new ImageIcon(rollUrl).getImage().getScaledInstance(statusIconWidth,statusIconHeight,Image.SCALE_SMOOTH));
+		
+		java.net.URL headingUrl = this.getClass().getResource("images/heading.png");
+		mIconHeading = new ImageIcon(new ImageIcon(headingUrl).getImage().getScaledInstance(statusIconWidth,statusIconHeight,Image.SCALE_SMOOTH));
 	}
 	
 	public void start()
@@ -556,6 +623,27 @@ public class CopterCtrlPanel implements WindowListener
 	{
 		JOptionPane.showMessageDialog(mMainFrame, text, Text.get("ERROR"), JOptionPane.ERROR_MESSAGE);
 	}
+	
+    private ImageIcon rotateImageIcon(ImageIcon picture, double angle)
+    {
+        // FOR YOU ...
+        int w = picture.getIconWidth();
+        int h = picture.getIconHeight();
+        int type = BufferedImage.TYPE_INT_RGB;  // other options, see api
+        BufferedImage image = new BufferedImage(h, w, type);
+        Graphics2D g2 = image.createGraphics();
+        double x = (h - w)/2.0;
+        double y = (w - h)/2.0;
+        AffineTransform at = AffineTransform.getTranslateInstance(x, y);
+        at.rotate(Math.toRadians(angle), w/2.0, h/2.0);
+        g2.setColor(mMainFrame.getBackground());
+        g2.fillRect(0, 0, w, h);
+        g2.drawImage(picture.getImage(), at, null);
+        g2.dispose();
+        picture = new ImageIcon(image);
+ 
+        return picture;
+    }
 
 	public static void main(String[] args)
 	{

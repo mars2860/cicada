@@ -3,6 +3,7 @@
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 #include <Wire.h>
+#include <Math.h>
 
 #include "MAX1704X.h"
 #include "I2Cdev.h"
@@ -13,6 +14,12 @@
 // 1. https://github.com/enjoyneering/ESP8266-I2C-Driver
 // 2. https://github.com/porrey/MAX1704X
 // 3. https://github.com/jrowberg/i2cdevlib
+// 4. https://github.com/dthain/QMC5883L
+
+/* Apparently M_PI isn't available in all environments. */
+#ifndef M_PI
+#define M_PI 3.14159265358979323846264338327950288
+#endif
 
 //----------------------------------------------------------------
 // HARDWARE
@@ -82,9 +89,17 @@ volatile uint32_t telemetryTimer = 0;
 MPU6050 mpu;      // 6-axis sensor
 QMC5883L mag;     // magnetometer
 
-int16_t magnetOffset[3] = {0,0,0};
-float magnetScale[3] = {1.f,1.f,1.f};
-int16_t magnet[3];
+int16_t magnet[3];          // Magnetometer calibrated data
+int16_t magnetOffset[3] = {0,0,0};    // Magnetometer hard-iron calibration offset
+float magnetScale[3] = {1.f,1.f,1.f}; // Magnetometer soft-iron calibration scales
+int16_t heading;            // Heading to magnetic north
+int16_t accel[3];           // Accel raw data
+int16_t accelOffset[3];     // Accel calibration offsets
+int16_t gyro[3];            // Gyro raw data
+int16_t gyroOffset[3];      // Gyro calibration offset
+float ypr[3];               // Yaw, Pitch, Roll
+Quaternion q;               // [w, x, y, z] quaternion container
+VectorFloat gravity;        // [x, y, z] gravity vector
 
 class Motor
 {
@@ -141,8 +156,13 @@ void ICACHE_RAM_ATTR escaperUpdate(uint8_t state);
 uint16_t writeTelemetryPacket(uint16_t pos, byte *packet, void *value, size_t valueSize);
 // Reads magnetometer and applies calibration to raw data
 void readMagnet(int16_t *mx, int16_t *my, int16_t *mz);
+// Calcs heading to magnetic north
+int16_t calcHeading(int16_t mx, int16_t my);
+// Update stored MPU6050 calibration
+void readMpuOffsets();
 
 //void processEspLed();
+void processSensors();
 
 //--------------------------------------------------------------
 // INTERRUPTS
@@ -313,7 +333,11 @@ void setup()
   Wire.setClock(400000);
 
   mpu.initialize();
+  mpu.dmpInitialize();
+  mpu.setDMPEnabled(true);
   mag.init();
+
+  readMpuOffsets();
 
   udp.begin(cmdPort);
 }
@@ -344,6 +368,7 @@ void loop()
         mpu.setXAccelOffset(dx);
         mpu.setYAccelOffset(dy);
         mpu.setZAccelOffset(dz);
+        readMpuOffsets();
         break;
       case CMD_SET_GYRO_OFFSET:
         memcpy(&dx, &udpPacket[1], sizeof(int16_t));
@@ -352,6 +377,7 @@ void loop()
         mpu.setXGyroOffset(dx);
         mpu.setYGyroOffset(dy);
         mpu.setZGyroOffset(dz);
+        readMpuOffsets();
         break;
       case CMD_SET_MAGNET_CALIB:
         memcpy(&magnetOffset[0], &udpPacket[1], 6);
@@ -359,9 +385,11 @@ void loop()
         break;
       case CMD_SELF_CALIB_ACCEL:
         mpu.CalibrateAccel(6);
+        readMpuOffsets();
         break;
       case CMD_SELF_CALIB_GYRO:
         mpu.CalibrateGyro(6);
+        readMpuOffsets();
         break;
     }
   }
@@ -380,51 +408,55 @@ void loop()
     // Read Wifi Level
     int32_t val32 = WiFi.RSSI();
     pos = writeTelemetryPacket(pos, udpPacket, &val32, sizeof(val32));
-    // Read IMU data
-    int16_t ax,ay,az,gx,gy,gz;
-    mpu.getMotion6(&ax,&ay,&az,&gx,&gy,&gz);
-    pos = writeTelemetryPacket(pos, udpPacket, &ax, sizeof(ax));
-    pos = writeTelemetryPacket(pos, udpPacket, &ay, sizeof(ay));
-    pos = writeTelemetryPacket(pos, udpPacket, &az, sizeof(az));
-    pos = writeTelemetryPacket(pos, udpPacket, &gx, sizeof(gx));
-    pos = writeTelemetryPacket(pos, udpPacket, &gy, sizeof(gy));
-    pos = writeTelemetryPacket(pos, udpPacket, &gz, sizeof(gz));
-    // Read magnetometer data
-    readMagnet(&ax, &ay, &az);
-    pos = writeTelemetryPacket(pos, udpPacket, &ax, sizeof(ax));
-    pos = writeTelemetryPacket(pos, udpPacket, &ay, sizeof(ay));
-    pos = writeTelemetryPacket(pos, udpPacket, &az, sizeof(az));
+    // IMU data
+    pos = writeTelemetryPacket(pos, udpPacket, &accel[0], sizeof(accel[0]));
+    pos = writeTelemetryPacket(pos, udpPacket, &accel[1], sizeof(accel[1]));
+    pos = writeTelemetryPacket(pos, udpPacket, &accel[2], sizeof(accel[2]));
+    pos = writeTelemetryPacket(pos, udpPacket, &gyro[0], sizeof(gyro[0]));
+    pos = writeTelemetryPacket(pos, udpPacket, &gyro[1], sizeof(gyro[1]));
+    pos = writeTelemetryPacket(pos, udpPacket, &gyro[2], sizeof(gyro[2]));
+    // Magnetometer data
+    pos = writeTelemetryPacket(pos, udpPacket, &magnet[0], sizeof(magnet[0]));
+    pos = writeTelemetryPacket(pos, udpPacket, &magnet[1], sizeof(magnet[1]));
+    pos = writeTelemetryPacket(pos, udpPacket, &magnet[2], sizeof(magnet[2]));
     // Get IMU calibration settings
-    ax = mpu.getXAccelOffset();
-    pos = writeTelemetryPacket(pos, udpPacket, &ax, sizeof(ax));
-
-    ax = mpu.getYAccelOffset();
-    pos = writeTelemetryPacket(pos, udpPacket, &ax, sizeof(ax));
-
-    ax = mpu.getZAccelOffset();
-    pos = writeTelemetryPacket(pos, udpPacket, &ax, sizeof(ax));
-
-    ax = mpu.getXGyroOffset();
-    pos = writeTelemetryPacket(pos, udpPacket, &ax, sizeof(ax));
-
-    ax = mpu.getYGyroOffset();
-    pos = writeTelemetryPacket(pos, udpPacket, &ax, sizeof(ax));
-
-    ax = mpu.getZGyroOffset();
-    pos = writeTelemetryPacket(pos, udpPacket, &ax, sizeof(ax));
-    // Get magnetometer calibration
+    pos = writeTelemetryPacket(pos, udpPacket, &accelOffset[0], sizeof(accelOffset[0]));
+    pos = writeTelemetryPacket(pos, udpPacket, &accelOffset[1], sizeof(accelOffset[1]));
+    pos = writeTelemetryPacket(pos, udpPacket, &accelOffset[2], sizeof(accelOffset[2]));
+    pos = writeTelemetryPacket(pos, udpPacket, &gyroOffset[0], sizeof(gyroOffset[0]));
+    pos = writeTelemetryPacket(pos, udpPacket, &gyroOffset[1], sizeof(gyroOffset[1]));
+    pos = writeTelemetryPacket(pos, udpPacket, &gyroOffset[2], sizeof(gyroOffset[2]));
+    // Magnetometer calibration
     pos = writeTelemetryPacket(pos, udpPacket, &magnetOffset[0], sizeof(magnetOffset[0]));
     pos = writeTelemetryPacket(pos, udpPacket, &magnetOffset[1], sizeof(magnetOffset[1]));
     pos = writeTelemetryPacket(pos, udpPacket, &magnetOffset[2], sizeof(magnetOffset[2]));
     pos = writeTelemetryPacket(pos, udpPacket, &magnetScale[0], sizeof(magnetScale[0]));
     pos = writeTelemetryPacket(pos, udpPacket, &magnetScale[1], sizeof(magnetScale[1]));
     pos = writeTelemetryPacket(pos, udpPacket, &magnetScale[2], sizeof(magnetScale[2]));
+    // Yaw Pitch Roll
+    pos = writeTelemetryPacket(pos, udpPacket, &ypr[0], sizeof(float));
+    pos = writeTelemetryPacket(pos, udpPacket, &ypr[1], sizeof(float));
+    pos = writeTelemetryPacket(pos, udpPacket, &ypr[2], sizeof(float));
+    // Heading
+    pos = writeTelemetryPacket(pos, udpPacket, &heading, sizeof(heading));
 
     udp.beginPacket(host, telemetryPort);
     udp.write(udpPacket, pos);
     udp.endPacket();
+
+    // About 11-12 millis to sent telemetry
+
+    //uint32_t tt = millis() - telemetryTimer;
+    //Serial.print("telemetry time = ");
+    //Serial.print(tt);
   }
 
+  //uint32_t tm = millis();
+  processSensors();   // About 88 millis to process sensors
+  //uint32_t tt = millis() - tm;
+  //Serial.print("sensors time = ");
+  //Serial.println(tt);
+  
   //Serial.print("pwmNext = "); Serial.println(pwmNext);
 
   //processEspLed(); // just for debug
@@ -482,6 +514,51 @@ void readMagnet(int16_t *mx, int16_t *my, int16_t *mz)
   *mx = x;
   *my = y;
   *mz = z;
+}
+
+void processSensors()
+{
+  uint8_t mpuIntStatus = mpu.getIntStatus();        // holds actual interrupt status byte from MPU
+  uint8_t fifoBuffer[64];                           // FIFO storage buffer
+  uint16_t packetSize = mpu.dmpGetFIFOPacketSize();
+
+  if(mpu.dmpPacketAvailable())
+  {
+    // read a packet from FIFO (54 millis to execute)
+    mpu.getFIFOBytes(fifoBuffer, packetSize);
+    // calc ypr (< 1 millis to execute)
+    mpu.dmpGetQuaternion(&q, fifoBuffer);
+    mpu.dmpGetAccel(accel, fifoBuffer);
+    mpu.dmpGetGyro(gyro, fifoBuffer);
+    mpu.dmpGetGravity(&gravity, &q);
+    mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
+    // about 8 millis to execute
+    mpu.resetFIFO();
+  }
+  // read magnetometer (15 millis to execute)
+  readMagnet(&magnet[0],&magnet[1],&magnet[2]);
+  heading = calcHeading(-magnet[0],magnet[1]);
+}
+
+int16_t calcHeading(int16_t mx, int16_t my)
+{
+  double fx = mx;
+  double fy = my;
+  int16_t result = (180.0*atan2(fy,fx)/M_PI);
+  if(result < 0 )
+    result += 360;
+
+  return result;
+}
+
+void readMpuOffsets()
+{
+    accelOffset[0] = mpu.getXAccelOffset();
+    accelOffset[1] = mpu.getYAccelOffset();
+    accelOffset[2] = mpu.getZAccelOffset();
+    gyroOffset[0] = mpu.getXGyroOffset();
+    gyroOffset[1] = mpu.getYGyroOffset();
+    gyroOffset[2] = mpu.getZGyroOffset();  
 }
 
 /*

@@ -87,7 +87,6 @@ volatile uint32_t pwmTimer = 0;              // count ticks from pwm period star
 volatile uint32_t telemetryTimer = 0;
 
 MPU6050 mpu;      // 6-axis sensor
-QMC5883L mag;     // magnetometer
 
 int16_t magnet[3];          // Magnetometer calibrated data
 int16_t magnetOffset[3] = {0,0,0};    // Magnetometer hard-iron calibration offset
@@ -146,6 +145,34 @@ class MAX17040: public MAX1704X
     return MAX1704X::readRegister16(registerId);
   }
 } FuelGauge;
+
+class MyQMC5883L: public QMC5883L
+{
+  public:
+  
+  uint8_t readRaw(int16_t *x, int16_t *y, int16_t *z)
+  {
+    if(ready())
+    {
+      Wire.beginTransmission(0x0d);
+      Wire.write(0);
+      Wire.endTransmission();
+  
+      Wire.requestFrom(0x0d,6);
+      int n = Wire.available();
+      if(n != 6)
+        return 0;
+
+      *x = Wire.read() | (Wire.read()<<8);
+      *y = Wire.read() | (Wire.read()<<8);
+      *z = Wire.read() | (Wire.read()<<8);
+
+      return 1;
+    }
+
+    return 0;
+  }
+} mag;
 
 //--------------------------------------------------------------
 // FUNCTIONS
@@ -330,12 +357,15 @@ void setup()
   Serial.println(pwmStepTicks);*/
 
   Wire.begin();
-  Wire.setClock(400000);
+  Wire.setClock(200000UL);    // there are bad SCL fronts if set greater
 
   mpu.initialize();
   mpu.dmpInitialize();
   mpu.setDMPEnabled(true);
+  
   mag.init();
+  mag.setSamplingRate(200);
+  mag.setOversampling(512);
 
   readMpuOffsets();
 
@@ -444,18 +474,13 @@ void loop()
     udp.write(udpPacket, pos);
     udp.endPacket();
 
-    // About 11-12 millis to sent telemetry
-
+    // About 1 millis to sent telemetry
     //uint32_t tt = millis() - telemetryTimer;
     //Serial.print("telemetry time = ");
     //Serial.print(tt);
   }
 
-  //uint32_t tm = millis();
-  processSensors();   // About 88 millis to process sensors
-  //uint32_t tt = millis() - tm;
-  //Serial.print("sensors time = ");
-  //Serial.println(tt);
+  processSensors();   // Max 5 millis to process sensors
   
   //Serial.print("pwmNext = "); Serial.println(pwmNext);
 
@@ -500,20 +525,25 @@ uint16_t writeTelemetryPacket(uint16_t pos, byte *packet, void *value, size_t va
 
 void readMagnet(int16_t *mx, int16_t *my, int16_t *mz)
 {
-  int16_t mt;
-  mag.readRaw(mx, my, mz, &mt);
+  uint8_t result;
+  int16_t rx,ry,rz;
+  
+  result = mag.readRaw(&rx, &ry, &rz);
+  
+  if(result)
+  {
+    float x = rx - magnetOffset[0];
+    float y = ry - magnetOffset[1];
+    float z = rz - magnetOffset[2];
 
-  float x = *mx - magnetOffset[0];
-  float y = *my - magnetOffset[1];
-  float z = *mz - magnetOffset[2];
+    x *= magnetScale[0];
+    y *= magnetScale[1];
+    z *= magnetScale[2];
 
-  x *= magnetScale[0];
-  y *= magnetScale[1];
-  z *= magnetScale[2];
-
-  *mx = x;
-  *my = y;
-  *mz = z;
+    *mx = x;
+    *my = y;
+    *mz = z;
+  }
 }
 
 void processSensors()
@@ -524,7 +554,7 @@ void processSensors()
 
   if(mpu.dmpPacketAvailable())
   {
-    // read a packet from FIFO (54 millis to execute)
+    // read a packet from FIFO (2-3 millis to execute)
     mpu.getFIFOBytes(fifoBuffer, packetSize);
     // calc ypr (< 1 millis to execute)
     mpu.dmpGetQuaternion(&q, fifoBuffer);
@@ -532,10 +562,10 @@ void processSensors()
     mpu.dmpGetGyro(gyro, fifoBuffer);
     mpu.dmpGetGravity(&gravity, &q);
     mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
-    // about 8 millis to execute
+    // reset fifo to get fresh data in next cycle
     mpu.resetFIFO();
   }
-  // read magnetometer (15 millis to execute)
+  // read magnetometer (1 millis to execute)
   readMagnet(&magnet[0],&magnet[1],&magnet[2]);
   heading = calcHeading(-magnet[0],magnet[1]);
 }

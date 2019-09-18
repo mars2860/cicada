@@ -75,6 +75,29 @@ public class SensorsDlg extends JDialog
 			mlbGz.setText(text);
 			mlbGz.setToolTipText(text);
 			
+			/* debug compass tilt compensation
+			double roll = CopterTelemetry.instance().getRoll();
+			double pitch = CopterTelemetry.instance().getPitch();
+			double fx = CopterTelemetry.instance().getMagnetX();
+			double fy = CopterTelemetry.instance().getMagnetY();
+			double fz = CopterTelemetry.instance().getMagnetZ();
+			double cor = Math.cos(Math.toRadians(roll));
+			double sir = Math.sin(Math.toRadians(roll));
+			double cop = Math.cos(Math.toRadians(pitch));
+			double sip = Math.sin(Math.toRadians(pitch));
+			
+			DecimalFormat fmt1 = new DecimalFormat();
+			fmt1.setMaximumFractionDigits(0);
+			
+			double fx1 = fx*cop + fy*sir*sip + fz*cor*sip;
+			double fy1 = fy*cor - fz*sir;
+			double fz1 = -fx*sip + fy*cop*sir + fz*cor*cop;
+			
+			double heading = 180.0 - Math.toDegrees(Math.atan2(fy1, fx1));
+			
+			mlbDataCount.setText(fmt1.format(heading));
+			*/
+			
 			text = ": " + Integer.toString(CopterTelemetry.instance().getMagnetX()) + "/" +
 					Integer.toString(CopterTelemetry.instance().getMagnetXOffset()) + "/" +
 					fmt.format(CopterTelemetry.instance().getMagnetXScale());

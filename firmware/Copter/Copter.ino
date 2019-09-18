@@ -567,16 +567,29 @@ void processSensors()
   }
   // read magnetometer (1 millis to execute)
   readMagnet(&magnet[0],&magnet[1],&magnet[2]);
-  heading = calcHeading(-magnet[0],magnet[1]);
+  // correct result according to copter x axis
+  heading = 180 - calcHeading(magnet[0],magnet[1],magnet[2], ypr[1], ypr[2]);
+  if(heading >= 360)
+    heading -= 360;
+  if(heading < 0)
+    heading += 360;
 }
 
-int16_t calcHeading(int16_t mx, int16_t my)
+int16_t calcHeading(int16_t mx, int16_t my, int16_t mz, double pitch, double roll)
 {
   double fx = mx;
   double fy = my;
-  int16_t result = (180.0*atan2(fy,fx)/M_PI);
-  if(result < 0 )
-    result += 360;
+  double fz = mz;
+  
+  double cor = cos(roll);
+  double sir = sin(roll);
+  double cop = cos(pitch);
+  double sip = sin(pitch);
+  
+  double fx1 = fx*cop + fy*sir*sip + fz*cor*sip;
+  double fy1 = fy*cor - fz*sir;
+  
+  int16_t result = (180.0*atan2(fy1,fx1)/M_PI);
 
   return result;
 }

@@ -22,7 +22,7 @@ public class MotorGasSlider extends javax.swing.JPanel
 		@Override
 		public void stateChanged(ChangeEvent e)
 		{
-			if(!mSlider.getValueIsAdjusting())
+			//if(!mSlider.getValueIsAdjusting())
 			{
 				int value = mSlider.getValue();
 				float percent = value;
@@ -41,21 +41,58 @@ public class MotorGasSlider extends javax.swing.JPanel
 	
 	public MotorGasSlider(String name)
 	{
+		this.createVertical(name);
+	}
+	
+	public MotorGasSlider(String name, boolean horizontal)
+	{
+		if(horizontal)
+			this.createHorizontal(name);
+		else
+			this.createVertical(name);
+	}
+	
+	private void createVertical(String name)
+	{
 		this.setLayout(new MigLayout("insets 0 0 0 0","[30!, center]","[][grow]"));
 		
 		mSlider = new JSlider(JSlider.VERTICAL, 0, 255, 0);
 		mlbGas = new JLabel();
 		mlbGasPercent = new JLabel();
 		
+		mSlider.setMinorTickSpacing(1);
 		mSlider.addChangeListener(new OnGasChanged());
 		// To update labels set value
 		mSlider.setValue(1);
 		mSlider.setValue(0);
 		
 		this.add(new JLabel(name),"wrap");
-		this.add(mSlider,"grow,wrap");
+		this.add(mSlider,"growy,wrap");
 		this.add(mlbGas,"wrap");
-		this.add(mlbGasPercent,"wrap");
+		this.add(mlbGasPercent);
+	}
+	
+	private void createHorizontal(String name)
+	{
+		this.setLayout(new MigLayout("insets 0 0 0 0","[][grow]","[center]"));
+		
+		mSlider = new JSlider(JSlider.HORIZONTAL, 0, 255, 0);
+		mlbGas = new JLabel();
+		mlbGasPercent = new JLabel();
+		
+		mlbGas.setHorizontalAlignment(JLabel.CENTER);
+		mlbGasPercent.setHorizontalAlignment(JLabel.CENTER);
+		
+		mSlider.setMinorTickSpacing(1);
+		mSlider.addChangeListener(new OnGasChanged());
+		// To update labels set value
+		mSlider.setValue(1);
+		mSlider.setValue(0);
+		
+		this.add(new JLabel(name));
+		this.add(mSlider,"growx");
+		this.add(mlbGas,"w 30!");
+		this.add(mlbGasPercent,"w 30!");
 	}
 	
 	public void addChangeListener(ChangeListener listener)
@@ -68,8 +105,10 @@ public class MotorGasSlider extends javax.swing.JPanel
 		return mSlider.getValue();
 	}
 	
-	public void setGas(int gas)
+	/** valueAdjust - see JSlider.setValueIsAdjusting */
+	public void setGas(int gas, boolean valueAdjust)
 	{
+		mSlider.setValueIsAdjusting(valueAdjust);
 		mSlider.setValue(gas);
 	}
 }

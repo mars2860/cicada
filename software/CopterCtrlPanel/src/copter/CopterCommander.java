@@ -150,7 +150,7 @@ public class CopterCommander implements Runnable
 				{
 					mSocket.send(packet);
 					// give time to copter to process a command
-					Thread.sleep(100);
+					Thread.sleep(50);
 				}
 				catch(IOException e)
 				{

@@ -375,35 +375,6 @@ public class SensorsDlg extends JDialog
 		}
 	}
 	
-	private class OnBtnSaveCalibration implements ActionListener
-	{
-		@Override
-		public void actionPerformed(ActionEvent e)
-		{
-			Settings.instance().setAccelXOffset(CopterTelemetry.instance().getAccelXOffset());
-			Settings.instance().setAccelYOffset(CopterTelemetry.instance().getAccelYOffset());
-			Settings.instance().setAccelZOffset(CopterTelemetry.instance().getAccelZOffset());
-			
-			Settings.instance().setGyroXOffset(CopterTelemetry.instance().getGyroXOffset());
-			Settings.instance().setGyroYOffset(CopterTelemetry.instance().getGyroYOffset());
-			Settings.instance().setGyroZOffset(CopterTelemetry.instance().getGyroZOffset());
-			
-			Settings.instance().setMagnetXOffset(CopterTelemetry.instance().getMagnetXOffset());
-			Settings.instance().setMagnetYOffset(CopterTelemetry.instance().getMagnetYOffset());
-			Settings.instance().setMagnetZOffset(CopterTelemetry.instance().getMagnetZOffset());
-			
-			Settings.instance().setMagnetXOffset(CopterTelemetry.instance().getMagnetXOffset());
-			Settings.instance().setMagnetYOffset(CopterTelemetry.instance().getMagnetYOffset());
-			Settings.instance().setMagnetZOffset(CopterTelemetry.instance().getMagnetZOffset());
-			
-			Settings.instance().setMagnetXScale(CopterTelemetry.instance().getMagnetXScale());
-			Settings.instance().setMagnetYScale(CopterTelemetry.instance().getMagnetYScale());
-			Settings.instance().setMagnetZScale(CopterTelemetry.instance().getMagnetZScale());
-			
-			Settings.instance().save();
-		}
-	}
-	
 	private OnTelemetryUpdate mObserver;
 	
 	private JLabel mlbAx;
@@ -450,7 +421,7 @@ public class SensorsDlg extends JDialog
 		mMagnetZ = new double[MAX_DATA_COUNT];
 		
 		this.setTitle(Text.get("SENSORS"));
-		this.setSize(680, 600);
+		this.setSize(680, 568);
 		this.setLocationRelativeTo(null);
 		this.setResizable(true);
 		this.setLayout(new MigLayout("","[][80!][center]"));
@@ -485,7 +456,6 @@ public class SensorsDlg extends JDialog
 		JButton btnResetCalibration = new JButton(Text.get("RESET_CALIBRATION"));
 		JButton btnSelfCalibrateAccel = new JButton(Text.get("SELF_CALIBRATE_ACCEL"));
 		JButton btnSelfCalibrateGyro = new JButton(Text.get("SELF_CALIBRATE_GYRO"));
-		JButton btnSaveCalibration = new JButton(Text.get("SAVE_CALIBRATION"));
 		
 		ButtonGroup group = new ButtonGroup();
 		group.add(mrbAccel);
@@ -501,7 +471,6 @@ public class SensorsDlg extends JDialog
 		btnResetCalibration.addActionListener(new OnBtnResetCalibration());
 		btnSelfCalibrateAccel.addActionListener(new OnBtnSelfCalibrateAccel());
 		btnSelfCalibrateGyro.addActionListener(new OnBtnSelfCalibrateGyro());
-		btnSaveCalibration.addActionListener(new OnBtnSaveCalibration());
 		
 		this.add(new JLabel("AccelX/Off"));
 		this.add(mlbAx);
@@ -550,7 +519,6 @@ public class SensorsDlg extends JDialog
 		this.add(btnSelfCalibrateGyro,"spanx 2,grow,wrap");
 		this.add(btnCalibrateMagnet,"spanx 2,grow,wrap");
 		this.add(btnResetCalibration,"spanx 2,grow,wrap");
-		this.add(btnSaveCalibration,"spanx 2,grow,wrap");
 		
 		this.drawData();
 	}
@@ -559,9 +527,44 @@ public class SensorsDlg extends JDialog
 	public void setVisible(boolean b)
 	{
 		if(b)
+		{
 			CopterTelemetry.instance().addObserver(mObserver);
+		}
 		else
+		{
+			int result = JOptionPane.showConfirmDialog(	this,
+														Text.get("CONFIRM_SAVE_SETTINGS"),
+														"",
+														JOptionPane.YES_NO_OPTION,
+														JOptionPane.QUESTION_MESSAGE);
+
+			if(result == JOptionPane.YES_OPTION)
+			{
+				Settings.instance().setAccelXOffset(CopterTelemetry.instance().getAccelXOffset());
+				Settings.instance().setAccelYOffset(CopterTelemetry.instance().getAccelYOffset());
+				Settings.instance().setAccelZOffset(CopterTelemetry.instance().getAccelZOffset());
+				
+				Settings.instance().setGyroXOffset(CopterTelemetry.instance().getGyroXOffset());
+				Settings.instance().setGyroYOffset(CopterTelemetry.instance().getGyroYOffset());
+				Settings.instance().setGyroZOffset(CopterTelemetry.instance().getGyroZOffset());
+				
+				Settings.instance().setMagnetXOffset(CopterTelemetry.instance().getMagnetXOffset());
+				Settings.instance().setMagnetYOffset(CopterTelemetry.instance().getMagnetYOffset());
+				Settings.instance().setMagnetZOffset(CopterTelemetry.instance().getMagnetZOffset());
+				
+				Settings.instance().setMagnetXOffset(CopterTelemetry.instance().getMagnetXOffset());
+				Settings.instance().setMagnetYOffset(CopterTelemetry.instance().getMagnetYOffset());
+				Settings.instance().setMagnetZOffset(CopterTelemetry.instance().getMagnetZOffset());
+				
+				Settings.instance().setMagnetXScale(CopterTelemetry.instance().getMagnetXScale());
+				Settings.instance().setMagnetYScale(CopterTelemetry.instance().getMagnetYScale());
+				Settings.instance().setMagnetZScale(CopterTelemetry.instance().getMagnetZScale());
+				
+				Settings.instance().save();
+			}
+
 			CopterTelemetry.instance().deleteObserver(mObserver);
+		}
 		
 		super.setVisible(b);
 	}

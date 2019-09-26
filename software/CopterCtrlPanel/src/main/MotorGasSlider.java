@@ -16,26 +16,36 @@ public class MotorGasSlider extends javax.swing.JPanel
 	private JSlider mSlider;
 	private JLabel mlbGas;
 	private JLabel mlbGasPercent;
+	private ChangeListener mcl;
+	private boolean mValueAdjusting;
 	
 	private class OnGasChanged implements ChangeListener
 	{
 		@Override
-		public void stateChanged(ChangeEvent e)
+		public synchronized void stateChanged(ChangeEvent e)
 		{
-			//if(!mSlider.getValueIsAdjusting())
+			if(mSlider.getValueIsAdjusting())
+				mValueAdjusting = true;
+			
+			int value = mSlider.getValue();
+			float percent = value;
+			percent /= mSlider.getMaximum();
+			percent *= 100.0;
+				
+			DecimalFormat fmt = new DecimalFormat();
+			fmt.setMaximumFractionDigits(0);
+			fmt.setMinimumFractionDigits(0);
+			
+			mlbGas.setText(Integer.toString(value));
+			mlbGasPercent.setText(fmt.format(percent) + "%");
+			
+			if(mSlider.getValueIsAdjusting() == false && mValueAdjusting == true)
 			{
-				int value = mSlider.getValue();
-				float percent = value;
-				percent /= mSlider.getMaximum();
-				percent *= 100.0;
+				if(mcl != null)
+					mcl.stateChanged(e);
 				
-				DecimalFormat fmt = new DecimalFormat();
-				fmt.setMaximumFractionDigits(0);
-				fmt.setMinimumFractionDigits(0);
-				
-				mlbGas.setText(Integer.toString(value));
-				mlbGasPercent.setText(fmt.format(percent) + "%");
-	        }
+				mValueAdjusting = false;
+			}
 		}
 	}
 	
@@ -97,7 +107,7 @@ public class MotorGasSlider extends javax.swing.JPanel
 	
 	public void addChangeListener(ChangeListener listener)
 	{
-		mSlider.addChangeListener(listener);
+		mcl = listener;
 	}
 	
 	public int getGas()
@@ -105,10 +115,18 @@ public class MotorGasSlider extends javax.swing.JPanel
 		return mSlider.getValue();
 	}
 	
-	/** valueAdjust - see JSlider.setValueIsAdjusting */
-	public void setGas(int gas, boolean valueAdjust)
+	public synchronized void setGas(int gas, boolean invokeListener)
 	{
-		mSlider.setValueIsAdjusting(valueAdjust);
-		mSlider.setValue(gas);
+		if(!mValueAdjusting)
+		{
+			if(invokeListener)
+				mSlider.setValueIsAdjusting(true);
+			
+			mSlider.setValue(gas);
+			
+			if(invokeListener)
+				mSlider.setValueIsAdjusting(false);
+		}
+	
 	}
 }

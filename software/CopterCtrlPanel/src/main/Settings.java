@@ -41,6 +41,23 @@ public class Settings
 	private float mMagnetXScale;
 	private float mMagnetYScale;
 	private float mMagnetZScale;
+	private boolean mYawPidEnabled;
+	private float mYawPidKp;
+	private float mYawPidKi;
+	private float mYawPidKd;
+	private boolean mPitchPidEnabled;
+	private float mPitchPidKp;
+	private float mPitchPidKi;
+	private float mPitchPidKd;
+	private boolean mRollPidEnabled;
+	private float mRollPidKp;
+	private float mRollPidKi;
+	private float mRollPidKd;
+	private boolean mAltPidEnabled;
+	private float mAltPidKp;
+	private float mAltPidKi;
+	private float mAltPidKd;
+	
 	
 	private Settings()
 	{
@@ -68,6 +85,22 @@ public class Settings
 		prop.setProperty("MagnetXScale", Double.toString(mMagnetXScale));
 		prop.setProperty("MagnetYScale", Double.toString(mMagnetYScale));
 		prop.setProperty("MagnetZScale", Double.toString(mMagnetZScale));
+		prop.setProperty("YawPidEnabled", Boolean.toString(mYawPidEnabled));
+		prop.setProperty("PitchPidEnabled", Boolean.toString(mPitchPidEnabled));
+		prop.setProperty("RollPidEnabled", Boolean.toString(mRollPidEnabled));
+		prop.setProperty("AltPidEnabled", Boolean.toString(mAltPidEnabled));
+		prop.setProperty("YawPidKp", Float.toString(mYawPidKp));
+		prop.setProperty("PitchPidKp", Float.toString(mPitchPidKp));
+		prop.setProperty("RollPidKp", Float.toString(mRollPidKp));
+		prop.setProperty("AltPidKp", Float.toString(mAltPidKp));
+		prop.setProperty("YawPidKi", Float.toString(mYawPidKi));
+		prop.setProperty("PitchPidKi", Float.toString(mPitchPidKi));
+		prop.setProperty("RollPidKi", Float.toString(mRollPidKi));
+		prop.setProperty("AltPidKi", Float.toString(mAltPidKi));
+		prop.setProperty("YawPidKd", Float.toString(mYawPidKd));
+		prop.setProperty("PitchPidKd", Float.toString(mPitchPidKd));
+		prop.setProperty("RollPidKd", Float.toString(mRollPidKd));
+		prop.setProperty("AltPidKd", Float.toString(mAltPidKd));
 		
 		try
 		{
@@ -151,6 +184,54 @@ public class Settings
 			
 			value = prop.getProperty("MagnetZScale", Double.toString(1.f));
 			mMagnetZScale = Float.parseFloat(value);
+			
+			value = prop.getProperty("YawPidEnabled", Boolean.toString(false));
+			mYawPidEnabled = Boolean.parseBoolean(value);
+			
+			value = prop.getProperty("PitchPidEnabled", Boolean.toString(false));
+			mPitchPidEnabled = Boolean.parseBoolean(value);
+			
+			value = prop.getProperty("RollPidEnabled", Boolean.toString(false));
+			mRollPidEnabled = Boolean.parseBoolean(value);
+			
+			value = prop.getProperty("AltPidEnabled", Boolean.toString(false));
+			mAltPidEnabled = Boolean.parseBoolean(value);
+			
+			value = prop.getProperty("YawPidKp", Float.toString(0));
+			mYawPidKp = Float.parseFloat(value);
+			
+			value = prop.getProperty("PitchPidKp", Float.toString(0));
+			mPitchPidKp = Float.parseFloat(value);
+			
+			value = prop.getProperty("RollPidKp", Float.toString(0));
+			mRollPidKp = Float.parseFloat(value);
+			
+			value = prop.getProperty("AltPidKp", Float.toString(0));
+			mAltPidKp = Float.parseFloat(value);
+			
+			value = prop.getProperty("YawPidKi", Float.toString(0));
+			mYawPidKi = Float.parseFloat(value);
+			
+			value = prop.getProperty("PitchPidKi", Float.toString(0));
+			mPitchPidKi = Float.parseFloat(value);
+			
+			value = prop.getProperty("RollPidKi", Float.toString(0));
+			mRollPidKi = Float.parseFloat(value);
+			
+			value = prop.getProperty("AltPidKi", Float.toString(0));
+			mAltPidKi = Float.parseFloat(value);
+			
+			value = prop.getProperty("YawPidKd", Float.toString(0));
+			mYawPidKd = Float.parseFloat(value);
+			
+			value = prop.getProperty("PitchPidKd", Float.toString(0));
+			mPitchPidKd = Float.parseFloat(value);
+			
+			value = prop.getProperty("RollPidKd", Float.toString(0));
+			mRollPidKd = Float.parseFloat(value);
+			
+			value = prop.getProperty("AltPidKd", Float.toString(0));
+			mAltPidKd = Float.parseFloat(value);
 		}
 		catch (FileNotFoundException e)
 		{
@@ -197,7 +278,7 @@ public class Settings
 		return mCopterVideoPort;
 	}
 
-	public void setmCopterVideoPort(int port)
+	public void setCopterVideoPort(int port)
 	{
 		this.mCopterVideoPort = port;
 	}
@@ -320,5 +401,165 @@ public class Settings
 	public void setMagnetZScale(float scale)
 	{
 		this.mMagnetZScale = scale;
+	}
+
+	public boolean getYawPidEnabled()
+	{
+		return mYawPidEnabled;
+	}
+
+	public void setYawPidEnabled(boolean enabled)
+	{
+		this.mYawPidEnabled = enabled;
+	}
+
+	public float getYawPidKp()
+	{
+		return mYawPidKp;
+	}
+
+	public void setYawPidKp(float kp)
+	{
+		this.mYawPidKp = kp;
+	}
+
+	public float getYawPidKi()
+	{
+		return mYawPidKi;
+	}
+
+	public void setYawPidKi(float ki)
+	{
+		this.mYawPidKi = ki;
+	}
+
+	public float getYawPidKd()
+	{
+		return mYawPidKd;
+	}
+
+	public void setYawPidKd(float kd)
+	{
+		this.mYawPidKd = kd;
+	}
+
+	public boolean getPitchPidEnabled()
+	{
+		return mPitchPidEnabled;
+	}
+
+	public void setPitchPidEnabled(boolean enabled)
+	{
+		this.mPitchPidEnabled = enabled;
+	}
+
+	public float getPitchPidKp()
+	{
+		return mPitchPidKp;
+	}
+
+	public void setPitchPidKp(float kp)
+	{
+		this.mPitchPidKp = kp;
+	}
+
+	public float getPitchPidKi()
+	{
+		return mPitchPidKi;
+	}
+
+	public void setPitchPidKi(float ki)
+	{
+		this.mPitchPidKi = ki;
+	}
+
+	public float getPitchPidKd()
+	{
+		return mPitchPidKd;
+	}
+
+	public void setPitchPidKd(float kd)
+	{
+		this.mPitchPidKd = kd;
+	}
+
+	public boolean getRollPidEnabled()
+	{
+		return mRollPidEnabled;
+	}
+
+	public void setRollPidEnabled(boolean enabled)
+	{
+		this.mRollPidEnabled = enabled;
+	}
+
+	public float getRollPidKp()
+	{
+		return mRollPidKp;
+	}
+
+	public void setRollPidKp(float kp)
+	{
+		this.mRollPidKp = kp;
+	}
+
+	public float getRollPidKi()
+	{
+		return mRollPidKi;
+	}
+
+	public void setRollPidKi(float ki)
+	{
+		this.mRollPidKi = ki;
+	}
+
+	public float getRollPidKd()
+	{
+		return mRollPidKd;
+	}
+
+	public void setRollPidKd(float kd)
+	{
+		this.mRollPidKd = kd;
+	}
+
+	public boolean getAltPidEnabled()
+	{
+		return mAltPidEnabled;
+	}
+
+	public void setAltPidEnabled(boolean enabled)
+	{
+		this.mAltPidEnabled = enabled;
+	}
+
+	public float getAltPidKp()
+	{
+		return mAltPidKp;
+	}
+
+	public void setAltPidKp(float kp)
+	{
+		this.mAltPidKp = kp;
+	}
+
+	public float getAltPidKi()
+	{
+		return mAltPidKi;
+	}
+
+	public void setAltPidKi(float ki)
+	{
+		this.mAltPidKi = ki;
+	}
+
+	public float getAltPidKd()
+	{
+		return mAltPidKd;
+	}
+
+	public void setAltPidKd(float kd)
+	{
+		this.mAltPidKd = kd;
 	}
 }

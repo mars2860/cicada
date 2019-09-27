@@ -29,6 +29,7 @@ public class TextBundle extends ListResourceBundle
             
             {"MOTORS", "Motors"},
             {"MOTORS_ENABLED", "Motors enabled"},
+            {"GAS", "Gas"},
             
             {"CONNECT", "Connect"},
             {"SENSORS", "Sensors"},
@@ -59,6 +60,15 @@ public class TextBundle extends ListResourceBundle
             {"CALIBRATE_INSTRUCTION_2", "Before set the collect data checkbox and after rotate the copter in all directions"},
             {"WAIT_CALIBRATION", "The copter will be disconnected for one minute to process sensor calibration"},
             
+            {"PID", "PID"},
+            {"TARGET", "Target"},
+            {"PID_ENABLED", "PID Enabled"},
+            {"YAW_PID", "Yaw PID"},
+            {"PITCH_PID", "Pitch PID"},
+            {"ROLL_PID", "Roll PID"},
+            {"ALT_PID", "Alt PID"},
+            {"SET", "Set"},
+            {"CONFIRM_SAVE_SETTINGS", "Do you want to save settings?"},
         // END OF MATERIAL TO LOCALIZE
         };
     }

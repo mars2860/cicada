@@ -60,6 +60,31 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 	private float mPitch;
 	private float mRoll;
 	private int mHeading;
+	private int mYawPidEnabled;
+	private float mYawPidKp;
+	private float mYawPidKi;
+	private float mYawPidKd;
+	private float mYawPidTarget;
+	private int mPitchPidEnabled;
+	private float mPitchPidKp;
+	private float mPitchPidKi;
+	private float mPitchPidKd;
+	private float mPitchPidTarget;
+	private int mRollPidEnabled;
+	private float mRollPidKp;
+	private float mRollPidKi;
+	private float mRollPidKd;
+	private float mRollPidTarget;
+	private int mAltPidEnabled;
+	private float mAltPidKp;
+	private float mAltPidKi;
+	private float mAltPidKd;
+	private float mAltPidTarget;
+	private int mMotorsEnabled;
+	private int mMotorGas0;
+	private int mMotorGas1;
+	private int mMotorGas2;
+	private int mMotorGas3;
 	
 	private CopterTelemetry()
 	{
@@ -450,6 +475,321 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 		
 		return result;
 	}
+	
+	public boolean getYawPidEnabled()
+	{
+		boolean result;
+		
+		synchronized(objDataSync)
+		{
+			if(mYawPidEnabled > 0)
+				result = true;
+			else
+				result = false;
+		}
+		
+		return result;
+	}
+	
+	public boolean getPitchPidEnabled()
+	{
+		boolean result;
+		
+		synchronized(objDataSync)
+		{
+			if(mPitchPidEnabled > 0)
+				result = true;
+			else
+				result = false;
+		}
+		
+		return result;
+	}
+	
+	public boolean getRollPidEnabled()
+	{
+		boolean result;
+		
+		synchronized(objDataSync)
+		{
+			if(mRollPidEnabled > 0)
+				result = true;
+			else
+				result = false;
+		}
+		
+		return result;
+	}
+	
+	public boolean getAltPidEnabled()
+	{
+		boolean result;
+		
+		synchronized(objDataSync)
+		{
+			if(mAltPidEnabled > 0)
+				result = true;
+			else
+				result = false;
+		}
+		
+		return result;
+	}
+	
+	public float getYawPidKp()
+	{
+		float result;
+		
+		synchronized(objDataSync)
+		{
+			result = mYawPidKp;
+		}
+		
+		return result;
+	}
+	
+	public float getPitchPidKp()
+	{
+		float result;
+		
+		synchronized(objDataSync)
+		{
+			result = mPitchPidKp;
+		}
+		
+		return result;
+	}
+	
+	public float getRollPidKp()
+	{
+		float result;
+		
+		synchronized(objDataSync)
+		{
+			result = mRollPidKp;
+		}
+		
+		return result;
+	}
+	
+	public float getAltPidKp()
+	{
+		float result;
+		
+		synchronized(objDataSync)
+		{
+			result = mAltPidKp;
+		}
+		
+		return result;
+	}
+	
+	public float getYawPidKi()
+	{
+		float result;
+		
+		synchronized(objDataSync)
+		{
+			result = mYawPidKi;
+		}
+		
+		return result;
+	}
+	
+	public float getPitchPidKi()
+	{
+		float result;
+		
+		synchronized(objDataSync)
+		{
+			result = mPitchPidKi;
+		}
+		
+		return result;
+	}
+	
+	public float getRollPidKi()
+	{
+		float result;
+		
+		synchronized(objDataSync)
+		{
+			result = mRollPidKi;
+		}
+		
+		return result;
+	}
+	
+	public float getAltPidKi()
+	{
+		float result;
+		
+		synchronized(objDataSync)
+		{
+			result = mAltPidKi;
+		}
+		
+		return result;
+	}
+	
+	public float getYawPidKd()
+	{
+		float result;
+		
+		synchronized(objDataSync)
+		{
+			result = mYawPidKd;
+		}
+		
+		return result;
+	}
+	
+	public float getPitchPidKd()
+	{
+		float result;
+		
+		synchronized(objDataSync)
+		{
+			result = mPitchPidKd;
+		}
+		
+		return result;
+	}
+	
+	public float getRollPidKd()
+	{
+		float result;
+		
+		synchronized(objDataSync)
+		{
+			result = mRollPidKd;
+		}
+		
+		return result;
+	}
+	
+	public float getAltPidKd()
+	{
+		float result;
+		
+		synchronized(objDataSync)
+		{
+			result = mAltPidKd;
+		}
+		
+		return result;
+	}
+	
+	public float getYawPidTarget()
+	{
+		float result;
+		
+		synchronized(objDataSync)
+		{
+			result = (float)Math.toDegrees(mYawPidTarget);
+		}
+		
+		return result;
+	}
+	
+	public float getPitchPidTarget()
+	{
+		float result;
+		
+		synchronized(objDataSync)
+		{
+			result = (float)Math.toDegrees(mPitchPidTarget);
+		}
+		
+		return result;
+	}
+	
+	public float getRollPidTarget()
+	{
+		float result;
+		
+		synchronized(objDataSync)
+		{
+			result = (float)Math.toDegrees(mRollPidTarget);
+		}
+		
+		return result;
+	}
+	
+	public float getAltPidTarget()
+	{
+		float result;
+		
+		synchronized(objDataSync)
+		{
+			result = mAltPidTarget;
+		}
+		
+		return result;
+	}
+	
+	public boolean getMotorsEnabled()
+	{
+		boolean result;
+		
+		synchronized(objDataSync)
+		{
+			if(mMotorsEnabled > 0)
+				result = true;
+			else
+				result = false;
+		}
+		
+		return result;
+	}
+	
+	public int getMotorGas0()
+	{
+		int result;
+		
+		synchronized(objDataSync)
+		{
+			result = mMotorGas0;
+		}
+		
+		return result;
+	}
+	
+	public int getMotorGas1()
+	{
+		int result;
+		
+		synchronized(objDataSync)
+		{
+			result = mMotorGas1;
+		}
+		
+		return result;
+	}
+	
+	public int getMotorGas2()
+	{
+		int result;
+		
+		synchronized(objDataSync)
+		{
+			result = mMotorGas2;
+		}
+		
+		return result;
+	}
+	
+	public int getMotorGas3()
+	{
+		int result;
+		
+		synchronized(objDataSync)
+		{
+			result = mMotorGas3;
+		}
+		
+		return result;
+	}
 
 	@Override
 	public void run()
@@ -513,6 +853,36 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 						mRoll = this.getFloat(receivePacket);
 						// Heading
 						mHeading = this.getInt16t(receivePacket);
+						// Yaw Pid
+						mYawPidEnabled = this.getUint8t(receivePacket);
+						mYawPidKp = this.getFloat(receivePacket);
+						mYawPidKi = this.getFloat(receivePacket);
+						mYawPidKd = this.getFloat(receivePacket);
+						mYawPidTarget = this.getFloat(receivePacket);
+						// Pitch Pid
+						mPitchPidEnabled = this.getUint8t(receivePacket);
+						mPitchPidKp = this.getFloat(receivePacket);
+						mPitchPidKi = this.getFloat(receivePacket);
+						mPitchPidKd = this.getFloat(receivePacket);
+						mPitchPidTarget = this.getFloat(receivePacket);
+						// Roll Pid
+						mRollPidEnabled = this.getUint8t(receivePacket);
+						mRollPidKp = this.getFloat(receivePacket);
+						mRollPidKi = this.getFloat(receivePacket);
+						mRollPidKd = this.getFloat(receivePacket);
+						mRollPidTarget = this.getFloat(receivePacket);
+						// Alt Pid
+						mAltPidEnabled = this.getUint8t(receivePacket);
+						mAltPidKp = this.getFloat(receivePacket);
+						mAltPidKi = this.getFloat(receivePacket);
+						mAltPidKd = this.getFloat(receivePacket);
+						mAltPidTarget = this.getFloat(receivePacket);
+						// Motors
+						mMotorsEnabled = this.getUint8t(receivePacket);
+						mMotorGas0 = this.getInt32t(receivePacket);
+						mMotorGas1 = this.getInt32t(receivePacket);
+						mMotorGas2 = this.getInt32t(receivePacket);
+						mMotorGas3 = this.getInt32t(receivePacket);
 					}
 
 					this.setChanged();
@@ -536,6 +906,15 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 			//System.out.println("Notify telemetry thread is stopped");
 			objTelemetrySync.notify();
 		}
+	}
+	
+	private int getUint8t(DatagramPacket packet)
+	{
+		int result = 0;
+		
+		result = packet.getData()[mParsePos++] & 0xFF;
+		
+		return result;
 	}
 	
 	private int getInt16t(DatagramPacket packet)

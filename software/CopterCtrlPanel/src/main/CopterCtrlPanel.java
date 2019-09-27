@@ -39,7 +39,11 @@ import copter.CopterTelemetry;
 import copter.commands.CmdCalibrateAccel;
 import copter.commands.CmdCalibrateGyro;
 import copter.commands.CmdCalibrateMagnet;
+import copter.commands.CmdSetAltPid;
 import copter.commands.CmdSetMotorsGas;
+import copter.commands.CmdSetPitchPid;
+import copter.commands.CmdSetRollPid;
+import copter.commands.CmdSetYawPid;
 import copter.commands.CmdSwitchMotors;
 import helper.NumericDocument;
 import net.miginfocom.swing.MigLayout;
@@ -64,7 +68,7 @@ public class CopterCtrlPanel implements WindowListener
 				Settings.instance().setCopterIp(mtfCopterIp.getIpAddressString());
 				Settings.instance().setCopterCmdPort(Integer.parseInt(mtfCopterCmdPort.getText()));
 				Settings.instance().setCopterTelemetryPort(Integer.parseInt(mtfCopterTelemetryPort.getText()));
-				Settings.instance().setmCopterVideoPort(Integer.parseInt(mtfCopterVideoPort.getText()));
+				Settings.instance().setCopterVideoPort(Integer.parseInt(mtfCopterVideoPort.getText()));
 				
 				Locale locale = (Locale)mcbLocale.getSelectedItem();
 				Locale.setDefault(locale);
@@ -192,8 +196,43 @@ public class CopterCtrlPanel implements WindowListener
 			pnlOkCancel.add(btnOk,"grow,wrap");
 			pnlOkCancel.add(btnCancel,"grow");
 			
-			pnlSettings.add(pnlCalibration,"span,grow,wrap");
-			pnlSettings.add(pnlNet,"span,grow,wrap");
+			JPanel pnlYawPid = createPidPanel(
+					Text.get("YAW_PID"),
+					Settings.instance().getYawPidEnabled(),
+					Settings.instance().getYawPidKp(),
+					Settings.instance().getYawPidKi(),
+					Settings.instance().getYawPidKd());
+			
+			JPanel pnlPitchPid = createPidPanel(
+					Text.get("PITCH_PID"),
+					Settings.instance().getPitchPidEnabled(),
+					Settings.instance().getPitchPidKp(),
+					Settings.instance().getPitchPidKi(),
+					Settings.instance().getPitchPidKd());
+			
+			JPanel pnlRollPid = createPidPanel(
+					Text.get("ROLL_PID"),
+					Settings.instance().getRollPidEnabled(),
+					Settings.instance().getRollPidKp(),
+					Settings.instance().getRollPidKi(),
+					Settings.instance().getRollPidKd());
+			
+			JPanel pnlAltPid = createPidPanel(
+					Text.get("ALT_PID"),
+					Settings.instance().getAltPidEnabled(),
+					Settings.instance().getAltPidKp(),
+					Settings.instance().getAltPidKi(),
+					Settings.instance().getAltPidKd());
+			
+			pnlSettings.add(pnlCalibration,"spanx 2, spany 2,grow");
+			
+			pnlSettings.add(pnlYawPid,"grow");
+			pnlSettings.add(pnlPitchPid,"grow,wrap");
+			
+			pnlSettings.add(pnlRollPid,"grow");
+			pnlSettings.add(pnlAltPid,"grow,wrap");
+			
+			pnlSettings.add(pnlNet,"spanx 2,grow,wrap");
 			pnlSettings.add(new JLabel(Text.get("LANGUAGE")));
 			pnlSettings.add(mcbLocale, "span,w 80!,wrap");
 			
@@ -203,9 +242,29 @@ public class CopterCtrlPanel implements WindowListener
 			this.setLayout(new MigLayout("","[grow]","[grow]"));
 			this.setTitle(Text.get("SETTINGS"));
 			this.setResizable(true);
-			this.setSize(310, 450);
+			this.setSize(575, 530);
 			this.setLocationRelativeTo(null);
 			this.add(pnlSettings, "grow");
+		}
+		
+		private JPanel createPidPanel(String title, boolean enabled, float kp, float ki, float kd)
+		{
+			JPanel pnl = new JPanel(new MigLayout());
+			pnl.setBorder(new TitledBorder(title));
+			
+			DecimalFormat fmt = new DecimalFormat();
+			fmt.setMaximumFractionDigits(3);
+			
+			pnl.add(new JLabel(Text.get("PID_ENABLED")));
+			pnl.add(new JLabel(": " + Boolean.toString(enabled)),"wrap");
+			pnl.add(new JLabel("Kp"));
+			pnl.add(new JLabel(": " + fmt.format(kp)),"wrap");
+			pnl.add(new JLabel("Ki"));
+			pnl.add(new JLabel(": " + fmt.format(ki)),"wrap");
+			pnl.add(new JLabel("Kd"));
+			pnl.add(new JLabel(": " + fmt.format(kd)),"wrap");
+			
+			return pnl;
 		}
 	}
 	
@@ -229,12 +288,16 @@ public class CopterCtrlPanel implements WindowListener
 		}
 	}
 	
-	private class OnMotorsEnabled implements ItemListener
+	public static class OnMotorsEnabled implements ItemListener
 	{
 		@Override
 		public void itemStateChanged(ItemEvent e)
 		{
-			boolean state = mcbMotorsEnabled.isSelected();
+			boolean state = false;
+			
+			if(e.getStateChange() == ItemEvent.SELECTED)
+				state = true;
+			
 			CopterCommander.instance().addCmd(new CmdSwitchMotors(state));	
 		}
 	}
@@ -279,10 +342,10 @@ public class CopterCtrlPanel implements WindowListener
 				
 				CopterCommander.instance().addCmd(mCmdSetGas);
 				
-				mgas0.setGas(value);
-				mgas1.setGas(value);
-				mgas2.setGas(value);
-				mgas3.setGas(value);
+				mgas0.setGas(value,true);
+				mgas1.setGas(value,true);
+				mgas2.setGas(value,true);
+				mgas3.setGas(value,true);
 	        }
 		}	
 	}
@@ -324,17 +387,25 @@ public class CopterCtrlPanel implements WindowListener
 			mlbWifiLevel.setText(Integer.toString(CopterTelemetry.instance().getWifiLevel()));
 			
 			float yaw = CopterTelemetry.instance().getYaw();
+			float yawTarget = CopterTelemetry.instance().getYawPidTarget();
 			float pitch = CopterTelemetry.instance().getPitch();
+			float pitchTarget = CopterTelemetry.instance().getPitchPidTarget();
 			float roll = CopterTelemetry.instance().getRoll();
+			float rollTarget = CopterTelemetry.instance().getRollPidTarget();
 			
-			mlbYawValue.setText(fmt1.format(yaw));
-			mlbPitchValue.setText(fmt1.format(pitch));
-			mlbRollValue.setText(fmt1.format(roll));
+			mlbYawValue.setText(fmt1.format(yaw) + "/" + fmt1.format(yawTarget));
+			mlbPitchValue.setText(fmt1.format(pitch) + "/" + fmt1.format(pitchTarget));
+			mlbRollValue.setText(fmt1.format(roll) + "/" + fmt1.format(rollTarget));
 			mlbHeading.setText(fmt1.format(CopterTelemetry.instance().getHeading()));
 			
 			mlbYaw.setIcon(rotateImageIcon(mIconYaw, yaw));
 			mlbPitch.setIcon(rotateImageIcon(mIconPitch, pitch));
 			mlbRoll.setIcon(rotateImageIcon(mIconRoll, roll));
+
+			mgas0.setGas(CopterTelemetry.instance().getMotorGas0(),false);
+			mgas1.setGas(CopterTelemetry.instance().getMotorGas1(),false);
+			mgas2.setGas(CopterTelemetry.instance().getMotorGas2(),false);
+			mgas3.setGas(CopterTelemetry.instance().getMotorGas3(),false);
 		}
 	}
 	
@@ -364,15 +435,67 @@ public class CopterCtrlPanel implements WindowListener
 			
 			CmdCalibrateMagnet cmd3 = new CmdCalibrateMagnet(dx,dy,dz,sx,sy,sz);
 			
+			boolean enabled = Settings.instance().getYawPidEnabled();
+			float kp = Settings.instance().getYawPidKp();
+			float ki = Settings.instance().getYawPidKi();
+			float kd = Settings.instance().getYawPidKd();
+			CmdSetYawPid cmd4 = new CmdSetYawPid(enabled,kp,ki,kd);
+			
+			enabled = Settings.instance().getPitchPidEnabled();
+			kp = Settings.instance().getPitchPidKp();
+			ki = Settings.instance().getPitchPidKi();
+			kd = Settings.instance().getPitchPidKd();
+			CmdSetPitchPid cmd5 = new CmdSetPitchPid(enabled,kp,ki,kd);
+			
+			enabled = Settings.instance().getRollPidEnabled();
+			kp = Settings.instance().getRollPidKp();
+			ki = Settings.instance().getRollPidKi();
+			kd = Settings.instance().getRollPidKd();
+			CmdSetRollPid cmd6 = new CmdSetRollPid(enabled,kp,ki,kd);
+			
+			enabled = Settings.instance().getAltPidEnabled();
+			kp = Settings.instance().getAltPidKp();
+			ki = Settings.instance().getAltPidKi();
+			kd = Settings.instance().getAltPidKd();
+			CmdSetAltPid cmd7 = new CmdSetAltPid(enabled,kp,ki,kd);
+			
 			CopterCommander.instance().addCmd(cmd1);
 			CopterCommander.instance().addCmd(cmd1);
 			CopterCommander.instance().addCmd(cmd1);
+			
 			CopterCommander.instance().addCmd(cmd2);
 			CopterCommander.instance().addCmd(cmd2);
 			CopterCommander.instance().addCmd(cmd2);
+			
 			CopterCommander.instance().addCmd(cmd3);
 			CopterCommander.instance().addCmd(cmd3);
 			CopterCommander.instance().addCmd(cmd3);
+			
+			CopterCommander.instance().addCmd(cmd4);
+			CopterCommander.instance().addCmd(cmd4);
+			CopterCommander.instance().addCmd(cmd4);
+			
+			CopterCommander.instance().addCmd(cmd5);
+			CopterCommander.instance().addCmd(cmd5);
+			CopterCommander.instance().addCmd(cmd5);
+			
+			CopterCommander.instance().addCmd(cmd6);
+			CopterCommander.instance().addCmd(cmd6);
+			CopterCommander.instance().addCmd(cmd6);
+			
+			CopterCommander.instance().addCmd(cmd7);
+			CopterCommander.instance().addCmd(cmd7);
+			CopterCommander.instance().addCmd(cmd7);
+		}
+	}
+	
+	private class OnBtnPID implements ActionListener
+	{
+		@Override
+		public void actionPerformed(ActionEvent e)
+		{
+			PIDlg dlg = new PIDlg(mMainFrame);
+			dlg.setVisible(true);
 		}
 	}
 
@@ -440,9 +563,13 @@ public class CopterCtrlPanel implements WindowListener
 		JButton btnSensors = new JButton(Text.get("SENSORS"));
 		btnSensors.addActionListener(new OnBtnSensors());
 		
+		JButton btnPID = new JButton(Text.get("PID"));
+		btnPID.addActionListener(new OnBtnPID());
+		
 		pnlSettings.add(btnConnect);
 		pnlSettings.add(btnSensors);
 		pnlSettings.add(btnSettings);
+		pnlSettings.add(btnPID);
 
 		return pnlSettings;
 	}
@@ -484,12 +611,36 @@ public class CopterCtrlPanel implements WindowListener
 		mgas3.addChangeListener(new MotorGasChanged(3));
 		mgasCom.addChangeListener(new SetAllMotorGas());
 		
+		MotorGasSlider yawSlider = new MotorGasSlider("Yaw");
+		yawSlider.setGas(128,false);
+		yawSlider.addChangeListener(new ChangeListener()
+		{
+			int oldValue;
+			
+			@Override
+			public void stateChanged(ChangeEvent e)
+			{
+				JSlider sl = (JSlider)e.getSource();
+				if(!sl.getValueIsAdjusting())
+				{
+					int dx = sl.getValue() - oldValue;
+					oldValue = sl.getValue();
+					
+					mgas0.setGas(mgas0.getGas() + dx,true);
+					mgas2.setGas(mgas2.getGas() + dx,true);
+					mgas1.setGas(mgas1.getGas() - dx,true);
+					mgas3.setGas(mgas3.getGas() - dx,true);
+				}
+			}
+		});
+		
 		pnlMotorsGas.add(mcbMotorsEnabled,"span,wrap");
-		pnlMotorsGas.add(mgas0);
-		pnlMotorsGas.add(mgas1);
-		pnlMotorsGas.add(mgas2);
-		pnlMotorsGas.add(mgas3);
-		pnlMotorsGas.add(mgasCom);
+		pnlMotorsGas.add(mgas0,"grow");
+		pnlMotorsGas.add(mgas1,"grow");
+		pnlMotorsGas.add(mgas2,"grow");
+		pnlMotorsGas.add(mgas3,"grow");
+		pnlMotorsGas.add(mgasCom,"grow");
+		pnlMotorsGas.add(yawSlider,"grow");
 		
 		return pnlMotorsGas;
 	}
@@ -526,11 +677,11 @@ public class CopterCtrlPanel implements WindowListener
 		pnlStatus.add(new JLabel(mIconWifi));
 		pnlStatus.add(mlbWifiLevel,"w 30!");
 		pnlStatus.add(mlbYaw);
-		pnlStatus.add(mlbYawValue,"w 60!");
+		pnlStatus.add(mlbYawValue,"w 80!");
 		pnlStatus.add(mlbPitch);
-		pnlStatus.add(mlbPitchValue,"w 60!");
+		pnlStatus.add(mlbPitchValue,"w 80!");
 		pnlStatus.add(mlbRoll);
-		pnlStatus.add(mlbRollValue,"w 60!");
+		pnlStatus.add(mlbRollValue,"w 80!");
 		pnlStatus.add(new JLabel(mIconHeading));
 		pnlStatus.add(mlbHeading,"w 30!");
 		

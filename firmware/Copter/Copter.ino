@@ -9,12 +9,14 @@
 #include "I2Cdev.h"
 #include "MPU6050_6Axis_MotionApps20.h"
 #include "QMC5883L.h"
+#include "FastPID.h"
 
 // Install:
 // 1. https://github.com/enjoyneering/ESP8266-I2C-Driver
 // 2. https://github.com/porrey/MAX1704X
 // 3. https://github.com/jrowberg/i2cdevlib
 // 4. https://github.com/dthain/QMC5883L
+// 5. https://github.com/mike-matera/FastPID
 
 /* Apparently M_PI isn't available in all environments. */
 #ifndef M_PI
@@ -47,10 +49,15 @@ unsigned int cmdPort = 4210;          // local port to receive commands
 unsigned int telemetryPort = 4211;    // local port to send telemetry data
 
 #define LED_FLASH_TIME 1000
-#define TELEMETRY_UPDATE_TIME 250
+#define TELEMETRY_UPDATE_TIME 20
+#define PID_UPDATE_TIME 20
 
 #define MOTORS_PWM_FREQ           1024UL
 #define MOTORS_PWM_RESOLUTION     256UL
+
+#define TELEMETRY_MAX_PACKET_SIZE 255
+
+#define PID_HZ 1000.0/PID_UPDATE_TIME
 
 //---------------------------------------------------------------
 // COMMANDS
@@ -62,6 +69,11 @@ unsigned int telemetryPort = 4211;    // local port to send telemetry data
 #define CMD_SET_MAGNET_CALIB      104
 #define CMD_SELF_CALIB_ACCEL      105
 #define CMD_SELF_CALIB_GYRO       106
+#define CMD_SET_YAW_PID           107
+#define CMD_SET_PITCH_PID         108
+#define CMD_SET_ROLL_PID          109
+#define CMD_SET_ALT_PID           110
+#define CMD_SET_YPR               111
 
 //---------------------------------------------------------------
 // VARIABLES
@@ -69,12 +81,15 @@ unsigned int telemetryPort = 4211;    // local port to send telemetry data
 const char* ssid = STASSID;
 const char* password = STAPSK;
 
-#define TELEMETRY_MAX_PACKET_SIZE 255
 WiFiUDP udp;
 uint8_t udpPacket[TELEMETRY_MAX_PACKET_SIZE];             // buffer for udp packets
 
+uint32_t telemetryTimer;
 uint32_t ledTimer;
+uint32_t pidTimer;
 
+//--------------------------------------------------------------------
+// PWM
 uint8_t escOutputs = 0;             // state of outputs of escaper, one bit per channel
 
 uint8_t motorsEnabled = 0;
@@ -83,8 +98,7 @@ volatile uint32_t pwmStepTicks;              // ticks of timer to next pwm step
 volatile uint32_t pwmPeriodTicks;            // ticks of timer per one pwm period
 volatile uint32_t pwmNext = 0;               // ticks to next pwm timer interrupt
 volatile uint32_t pwmTimer = 0;              // count ticks from pwm period start
-
-volatile uint32_t telemetryTimer = 0;
+//-------------------------------------------------------------------
 
 MPU6050 mpu;      // 6-axis sensor
 
@@ -96,16 +110,14 @@ int16_t accel[3];           // Accel raw data
 int16_t accelOffset[3];     // Accel calibration offsets
 int16_t gyro[3];            // Gyro raw data
 int16_t gyroOffset[3];      // Gyro calibration offset
-float ypr[3];               // Yaw, Pitch, Roll
+float ypr[3];               // Yaw, Pitch, Roll (radians)
 Quaternion q;               // [w, x, y, z] quaternion container
 VectorFloat gravity;        // [x, y, z] gravity vector
 
 class Motor
 {
-  private:
-    uint32_t gas;                     // count of pwm steps (use setMotorGas function)
-  
   public:
+    int32_t gas;                     // count of pwm steps (use setGas function to change value)
     uint32_t gasTicks;                // count of ticks of pwm timer
     uint8_t setMask;                  // bit mask to update escOutput
     uint8_t clearMask;                // bit mask to update escOutput
@@ -126,13 +138,28 @@ class Motor
       
     }
 
-    void setGas(uint32_t value)
+    void setGas(int32_t value)
     {
-      if(value > MOTORS_PWM_RESOLUTION)
+      int32_t limit = int32_t(MOTORS_PWM_RESOLUTION);
+      if(value > limit)
         value = MOTORS_PWM_RESOLUTION;
+      if(value < -limit)
+        value = -limit;
 
       gas = value;
-      gasTicks = gas * pwmStepTicks;
+      
+      if(gas > 0)
+        gasTicks = gas * pwmStepTicks;
+      else
+        gasTicks = 0;
+    }
+
+    void addGas(int32_t dx)
+    {
+      int32_t value = gas;
+      value += dx;
+
+      setGas(value);
     }
 } motor[4];
 
@@ -174,6 +201,34 @@ class MyQMC5883L: public QMC5883L
   }
 } mag;
 
+class MyFastPID: public FastPID
+{
+  public:
+    float kp;
+    float ki;
+    float kd;
+    float target;
+    uint8_t enabled;
+  public:
+    MyFastPID(float kp=0, float ki=0, float kd=0, float hz=1.f, int bits=16, bool sign=false): FastPID(kp, ki, kd, hz, bits, sign)
+    {
+      this->kp = kp;
+      this->ki = ki;
+      this->kd = kd;
+      enabled = 0;
+      target = 0;
+    }
+
+    bool setCoefficients(float kp, float ki, float kd, float hz)
+    {
+      this->kp = kp;
+      this->ki = ki;
+      this->kd = kd;
+
+      return FastPID::setCoefficients(kp,ki,kd,hz);
+    }
+} yawPid, pitchPid, rollPid, altPid;
+
 //--------------------------------------------------------------
 // FUNCTIONS
 
@@ -189,7 +244,10 @@ int16_t calcHeading(int16_t mx, int16_t my);
 void readMpuOffsets();
 
 //void processEspLed();
+void processCommand();
+void processTelemetry();
 void processSensors();
+void processPids();
 
 //--------------------------------------------------------------
 // INTERRUPTS
@@ -346,16 +404,12 @@ void setup()
   timer1_enable(TIM_DIV16, TIM_EDGE, TIM_SINGLE);
   timer1_write(pwmPeriodTicks);
 
-  // Process timers
-
+  // Setup program timers
   ledTimer = millis();
   telemetryTimer = millis();
+  pidTimer = millis();
   
-  /*Serial.println("pwmPeriodTicks = ");
-  Serial.print(pwmPeriodTicks);
-  Serial.print(", pwmStepTicks = ");
-  Serial.println(pwmStepTicks);*/
-
+  // Setup sensors
   Wire.begin();
   Wire.setClock(200000UL);    // there are bad SCL fronts if set greater
 
@@ -369,6 +423,20 @@ void setup()
 
   readMpuOffsets();
 
+  // Setup PIDs
+  yawPid.setCoefficients(0,0,0,PID_HZ);
+  yawPid.setOutputConfig(5,true);
+
+  pitchPid.setCoefficients(0,0,0,PID_HZ);
+  pitchPid.setOutputConfig(5,true);
+
+  rollPid.setCoefficients(0,0,0,PID_HZ);
+  rollPid.setOutputConfig(5,true);
+
+  altPid.setCoefficients(0,0,0,PID_HZ);
+  altPid.setOutputConfig(5,true);
+  
+  // Start WiFi
   udp.begin(cmdPort);
 }
 
@@ -376,111 +444,25 @@ void loop()
 {
   ArduinoOTA.handle();
 
-  if(udp.parsePacket())
-  {
-    udp.read(udpPacket, sizeof(udpPacket));
-    host = udp.remoteIP();
-    uint8_t cmd = udpPacket[0];
-    int16_t dx,dy,dz;
-    switch(cmd)
-    {
-      case CMD_SWITCH_MOTORS:
-        motorsEnabled = udpPacket[1];
-        break;
-      case CMD_SET_MOTORS_GAS:
-        for(uint8_t i = 0; i < 4; i++)
-          motor[i].setGas(udpPacket[1 + i]);
-        break;
-      case CMD_SET_ACCEL_OFFSET:
-        memcpy(&dx, &udpPacket[1], sizeof(int16_t));
-        memcpy(&dy, &udpPacket[3], sizeof(int16_t));
-        memcpy(&dz, &udpPacket[5], sizeof(int16_t));
-        mpu.setXAccelOffset(dx);
-        mpu.setYAccelOffset(dy);
-        mpu.setZAccelOffset(dz);
-        readMpuOffsets();
-        break;
-      case CMD_SET_GYRO_OFFSET:
-        memcpy(&dx, &udpPacket[1], sizeof(int16_t));
-        memcpy(&dy, &udpPacket[3], sizeof(int16_t));
-        memcpy(&dz, &udpPacket[5], sizeof(int16_t));
-        mpu.setXGyroOffset(dx);
-        mpu.setYGyroOffset(dy);
-        mpu.setZGyroOffset(dz);
-        readMpuOffsets();
-        break;
-      case CMD_SET_MAGNET_CALIB:
-        memcpy(&magnetOffset[0], &udpPacket[1], 6);
-        memcpy(&magnetScale[0], &udpPacket[7], 12);
-        break;
-      case CMD_SELF_CALIB_ACCEL:
-        mpu.CalibrateAccel(6);
-        readMpuOffsets();
-        break;
-      case CMD_SELF_CALIB_GYRO:
-        mpu.CalibrateGyro(6);
-        readMpuOffsets();
-        break;
-    }
-  }
-
   if(millis() - telemetryTimer >= TELEMETRY_UPDATE_TIME && host.isSet())
   {
     telemetryTimer = millis();
+    processTelemetry();
+  }
 
-    uint16_t pos = 0;
-    // Read battery voltage
-    uint16_t val16 = FuelGauge.adc();
-    pos = writeTelemetryPacket(pos, udpPacket, &val16, sizeof(val16));
-    // Read battery percent
-    val16 = FuelGauge.readRegister16(REGISTER_SOC);
-    pos = writeTelemetryPacket(pos, udpPacket, &val16, sizeof(val16));
-    // Read Wifi Level
-    int32_t val32 = WiFi.RSSI();
-    pos = writeTelemetryPacket(pos, udpPacket, &val32, sizeof(val32));
-    // IMU data
-    pos = writeTelemetryPacket(pos, udpPacket, &accel[0], sizeof(accel[0]));
-    pos = writeTelemetryPacket(pos, udpPacket, &accel[1], sizeof(accel[1]));
-    pos = writeTelemetryPacket(pos, udpPacket, &accel[2], sizeof(accel[2]));
-    pos = writeTelemetryPacket(pos, udpPacket, &gyro[0], sizeof(gyro[0]));
-    pos = writeTelemetryPacket(pos, udpPacket, &gyro[1], sizeof(gyro[1]));
-    pos = writeTelemetryPacket(pos, udpPacket, &gyro[2], sizeof(gyro[2]));
-    // Magnetometer data
-    pos = writeTelemetryPacket(pos, udpPacket, &magnet[0], sizeof(magnet[0]));
-    pos = writeTelemetryPacket(pos, udpPacket, &magnet[1], sizeof(magnet[1]));
-    pos = writeTelemetryPacket(pos, udpPacket, &magnet[2], sizeof(magnet[2]));
-    // Get IMU calibration settings
-    pos = writeTelemetryPacket(pos, udpPacket, &accelOffset[0], sizeof(accelOffset[0]));
-    pos = writeTelemetryPacket(pos, udpPacket, &accelOffset[1], sizeof(accelOffset[1]));
-    pos = writeTelemetryPacket(pos, udpPacket, &accelOffset[2], sizeof(accelOffset[2]));
-    pos = writeTelemetryPacket(pos, udpPacket, &gyroOffset[0], sizeof(gyroOffset[0]));
-    pos = writeTelemetryPacket(pos, udpPacket, &gyroOffset[1], sizeof(gyroOffset[1]));
-    pos = writeTelemetryPacket(pos, udpPacket, &gyroOffset[2], sizeof(gyroOffset[2]));
-    // Magnetometer calibration
-    pos = writeTelemetryPacket(pos, udpPacket, &magnetOffset[0], sizeof(magnetOffset[0]));
-    pos = writeTelemetryPacket(pos, udpPacket, &magnetOffset[1], sizeof(magnetOffset[1]));
-    pos = writeTelemetryPacket(pos, udpPacket, &magnetOffset[2], sizeof(magnetOffset[2]));
-    pos = writeTelemetryPacket(pos, udpPacket, &magnetScale[0], sizeof(magnetScale[0]));
-    pos = writeTelemetryPacket(pos, udpPacket, &magnetScale[1], sizeof(magnetScale[1]));
-    pos = writeTelemetryPacket(pos, udpPacket, &magnetScale[2], sizeof(magnetScale[2]));
-    // Yaw Pitch Roll
-    pos = writeTelemetryPacket(pos, udpPacket, &ypr[0], sizeof(float));
-    pos = writeTelemetryPacket(pos, udpPacket, &ypr[1], sizeof(float));
-    pos = writeTelemetryPacket(pos, udpPacket, &ypr[2], sizeof(float));
-    // Heading
-    pos = writeTelemetryPacket(pos, udpPacket, &heading, sizeof(heading));
-
-    udp.beginPacket(host, telemetryPort);
-    udp.write(udpPacket, pos);
-    udp.endPacket();
-
-    // About 1 millis to sent telemetry
-    //uint32_t tt = millis() - telemetryTimer;
-    //Serial.print("telemetry time = ");
-    //Serial.print(tt);
+  if(millis() - pidTimer >= PID_UPDATE_TIME)
+  {
+    pidTimer = millis();
+    uint32_t tt = millis();
+    processPids();
+    tt = millis() - tt;
+    Serial.print("pids time = ");
+    Serial.println(tt);
   }
 
   processSensors();   // Max 5 millis to process sensors
+  processCommand();
+  
   
   //Serial.print("pwmNext = "); Serial.println(pwmNext);
 
@@ -543,6 +525,271 @@ void readMagnet(int16_t *mx, int16_t *my, int16_t *mz)
     *mx = x;
     *my = y;
     *mz = z;
+  }
+}
+
+void processCommand()
+{
+  if(udp.parsePacket())
+  {
+    udp.read(udpPacket, sizeof(udpPacket));
+    host = udp.remoteIP();
+    uint8_t cmd = udpPacket[0];
+    int16_t dx,dy,dz;
+    float kp,ki,kd;
+    uint8_t enabled;
+    switch(cmd)
+    {
+      case CMD_SWITCH_MOTORS:
+        motorsEnabled = udpPacket[1];
+        if(motorsEnabled)
+        {
+          yawPid.target = ypr[0];
+          pitchPid.target = 0;
+          rollPid.target = 0;
+        }
+        break;
+      case CMD_SET_MOTORS_GAS:
+        for(uint8_t i = 0; i < 4; i++)
+          motor[i].setGas(udpPacket[1 + i]);
+        break;
+      case CMD_SET_ACCEL_OFFSET:
+        memcpy(&dx, &udpPacket[1], sizeof(int16_t));
+        memcpy(&dy, &udpPacket[3], sizeof(int16_t));
+        memcpy(&dz, &udpPacket[5], sizeof(int16_t));
+        mpu.setXAccelOffset(dx);
+        mpu.setYAccelOffset(dy);
+        mpu.setZAccelOffset(dz);
+        readMpuOffsets();
+        break;
+      case CMD_SET_GYRO_OFFSET:
+        memcpy(&dx, &udpPacket[1], sizeof(int16_t));
+        memcpy(&dy, &udpPacket[3], sizeof(int16_t));
+        memcpy(&dz, &udpPacket[5], sizeof(int16_t));
+        mpu.setXGyroOffset(dx);
+        mpu.setYGyroOffset(dy);
+        mpu.setZGyroOffset(dz);
+        readMpuOffsets();
+        break;
+      case CMD_SET_MAGNET_CALIB:
+        memcpy(&magnetOffset[0], &udpPacket[1], 6);
+        memcpy(&magnetScale[0], &udpPacket[7], 12);
+        break;
+      case CMD_SELF_CALIB_ACCEL:
+        mpu.CalibrateAccel(6);
+        readMpuOffsets();
+        break;
+      case CMD_SELF_CALIB_GYRO:
+        mpu.CalibrateGyro(6);
+        readMpuOffsets();
+        break;
+      case CMD_SET_YAW_PID:
+        enabled = udpPacket[1];
+        memcpy(&kp, &udpPacket[2], sizeof(kp));
+        memcpy(&ki, &udpPacket[2 + sizeof(kp)], sizeof(ki));
+        memcpy(&kd, &udpPacket[2 + sizeof(kp) + sizeof(ki)], sizeof(kd));
+        yawPid.enabled = enabled;
+        yawPid.setCoefficients(kp,ki,kd,PID_HZ);
+        break;
+      case CMD_SET_PITCH_PID:
+        enabled = udpPacket[1];
+        memcpy(&kp, &udpPacket[2], sizeof(kp));
+        memcpy(&ki, &udpPacket[2 + sizeof(kp)], sizeof(ki));
+        memcpy(&kd, &udpPacket[2 + sizeof(kp) + sizeof(ki)], sizeof(kd));
+        pitchPid.enabled = enabled;
+        pitchPid.setCoefficients(kp,ki,kd,PID_HZ);
+        break;
+      case CMD_SET_ROLL_PID:
+        enabled = udpPacket[1];
+        memcpy(&kp, &udpPacket[2], sizeof(kp));
+        memcpy(&ki, &udpPacket[2 + sizeof(kp)], sizeof(ki));
+        memcpy(&kd, &udpPacket[2 + sizeof(kp) + sizeof(ki)], sizeof(kd));
+        rollPid.enabled = enabled;
+        rollPid.setCoefficients(kp,ki,kd,PID_HZ);
+        break;
+      case CMD_SET_ALT_PID:
+        enabled = udpPacket[1];
+        memcpy(&kp, &udpPacket[2], sizeof(kp));
+        memcpy(&ki, &udpPacket[2 + sizeof(kp)], sizeof(ki));
+        memcpy(&kd, &udpPacket[2 + sizeof(kp) + sizeof(ki)], sizeof(kd));
+        altPid.enabled = enabled;
+        altPid.setCoefficients(kp,ki,kd,PID_HZ);
+        break;
+      case CMD_SET_YPR:
+        memcpy(&kp, &udpPacket[1], sizeof(kp));
+        memcpy(&ki, &udpPacket[1 + sizeof(kp)], sizeof(ki));
+        memcpy(&kd, &udpPacket[1 + sizeof(kp) + sizeof(ki)], sizeof(kd));
+        yawPid.target = kp;
+        pitchPid.target = ki;
+        rollPid.target = kd;
+        break;
+    }
+  }
+}
+
+void processTelemetry()
+{
+    uint16_t pos = 0;
+    // Read battery voltage
+    uint16_t val16 = FuelGauge.adc();
+    pos = writeTelemetryPacket(pos, udpPacket, &val16, sizeof(val16));
+    // Read battery percent
+    val16 = FuelGauge.readRegister16(REGISTER_SOC);
+    pos = writeTelemetryPacket(pos, udpPacket, &val16, sizeof(val16));
+    // Read Wifi Level
+    int32_t val32 = WiFi.RSSI();
+    pos = writeTelemetryPacket(pos, udpPacket, &val32, sizeof(val32));
+    // IMU data
+    pos = writeTelemetryPacket(pos, udpPacket, &accel[0], sizeof(accel[0]));
+    pos = writeTelemetryPacket(pos, udpPacket, &accel[1], sizeof(accel[1]));
+    pos = writeTelemetryPacket(pos, udpPacket, &accel[2], sizeof(accel[2]));
+    pos = writeTelemetryPacket(pos, udpPacket, &gyro[0], sizeof(gyro[0]));
+    pos = writeTelemetryPacket(pos, udpPacket, &gyro[1], sizeof(gyro[1]));
+    pos = writeTelemetryPacket(pos, udpPacket, &gyro[2], sizeof(gyro[2]));
+    // Magnetometer data
+    pos = writeTelemetryPacket(pos, udpPacket, &magnet[0], sizeof(magnet[0]));
+    pos = writeTelemetryPacket(pos, udpPacket, &magnet[1], sizeof(magnet[1]));
+    pos = writeTelemetryPacket(pos, udpPacket, &magnet[2], sizeof(magnet[2]));
+    // Get IMU calibration settings
+    pos = writeTelemetryPacket(pos, udpPacket, &accelOffset[0], sizeof(accelOffset[0]));
+    pos = writeTelemetryPacket(pos, udpPacket, &accelOffset[1], sizeof(accelOffset[1]));
+    pos = writeTelemetryPacket(pos, udpPacket, &accelOffset[2], sizeof(accelOffset[2]));
+    pos = writeTelemetryPacket(pos, udpPacket, &gyroOffset[0], sizeof(gyroOffset[0]));
+    pos = writeTelemetryPacket(pos, udpPacket, &gyroOffset[1], sizeof(gyroOffset[1]));
+    pos = writeTelemetryPacket(pos, udpPacket, &gyroOffset[2], sizeof(gyroOffset[2]));
+    // Magnetometer calibration
+    pos = writeTelemetryPacket(pos, udpPacket, &magnetOffset[0], sizeof(magnetOffset[0]));
+    pos = writeTelemetryPacket(pos, udpPacket, &magnetOffset[1], sizeof(magnetOffset[1]));
+    pos = writeTelemetryPacket(pos, udpPacket, &magnetOffset[2], sizeof(magnetOffset[2]));
+    pos = writeTelemetryPacket(pos, udpPacket, &magnetScale[0], sizeof(magnetScale[0]));
+    pos = writeTelemetryPacket(pos, udpPacket, &magnetScale[1], sizeof(magnetScale[1]));
+    pos = writeTelemetryPacket(pos, udpPacket, &magnetScale[2], sizeof(magnetScale[2]));
+    // Yaw Pitch Roll
+    pos = writeTelemetryPacket(pos, udpPacket, &ypr[0], sizeof(ypr[0]));
+    pos = writeTelemetryPacket(pos, udpPacket, &ypr[1], sizeof(ypr[1]));
+    pos = writeTelemetryPacket(pos, udpPacket, &ypr[2], sizeof(ypr[2]));
+    // Heading
+    pos = writeTelemetryPacket(pos, udpPacket, &heading, sizeof(heading));
+    // Yaw PID
+    pos = writeTelemetryPacket(pos, udpPacket, &yawPid.enabled, sizeof(yawPid.enabled));
+    pos = writeTelemetryPacket(pos, udpPacket, &yawPid.kp, sizeof(yawPid.kp));
+    pos = writeTelemetryPacket(pos, udpPacket, &yawPid.ki, sizeof(yawPid.ki));
+    pos = writeTelemetryPacket(pos, udpPacket, &yawPid.kd, sizeof(yawPid.kd));
+    pos = writeTelemetryPacket(pos, udpPacket, &yawPid.target, sizeof(yawPid.target));
+    // Pitch PID
+    pos = writeTelemetryPacket(pos, udpPacket, &pitchPid.enabled, sizeof(pitchPid.enabled));
+    pos = writeTelemetryPacket(pos, udpPacket, &pitchPid.kp, sizeof(pitchPid.kp));
+    pos = writeTelemetryPacket(pos, udpPacket, &pitchPid.ki, sizeof(pitchPid.ki));
+    pos = writeTelemetryPacket(pos, udpPacket, &pitchPid.kd, sizeof(pitchPid.kd));
+    pos = writeTelemetryPacket(pos, udpPacket, &pitchPid.target, sizeof(pitchPid.target));
+    // Roll PID
+    pos = writeTelemetryPacket(pos, udpPacket, &rollPid.enabled, sizeof(rollPid.enabled));
+    pos = writeTelemetryPacket(pos, udpPacket, &rollPid.kp, sizeof(rollPid.kp));
+    pos = writeTelemetryPacket(pos, udpPacket, &rollPid.ki, sizeof(rollPid.ki));
+    pos = writeTelemetryPacket(pos, udpPacket, &rollPid.kd, sizeof(rollPid.kd));
+    pos = writeTelemetryPacket(pos, udpPacket, &rollPid.target, sizeof(rollPid.target));
+    // Alt PID
+    pos = writeTelemetryPacket(pos, udpPacket, &altPid.enabled, sizeof(altPid.enabled));
+    pos = writeTelemetryPacket(pos, udpPacket, &altPid.kp, sizeof(altPid.kp));
+    pos = writeTelemetryPacket(pos, udpPacket, &altPid.ki, sizeof(altPid.ki));
+    pos = writeTelemetryPacket(pos, udpPacket, &altPid.kd, sizeof(altPid.kd));
+    pos = writeTelemetryPacket(pos, udpPacket, &altPid.target, sizeof(altPid.target));
+    // Motors
+    pos = writeTelemetryPacket(pos, udpPacket, &motorsEnabled, sizeof(motorsEnabled));
+    pos = writeTelemetryPacket(pos, udpPacket, &motor[0].gas, sizeof(motor[0].gas));
+    pos = writeTelemetryPacket(pos, udpPacket, &motor[1].gas, sizeof(motor[1].gas));
+    pos = writeTelemetryPacket(pos, udpPacket, &motor[2].gas, sizeof(motor[2].gas));
+    pos = writeTelemetryPacket(pos, udpPacket, &motor[3].gas, sizeof(motor[3].gas));
+    //
+
+    udp.beginPacket(host, telemetryPort);
+    udp.write(udpPacket, pos);
+    udp.endPacket();
+
+    // About 1 millis to sent telemetry
+    //uint32_t tt = millis() - telemetryTimer;
+    //Serial.print("telemetry time = ");
+    //Serial.print(tt);
+}
+
+void processPids()
+{
+  int16_t sp, fb;
+  int16_t dx;
+  
+  if(yawPid.enabled)
+  {
+    sp = int16_t(yawPid.target*1800.f/M_PI);
+    fb = int16_t(ypr[0]*1800.f/M_PI);
+    dx = yawPid.step(sp,fb);
+    motor[1].addGas(dx);
+    motor[3].addGas(dx);
+    motor[0].addGas(-dx);
+    motor[2].addGas(-dx);
+
+    /*
+    Serial.print("yaw = ");
+    Serial.println(ypr[0]);
+    Serial.print("sp = ");
+    Serial.println(sp);
+    Serial.print("fb = ");
+    Serial.println(fb);
+    Serial.print("yaw dx = ");
+    Serial.println(dx);
+    Serial.print("err = ");
+    Serial.println(yawPid.err());
+    */
+  }
+  else
+  {
+    yawPid.clear();
+  }
+
+  if(pitchPid.enabled)
+  {
+    sp = int16_t(pitchPid.target*1800.f/M_PI);
+    fb = int16_t(ypr[1]*1800.f/M_PI);
+    dx = pitchPid.step(sp,fb);
+    motor[1].addGas(dx);
+    motor[2].addGas(dx);
+    motor[0].addGas(-dx);
+    motor[3].addGas(-dx);
+  }
+  else
+  {
+    pitchPid.clear();
+  }
+
+  if(rollPid.enabled)
+  {
+    sp = int16_t(rollPid.target*1800.f/M_PI);
+    fb = int16_t(ypr[2]*1800.f/M_PI);
+    dx = rollPid.step(sp,fb);
+    motor[0].addGas(-dx);
+    motor[1].addGas(-dx);
+    motor[2].addGas(dx);
+    motor[3].addGas(dx);
+  }
+  else
+  {
+    rollPid.clear();
+  }
+
+  if(altPid.enabled)
+  {
+    sp = int16_t(altPid.target*100.f);
+    fb = 0;
+    dx = altPid.step(sp,fb);
+    /*
+    motor[0].addGas(dx);
+    motor[1].addGas(dx);
+    motor[2].addGas(dx);
+    motor[3].addGas(dx);
+    */
+  }
+  else
+  {
+    altPid.clear();
   }
 }
 

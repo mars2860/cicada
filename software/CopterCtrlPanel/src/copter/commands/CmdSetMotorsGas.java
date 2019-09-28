@@ -25,7 +25,15 @@ public class CmdSetMotorsGas extends AbstractCopterCmd
 	@Override
 	public byte[] getPacketData()
 	{
-		byte data[] = {(byte)this.getCode(), (byte)mgas0, (byte)mgas1, (byte)mgas2, (byte)mgas3};
+		int pos = 0;
+		byte data[] = new byte[17];
+		
+		pos = this.writeUint8(pos, data, this.mCmdCode);
+		pos = this.writeInt32(pos, data, mgas0);
+		pos = this.writeInt32(pos, data, mgas1);
+		pos = this.writeInt32(pos, data, mgas2);
+		pos = this.writeInt32(pos, data, mgas3);
+		
 		return data;
 	}
 	

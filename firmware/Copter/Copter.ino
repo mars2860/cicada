@@ -9,14 +9,14 @@
 #include "I2Cdev.h"
 #include "MPU6050_6Axis_MotionApps20.h"
 #include "QMC5883L.h"
-#include "FastPID.h"
+#include "AutoPID.h"
 
 // Install:
 // 1. https://github.com/enjoyneering/ESP8266-I2C-Driver
 // 2. https://github.com/porrey/MAX1704X
 // 3. https://github.com/jrowberg/i2cdevlib
 // 4. https://github.com/dthain/QMC5883L
-// 5. https://github.com/mike-matera/FastPID
+// 5. https://r-downing.github.io/AutoPID/#time-scaling-and-automatic-value-updating
 
 /* Apparently M_PI isn't available in all environments. */
 #ifndef M_PI
@@ -52,12 +52,10 @@ unsigned int telemetryPort = 4211;    // local port to send telemetry data
 #define TELEMETRY_UPDATE_TIME 20
 #define PID_UPDATE_TIME 20
 
-#define MOTORS_PWM_FREQ           1024UL
-#define MOTORS_PWM_RESOLUTION     256UL
+#define MOTORS_PWM_FREQ           1000UL
+#define MOTORS_PWM_RESOLUTION     1000UL
 
 #define TELEMETRY_MAX_PACKET_SIZE 255
-
-#define PID_HZ 1000.0/PID_UPDATE_TIME
 
 //---------------------------------------------------------------
 // COMMANDS
@@ -86,7 +84,6 @@ uint8_t udpPacket[TELEMETRY_MAX_PACKET_SIZE];             // buffer for udp pack
 
 uint32_t telemetryTimer;
 uint32_t ledTimer;
-uint32_t pidTimer;
 
 //--------------------------------------------------------------------
 // PWM
@@ -201,8 +198,17 @@ class MyQMC5883L: public QMC5883L
   }
 } mag;
 
-class MyFastPID: public FastPID
+class MyFastPID: public AutoPID
 {
+  protected:
+    double apInput;
+    double apSetpoint;
+    double apOutput;
+
+    void run()
+    {
+      return AutoPID::run();
+    }
   public:
     float kp;
     float ki;
@@ -210,22 +216,36 @@ class MyFastPID: public FastPID
     float target;
     uint8_t enabled;
   public:
-    MyFastPID(float kp=0, float ki=0, float kd=0, float hz=1.f, int bits=16, bool sign=false): FastPID(kp, ki, kd, hz, bits, sign)
+    MyFastPID(  float outMin=-float(MOTORS_PWM_RESOLUTION - 1),
+                float outMax=float(MOTORS_PWM_RESOLUTION),
+                float kp=0,
+                float ki=0,
+                float kd=0):
+                AutoPID(&this->apInput, &this->apSetpoint, &this->apOutput,outMin,outMax,kp,ki,kd)
     {
       this->kp = kp;
       this->ki = ki;
       this->kd = kd;
       enabled = 0;
       target = 0;
+      this->setTimeStep(PID_UPDATE_TIME);
     }
 
-    bool setCoefficients(float kp, float ki, float kd, float hz)
+    void setGains(double kp, double ki, double kd)
     {
       this->kp = kp;
       this->ki = ki;
       this->kd = kd;
 
-      return FastPID::setCoefficients(kp,ki,kd,hz);
+      return AutoPID::setGains(kp,ki,kd);
+    }
+
+    float run(float input)
+    {
+      apSetpoint = target;
+      apInput = input;
+      AutoPID::run();
+      return (float)apOutput;
     }
 } yawPid, pitchPid, rollPid, altPid;
 
@@ -389,12 +409,12 @@ void setup()
     motor[i].setNum(i);
 
   // Setup PWM
-  pwmStepTicks = (10000000UL / (2*MOTORS_PWM_FREQ*MOTORS_PWM_RESOLUTION)); // (1 MHz / freq*res) / 0.2 us (timer step)
+  pwmStepTicks = (10000000UL / (2*MOTORS_PWM_FREQ*MOTORS_PWM_RESOLUTION)); // (1 / freq*res) / 0.2 us (timer step)
   
   if(pwmStepTicks == 0)
     pwmStepTicks = 1;
 
-  pwmPeriodTicks = (10000000UL / (2*MOTORS_PWM_FREQ));   // (1 MHz / freq) / 0.2 us (timer step)
+  pwmPeriodTicks = (10000000UL / (2*MOTORS_PWM_FREQ));   // (1 / freq) / 0.2 us (timer step)
 
   if(pwmPeriodTicks == 0)
     pwmPeriodTicks = 1;
@@ -407,7 +427,6 @@ void setup()
   // Setup program timers
   ledTimer = millis();
   telemetryTimer = millis();
-  pidTimer = millis();
   
   // Setup sensors
   Wire.begin();
@@ -424,17 +443,6 @@ void setup()
   readMpuOffsets();
 
   // Setup PIDs
-  yawPid.setCoefficients(0,0,0,PID_HZ);
-  yawPid.setOutputConfig(5,true);
-
-  pitchPid.setCoefficients(0,0,0,PID_HZ);
-  pitchPid.setOutputConfig(5,true);
-
-  rollPid.setCoefficients(0,0,0,PID_HZ);
-  rollPid.setOutputConfig(5,true);
-
-  altPid.setCoefficients(0,0,0,PID_HZ);
-  altPid.setOutputConfig(5,true);
   
   // Start WiFi
   udp.begin(cmdPort);
@@ -444,22 +452,8 @@ void loop()
 {
   ArduinoOTA.handle();
 
-  if(millis() - telemetryTimer >= TELEMETRY_UPDATE_TIME && host.isSet())
-  {
-    telemetryTimer = millis();
-    processTelemetry();
-  }
-
-  if(millis() - pidTimer >= PID_UPDATE_TIME)
-  {
-    pidTimer = millis();
-    uint32_t tt = millis();
-    processPids();
-    tt = millis() - tt;
-    Serial.print("pids time = ");
-    Serial.println(tt);
-  }
-
+  processTelemetry();
+  processPids();
   processSensors();   // Max 5 millis to process sensors
   processCommand();
   
@@ -536,6 +530,7 @@ void processCommand()
     host = udp.remoteIP();
     uint8_t cmd = udpPacket[0];
     int16_t dx,dy,dz;
+    int32_t t0,t1,t2,t3;
     float kp,ki,kd;
     uint8_t enabled;
     switch(cmd)
@@ -550,8 +545,14 @@ void processCommand()
         }
         break;
       case CMD_SET_MOTORS_GAS:
-        for(uint8_t i = 0; i < 4; i++)
-          motor[i].setGas(udpPacket[1 + i]);
+        memcpy(&t0, &udpPacket[1], sizeof(int32_t));
+        memcpy(&t1, &udpPacket[5], sizeof(int32_t));
+        memcpy(&t2, &udpPacket[9], sizeof(int32_t));
+        memcpy(&t3, &udpPacket[13], sizeof(int32_t));
+        motor[0].setGas(t0);
+        motor[1].setGas(t1);
+        motor[2].setGas(t2);
+        motor[3].setGas(t3);
         break;
       case CMD_SET_ACCEL_OFFSET:
         memcpy(&dx, &udpPacket[1], sizeof(int16_t));
@@ -589,7 +590,7 @@ void processCommand()
         memcpy(&ki, &udpPacket[2 + sizeof(kp)], sizeof(ki));
         memcpy(&kd, &udpPacket[2 + sizeof(kp) + sizeof(ki)], sizeof(kd));
         yawPid.enabled = enabled;
-        yawPid.setCoefficients(kp,ki,kd,PID_HZ);
+        yawPid.setGains(kp,ki,kd);
         break;
       case CMD_SET_PITCH_PID:
         enabled = udpPacket[1];
@@ -597,7 +598,7 @@ void processCommand()
         memcpy(&ki, &udpPacket[2 + sizeof(kp)], sizeof(ki));
         memcpy(&kd, &udpPacket[2 + sizeof(kp) + sizeof(ki)], sizeof(kd));
         pitchPid.enabled = enabled;
-        pitchPid.setCoefficients(kp,ki,kd,PID_HZ);
+        pitchPid.setGains(kp,ki,kd);
         break;
       case CMD_SET_ROLL_PID:
         enabled = udpPacket[1];
@@ -605,7 +606,7 @@ void processCommand()
         memcpy(&ki, &udpPacket[2 + sizeof(kp)], sizeof(ki));
         memcpy(&kd, &udpPacket[2 + sizeof(kp) + sizeof(ki)], sizeof(kd));
         rollPid.enabled = enabled;
-        rollPid.setCoefficients(kp,ki,kd,PID_HZ);
+        rollPid.setGains(kp,ki,kd);
         break;
       case CMD_SET_ALT_PID:
         enabled = udpPacket[1];
@@ -613,7 +614,7 @@ void processCommand()
         memcpy(&ki, &udpPacket[2 + sizeof(kp)], sizeof(ki));
         memcpy(&kd, &udpPacket[2 + sizeof(kp) + sizeof(ki)], sizeof(kd));
         altPid.enabled = enabled;
-        altPid.setCoefficients(kp,ki,kd,PID_HZ);
+        altPid.setGains(kp,ki,kd);
         break;
       case CMD_SET_YPR:
         memcpy(&kp, &udpPacket[1], sizeof(kp));
@@ -629,103 +630,112 @@ void processCommand()
 
 void processTelemetry()
 {
-    uint16_t pos = 0;
-    // Read battery voltage
-    uint16_t val16 = FuelGauge.adc();
-    pos = writeTelemetryPacket(pos, udpPacket, &val16, sizeof(val16));
-    // Read battery percent
-    val16 = FuelGauge.readRegister16(REGISTER_SOC);
-    pos = writeTelemetryPacket(pos, udpPacket, &val16, sizeof(val16));
-    // Read Wifi Level
-    int32_t val32 = WiFi.RSSI();
-    pos = writeTelemetryPacket(pos, udpPacket, &val32, sizeof(val32));
-    // IMU data
-    pos = writeTelemetryPacket(pos, udpPacket, &accel[0], sizeof(accel[0]));
-    pos = writeTelemetryPacket(pos, udpPacket, &accel[1], sizeof(accel[1]));
-    pos = writeTelemetryPacket(pos, udpPacket, &accel[2], sizeof(accel[2]));
-    pos = writeTelemetryPacket(pos, udpPacket, &gyro[0], sizeof(gyro[0]));
-    pos = writeTelemetryPacket(pos, udpPacket, &gyro[1], sizeof(gyro[1]));
-    pos = writeTelemetryPacket(pos, udpPacket, &gyro[2], sizeof(gyro[2]));
-    // Magnetometer data
-    pos = writeTelemetryPacket(pos, udpPacket, &magnet[0], sizeof(magnet[0]));
-    pos = writeTelemetryPacket(pos, udpPacket, &magnet[1], sizeof(magnet[1]));
-    pos = writeTelemetryPacket(pos, udpPacket, &magnet[2], sizeof(magnet[2]));
-    // Get IMU calibration settings
-    pos = writeTelemetryPacket(pos, udpPacket, &accelOffset[0], sizeof(accelOffset[0]));
-    pos = writeTelemetryPacket(pos, udpPacket, &accelOffset[1], sizeof(accelOffset[1]));
-    pos = writeTelemetryPacket(pos, udpPacket, &accelOffset[2], sizeof(accelOffset[2]));
-    pos = writeTelemetryPacket(pos, udpPacket, &gyroOffset[0], sizeof(gyroOffset[0]));
-    pos = writeTelemetryPacket(pos, udpPacket, &gyroOffset[1], sizeof(gyroOffset[1]));
-    pos = writeTelemetryPacket(pos, udpPacket, &gyroOffset[2], sizeof(gyroOffset[2]));
-    // Magnetometer calibration
-    pos = writeTelemetryPacket(pos, udpPacket, &magnetOffset[0], sizeof(magnetOffset[0]));
-    pos = writeTelemetryPacket(pos, udpPacket, &magnetOffset[1], sizeof(magnetOffset[1]));
-    pos = writeTelemetryPacket(pos, udpPacket, &magnetOffset[2], sizeof(magnetOffset[2]));
-    pos = writeTelemetryPacket(pos, udpPacket, &magnetScale[0], sizeof(magnetScale[0]));
-    pos = writeTelemetryPacket(pos, udpPacket, &magnetScale[1], sizeof(magnetScale[1]));
-    pos = writeTelemetryPacket(pos, udpPacket, &magnetScale[2], sizeof(magnetScale[2]));
-    // Yaw Pitch Roll
-    pos = writeTelemetryPacket(pos, udpPacket, &ypr[0], sizeof(ypr[0]));
-    pos = writeTelemetryPacket(pos, udpPacket, &ypr[1], sizeof(ypr[1]));
-    pos = writeTelemetryPacket(pos, udpPacket, &ypr[2], sizeof(ypr[2]));
-    // Heading
-    pos = writeTelemetryPacket(pos, udpPacket, &heading, sizeof(heading));
-    // Yaw PID
-    pos = writeTelemetryPacket(pos, udpPacket, &yawPid.enabled, sizeof(yawPid.enabled));
-    pos = writeTelemetryPacket(pos, udpPacket, &yawPid.kp, sizeof(yawPid.kp));
-    pos = writeTelemetryPacket(pos, udpPacket, &yawPid.ki, sizeof(yawPid.ki));
-    pos = writeTelemetryPacket(pos, udpPacket, &yawPid.kd, sizeof(yawPid.kd));
-    pos = writeTelemetryPacket(pos, udpPacket, &yawPid.target, sizeof(yawPid.target));
-    // Pitch PID
-    pos = writeTelemetryPacket(pos, udpPacket, &pitchPid.enabled, sizeof(pitchPid.enabled));
-    pos = writeTelemetryPacket(pos, udpPacket, &pitchPid.kp, sizeof(pitchPid.kp));
-    pos = writeTelemetryPacket(pos, udpPacket, &pitchPid.ki, sizeof(pitchPid.ki));
-    pos = writeTelemetryPacket(pos, udpPacket, &pitchPid.kd, sizeof(pitchPid.kd));
-    pos = writeTelemetryPacket(pos, udpPacket, &pitchPid.target, sizeof(pitchPid.target));
-    // Roll PID
-    pos = writeTelemetryPacket(pos, udpPacket, &rollPid.enabled, sizeof(rollPid.enabled));
-    pos = writeTelemetryPacket(pos, udpPacket, &rollPid.kp, sizeof(rollPid.kp));
-    pos = writeTelemetryPacket(pos, udpPacket, &rollPid.ki, sizeof(rollPid.ki));
-    pos = writeTelemetryPacket(pos, udpPacket, &rollPid.kd, sizeof(rollPid.kd));
-    pos = writeTelemetryPacket(pos, udpPacket, &rollPid.target, sizeof(rollPid.target));
-    // Alt PID
-    pos = writeTelemetryPacket(pos, udpPacket, &altPid.enabled, sizeof(altPid.enabled));
-    pos = writeTelemetryPacket(pos, udpPacket, &altPid.kp, sizeof(altPid.kp));
-    pos = writeTelemetryPacket(pos, udpPacket, &altPid.ki, sizeof(altPid.ki));
-    pos = writeTelemetryPacket(pos, udpPacket, &altPid.kd, sizeof(altPid.kd));
-    pos = writeTelemetryPacket(pos, udpPacket, &altPid.target, sizeof(altPid.target));
-    // Motors
-    pos = writeTelemetryPacket(pos, udpPacket, &motorsEnabled, sizeof(motorsEnabled));
-    pos = writeTelemetryPacket(pos, udpPacket, &motor[0].gas, sizeof(motor[0].gas));
-    pos = writeTelemetryPacket(pos, udpPacket, &motor[1].gas, sizeof(motor[1].gas));
-    pos = writeTelemetryPacket(pos, udpPacket, &motor[2].gas, sizeof(motor[2].gas));
-    pos = writeTelemetryPacket(pos, udpPacket, &motor[3].gas, sizeof(motor[3].gas));
-    //
+  if(millis() - telemetryTimer < TELEMETRY_UPDATE_TIME || !host.isSet())
+    return;
+    
+  telemetryTimer = millis();
+    
+  uint16_t pos = 0;
+  // Read battery voltage
+  uint16_t val16 = FuelGauge.adc();
+  pos = writeTelemetryPacket(pos, udpPacket, &val16, sizeof(val16));
+  // Read battery percent
+  val16 = FuelGauge.readRegister16(REGISTER_SOC);
+  pos = writeTelemetryPacket(pos, udpPacket, &val16, sizeof(val16));
+  // Read Wifi Level
+  int32_t val32 = WiFi.RSSI();
+  pos = writeTelemetryPacket(pos, udpPacket, &val32, sizeof(val32));
+  // IMU data
+  pos = writeTelemetryPacket(pos, udpPacket, &accel[0], sizeof(accel[0]));
+  pos = writeTelemetryPacket(pos, udpPacket, &accel[1], sizeof(accel[1]));
+  pos = writeTelemetryPacket(pos, udpPacket, &accel[2], sizeof(accel[2]));
+  pos = writeTelemetryPacket(pos, udpPacket, &gyro[0], sizeof(gyro[0]));
+  pos = writeTelemetryPacket(pos, udpPacket, &gyro[1], sizeof(gyro[1]));
+  pos = writeTelemetryPacket(pos, udpPacket, &gyro[2], sizeof(gyro[2]));
+  // Magnetometer data
+  pos = writeTelemetryPacket(pos, udpPacket, &magnet[0], sizeof(magnet[0]));
+  pos = writeTelemetryPacket(pos, udpPacket, &magnet[1], sizeof(magnet[1]));
+  pos = writeTelemetryPacket(pos, udpPacket, &magnet[2], sizeof(magnet[2]));
+  // Get IMU calibration settings
+  pos = writeTelemetryPacket(pos, udpPacket, &accelOffset[0], sizeof(accelOffset[0]));
+  pos = writeTelemetryPacket(pos, udpPacket, &accelOffset[1], sizeof(accelOffset[1]));
+  pos = writeTelemetryPacket(pos, udpPacket, &accelOffset[2], sizeof(accelOffset[2]));
+  pos = writeTelemetryPacket(pos, udpPacket, &gyroOffset[0], sizeof(gyroOffset[0]));
+  pos = writeTelemetryPacket(pos, udpPacket, &gyroOffset[1], sizeof(gyroOffset[1]));
+  pos = writeTelemetryPacket(pos, udpPacket, &gyroOffset[2], sizeof(gyroOffset[2]));
+  // Magnetometer calibration
+  pos = writeTelemetryPacket(pos, udpPacket, &magnetOffset[0], sizeof(magnetOffset[0]));
+  pos = writeTelemetryPacket(pos, udpPacket, &magnetOffset[1], sizeof(magnetOffset[1]));
+  pos = writeTelemetryPacket(pos, udpPacket, &magnetOffset[2], sizeof(magnetOffset[2]));
+  pos = writeTelemetryPacket(pos, udpPacket, &magnetScale[0], sizeof(magnetScale[0]));
+  pos = writeTelemetryPacket(pos, udpPacket, &magnetScale[1], sizeof(magnetScale[1]));
+  pos = writeTelemetryPacket(pos, udpPacket, &magnetScale[2], sizeof(magnetScale[2]));
+  // Yaw Pitch Roll
+  pos = writeTelemetryPacket(pos, udpPacket, &ypr[0], sizeof(ypr[0]));
+  pos = writeTelemetryPacket(pos, udpPacket, &ypr[1], sizeof(ypr[1]));
+  pos = writeTelemetryPacket(pos, udpPacket, &ypr[2], sizeof(ypr[2]));
+  // Heading
+  pos = writeTelemetryPacket(pos, udpPacket, &heading, sizeof(heading));
+  // Yaw PID
+  pos = writeTelemetryPacket(pos, udpPacket, &yawPid.enabled, sizeof(yawPid.enabled));
+  pos = writeTelemetryPacket(pos, udpPacket, &yawPid.kp, sizeof(yawPid.kp));
+  pos = writeTelemetryPacket(pos, udpPacket, &yawPid.ki, sizeof(yawPid.ki));
+  pos = writeTelemetryPacket(pos, udpPacket, &yawPid.kd, sizeof(yawPid.kd));
+  pos = writeTelemetryPacket(pos, udpPacket, &yawPid.target, sizeof(yawPid.target));
+  // Pitch PID
+  pos = writeTelemetryPacket(pos, udpPacket, &pitchPid.enabled, sizeof(pitchPid.enabled));
+  pos = writeTelemetryPacket(pos, udpPacket, &pitchPid.kp, sizeof(pitchPid.kp));
+  pos = writeTelemetryPacket(pos, udpPacket, &pitchPid.ki, sizeof(pitchPid.ki));
+  pos = writeTelemetryPacket(pos, udpPacket, &pitchPid.kd, sizeof(pitchPid.kd));
+  pos = writeTelemetryPacket(pos, udpPacket, &pitchPid.target, sizeof(pitchPid.target));
+  // Roll PID
+  pos = writeTelemetryPacket(pos, udpPacket, &rollPid.enabled, sizeof(rollPid.enabled));
+  pos = writeTelemetryPacket(pos, udpPacket, &rollPid.kp, sizeof(rollPid.kp));
+  pos = writeTelemetryPacket(pos, udpPacket, &rollPid.ki, sizeof(rollPid.ki));
+  pos = writeTelemetryPacket(pos, udpPacket, &rollPid.kd, sizeof(rollPid.kd));
+  pos = writeTelemetryPacket(pos, udpPacket, &rollPid.target, sizeof(rollPid.target));
+  // Alt PID
+  pos = writeTelemetryPacket(pos, udpPacket, &altPid.enabled, sizeof(altPid.enabled));
+  pos = writeTelemetryPacket(pos, udpPacket, &altPid.kp, sizeof(altPid.kp));
+  pos = writeTelemetryPacket(pos, udpPacket, &altPid.ki, sizeof(altPid.ki));
+  pos = writeTelemetryPacket(pos, udpPacket, &altPid.kd, sizeof(altPid.kd));
+  pos = writeTelemetryPacket(pos, udpPacket, &altPid.target, sizeof(altPid.target));
+  // Motors
+  pos = writeTelemetryPacket(pos, udpPacket, &motorsEnabled, sizeof(motorsEnabled));
+  pos = writeTelemetryPacket(pos, udpPacket, &motor[0].gas, sizeof(motor[0].gas));
+  pos = writeTelemetryPacket(pos, udpPacket, &motor[1].gas, sizeof(motor[1].gas));
+  pos = writeTelemetryPacket(pos, udpPacket, &motor[2].gas, sizeof(motor[2].gas));
+  pos = writeTelemetryPacket(pos, udpPacket, &motor[3].gas, sizeof(motor[3].gas));
+  //
 
-    udp.beginPacket(host, telemetryPort);
-    udp.write(udpPacket, pos);
-    udp.endPacket();
+  udp.beginPacket(host, telemetryPort);
+  udp.write(udpPacket, pos);
+  udp.endPacket();
 
-    // About 1 millis to sent telemetry
-    //uint32_t tt = millis() - telemetryTimer;
-    //Serial.print("telemetry time = ");
-    //Serial.print(tt);
+  // About 1 millis to sent telemetry
+  //uint32_t tt = millis() - telemetryTimer;
+  //Serial.print("telemetry time = ");
+  //Serial.print(tt);
 }
 
 void processPids()
 {
-  int16_t sp, fb;
-  int16_t dx;
+  float dg = 0;
+  float mg[4] = {0,0,0,0};  // Motors gas
   
   if(yawPid.enabled)
   {
-    sp = int16_t(yawPid.target*1800.f/M_PI);
-    fb = int16_t(ypr[0]*1800.f/M_PI);
-    dx = yawPid.step(sp,fb);
-    motor[1].addGas(dx);
+    dg = yawPid.run(ypr[0]);
+    
+    mg[1] += dg;
+    mg[3] += dg;
+    mg[0] -= dg;
+    mg[2] -= dg;
+    
+    /*motor[1].addGas(dx);
     motor[3].addGas(dx);
     motor[0].addGas(-dx);
-    motor[2].addGas(-dx);
+    motor[2].addGas(-dx);*/
 
     /*
     Serial.print("yaw = ");
@@ -742,44 +752,51 @@ void processPids()
   }
   else
   {
-    yawPid.clear();
+    yawPid.stop();
   }
 
   if(pitchPid.enabled)
   {
-    sp = int16_t(pitchPid.target*1800.f/M_PI);
-    fb = int16_t(ypr[1]*1800.f/M_PI);
-    dx = pitchPid.step(sp,fb);
+    dg = pitchPid.run(ypr[1]);
+
+    mg[1] += dg;
+    mg[2] += dg;
+    mg[0] -= dg;
+    mg[3] -= dg;
+    /*
     motor[1].addGas(dx);
     motor[2].addGas(dx);
     motor[0].addGas(-dx);
-    motor[3].addGas(-dx);
+    motor[3].addGas(-dx);*/
   }
   else
   {
-    pitchPid.clear();
+    pitchPid.stop();
   }
 
   if(rollPid.enabled)
   {
-    sp = int16_t(rollPid.target*1800.f/M_PI);
-    fb = int16_t(ypr[2]*1800.f/M_PI);
-    dx = rollPid.step(sp,fb);
+    dg = rollPid.run(ypr[2]);
+    
+    mg[0] -= dg;
+    mg[1] -= dg;
+    mg[2] += dg;
+    mg[3] += dg;
+
+    /*
     motor[0].addGas(-dx);
     motor[1].addGas(-dx);
     motor[2].addGas(dx);
-    motor[3].addGas(dx);
+    motor[3].addGas(dx);*/
   }
   else
   {
-    rollPid.clear();
+    rollPid.stop();
   }
 
   if(altPid.enabled)
   {
-    sp = int16_t(altPid.target*100.f);
-    fb = 0;
-    dx = altPid.step(sp,fb);
+    altPid.run(0);
     /*
     motor[0].addGas(dx);
     motor[1].addGas(dx);
@@ -789,7 +806,13 @@ void processPids()
   }
   else
   {
-    altPid.clear();
+    altPid.stop();
+  }
+
+  if(yawPid.enabled | pitchPid.enabled | rollPid.enabled | altPid.enabled)
+  {
+    for(uint8_t i = 0; i < 4; i++)
+      motor[i].addGas(mg[i]/4.f);
   }
 }
 

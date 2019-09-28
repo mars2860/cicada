@@ -13,6 +13,9 @@ public class MotorGasSlider extends javax.swing.JPanel
 {
 	private static final long serialVersionUID = -4207784842035696255L;
 	
+	public static final int MIN_GAS = 0;
+	public static final int MAX_GAS = 1000;
+	
 	private JSlider mSlider;
 	private JLabel mlbGas;
 	private JLabel mlbGasPercent;
@@ -66,7 +69,7 @@ public class MotorGasSlider extends javax.swing.JPanel
 	{
 		this.setLayout(new MigLayout("insets 0 0 0 0","[30!, center]","[][grow]"));
 		
-		mSlider = new JSlider(JSlider.VERTICAL, 0, 255, 0);
+		mSlider = new JSlider(JSlider.VERTICAL, MIN_GAS, MAX_GAS, 0);
 		mlbGas = new JLabel();
 		mlbGasPercent = new JLabel();
 		

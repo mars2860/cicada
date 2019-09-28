@@ -612,7 +612,7 @@ public class CopterCtrlPanel implements WindowListener
 		mgasCom.addChangeListener(new SetAllMotorGas());
 		
 		MotorGasSlider yawSlider = new MotorGasSlider("Yaw");
-		yawSlider.setGas(128,false);
+		yawSlider.setGas((MotorGasSlider.MIN_GAS + MotorGasSlider.MAX_GAS)/2,false);
 		yawSlider.addChangeListener(new ChangeListener()
 		{
 			int oldValue;

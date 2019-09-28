@@ -24,6 +24,16 @@ public abstract class AbstractCopterCmd
 		return pos;
 	}
 	
+	protected int writeInt32(int pos, byte data[], int value)
+	{
+		data[pos++] = (byte)(value & 0xFF);
+		data[pos++] = (byte)((value >>> 8) & 0xFF);
+		data[pos++] = (byte)((value >>> 16) & 0xFF);
+		data[pos++] = (byte)((value >>> 24) & 0xFF);
+		
+		return pos;
+	}
+	
 	protected int writeUint8(int pos, byte data[], int value)
 	{
 		data[pos++] = (byte)(value & 0xFF);

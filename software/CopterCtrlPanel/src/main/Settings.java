@@ -57,7 +57,8 @@ public class Settings
 	private float mAltPidKp;
 	private float mAltPidKi;
 	private float mAltPidKd;
-	
+	private int mTelemetryPeriod;
+	private int mPidPeriod;
 	
 	private Settings()
 	{
@@ -101,6 +102,8 @@ public class Settings
 		prop.setProperty("PitchPidKd", Float.toString(mPitchPidKd));
 		prop.setProperty("RollPidKd", Float.toString(mRollPidKd));
 		prop.setProperty("AltPidKd", Float.toString(mAltPidKd));
+		prop.setProperty("TelemetryPeriod", Integer.toString(mTelemetryPeriod));
+		prop.setProperty("PidPeriod", Integer.toString(mPidPeriod));
 		
 		try
 		{
@@ -232,6 +235,12 @@ public class Settings
 			
 			value = prop.getProperty("AltPidKd", Float.toString(0));
 			mAltPidKd = Float.parseFloat(value);
+			
+			value = prop.getProperty("TelemetryPeriod", Integer.toString(100));
+			mTelemetryPeriod = Integer.parseInt(value);
+			
+			value = prop.getProperty("PidPeriod", Integer.toString(20));
+			mPidPeriod = Integer.parseInt(value);
 		}
 		catch (FileNotFoundException e)
 		{
@@ -561,5 +570,25 @@ public class Settings
 	public void setAltPidKd(float kd)
 	{
 		this.mAltPidKd = kd;
+	}
+	
+	public void setTelemetryPeriod(int period)
+	{
+		mTelemetryPeriod = period;
+	}
+	
+	public int getTelemetryPeriod()
+	{
+		return mTelemetryPeriod;
+	}
+	
+	public void setPidPeriod(int period)
+	{
+		mPidPeriod = period;
+	}
+	
+	public int getPidPeriod()
+	{
+		return mPidPeriod;
 	}
 }

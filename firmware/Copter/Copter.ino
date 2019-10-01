@@ -49,11 +49,11 @@ unsigned int cmdPort = 4210;          // local port to receive commands
 unsigned int telemetryPort = 4211;    // local port to send telemetry data
 
 #define LED_FLASH_TIME 1000
-#define TELEMETRY_UPDATE_TIME 20
-#define PID_UPDATE_TIME 20
+#define DEFAULT_TELEMETRY_PERIOD  100
+#define DEFAULT_PID_PERIOD        20
 
 #define MOTORS_PWM_FREQ           1000UL
-#define MOTORS_PWM_RESOLUTION     1000UL
+#define MOTORS_PWM_RESOLUTION     5000UL
 
 #define TELEMETRY_MAX_PACKET_SIZE 255
 
@@ -72,6 +72,8 @@ unsigned int telemetryPort = 4211;    // local port to send telemetry data
 #define CMD_SET_ROLL_PID          109
 #define CMD_SET_ALT_PID           110
 #define CMD_SET_YPR               111
+#define CMD_SET_PERIODS           112
+#define CMD_ENABLE_STABILIZATION  113
 
 //---------------------------------------------------------------
 // VARIABLES
@@ -83,6 +85,9 @@ WiFiUDP udp;
 uint8_t udpPacket[TELEMETRY_MAX_PACKET_SIZE];             // buffer for udp packets
 
 uint32_t telemetryTimer;
+uint32_t telemetryPeriod = DEFAULT_TELEMETRY_PERIOD;
+uint32_t pidPeriod = DEFAULT_PID_PERIOD;
+
 uint32_t ledTimer;
 
 //--------------------------------------------------------------------
@@ -110,6 +115,7 @@ int16_t gyroOffset[3];      // Gyro calibration offset
 float ypr[3];               // Yaw, Pitch, Roll (radians)
 Quaternion q;               // [w, x, y, z] quaternion container
 VectorFloat gravity;        // [x, y, z] gravity vector
+uint8_t enStabilization = 1;  // Stabilization is enabled
 
 class Motor
 {
@@ -139,7 +145,7 @@ class Motor
     {
       int32_t limit = int32_t(MOTORS_PWM_RESOLUTION);
       if(value > limit)
-        value = MOTORS_PWM_RESOLUTION;
+        value = limit;
       if(value < -limit)
         value = -limit;
 
@@ -198,7 +204,7 @@ class MyQMC5883L: public QMC5883L
   }
 } mag;
 
-class MyFastPID: public AutoPID
+class MyPID: public AutoPID
 {
   protected:
     double apInput;
@@ -216,19 +222,19 @@ class MyFastPID: public AutoPID
     float target;
     uint8_t enabled;
   public:
-    MyFastPID(  float outMin=-float(MOTORS_PWM_RESOLUTION - 1),
-                float outMax=float(MOTORS_PWM_RESOLUTION),
-                float kp=0,
-                float ki=0,
-                float kd=0):
-                AutoPID(&this->apInput, &this->apSetpoint, &this->apOutput,outMin,outMax,kp,ki,kd)
+    MyPID(  float outMin=-float(MOTORS_PWM_RESOLUTION),
+            float outMax=float(MOTORS_PWM_RESOLUTION),
+            float kp=0,
+            float ki=0,
+            float kd=0):
+            AutoPID(&this->apInput, &this->apSetpoint, &this->apOutput,outMin,outMax,kp,ki,kd)
     {
       this->kp = kp;
       this->ki = ki;
       this->kd = kd;
       enabled = 0;
       target = 0;
-      this->setTimeStep(PID_UPDATE_TIME);
+      this->setTimeStep(pidPeriod);
     }
 
     void setGains(double kp, double ki, double kd)
@@ -240,8 +246,17 @@ class MyFastPID: public AutoPID
       return AutoPID::setGains(kp,ki,kd);
     }
 
-    float run(float input)
+    float run(float input, bool correctAngle = false)
     {
+      if(correctAngle)
+      {
+        float error = target - input;
+        if(error > M_PI)
+          input += 2.f*M_PI;
+        else if(error < -M_PI)
+          input -= 2.f*M_PI;
+      }
+      
       apSetpoint = target;
       apInput = input;
       AutoPID::run();
@@ -300,11 +315,15 @@ void ICACHE_RAM_ATTR onTimerISR()
     }
   }
 
-  // Update timer
-  timer1_write(pwmNext);
+  // there is a bug in core, when next timer value less 2 then next timer interrupt will come over ~2secs
+  if(pwmNext < 3)
+    pwmNext = 3;
 
   // Update outputs
   escaperUpdate(escOutputs);
+
+  // Update timer
+  timer1_write(pwmNext);
 }
 
 void setup()
@@ -624,13 +643,28 @@ void processCommand()
         pitchPid.target = ki;
         rollPid.target = kd;
         break;
+      case CMD_SET_PERIODS:
+        memcpy(&telemetryPeriod, &udpPacket[1], sizeof(telemetryPeriod));
+        memcpy(&pidPeriod, &udpPacket[1 + sizeof(telemetryPeriod)], sizeof(pidPeriod));
+        if(telemetryPeriod < 1)
+          telemetryPeriod = 1;
+        if(pidPeriod < 1)
+          pidPeriod = 1;
+        yawPid.setTimeStep(pidPeriod);
+        pitchPid.setTimeStep(pidPeriod);
+        rollPid.setTimeStep(pidPeriod);
+        altPid.setTimeStep(pidPeriod);
+        break;
+      case CMD_ENABLE_STABILIZATION:
+        enStabilization = udpPacket[1];
+        break;
     }
   }
 }
 
 void processTelemetry()
 {
-  if(millis() - telemetryTimer < TELEMETRY_UPDATE_TIME || !host.isSet())
+  if(millis() - telemetryTimer < telemetryPeriod || !host.isSet())
     return;
     
   telemetryTimer = millis();
@@ -706,7 +740,11 @@ void processTelemetry()
   pos = writeTelemetryPacket(pos, udpPacket, &motor[1].gas, sizeof(motor[1].gas));
   pos = writeTelemetryPacket(pos, udpPacket, &motor[2].gas, sizeof(motor[2].gas));
   pos = writeTelemetryPacket(pos, udpPacket, &motor[3].gas, sizeof(motor[3].gas));
-  //
+  // Periods
+  pos = writeTelemetryPacket(pos, udpPacket, &telemetryPeriod, sizeof(telemetryPeriod));
+  pos = writeTelemetryPacket(pos, udpPacket, &pidPeriod, sizeof(pidPeriod));
+  // Stabilization
+  pos = writeTelemetryPacket(pos, udpPacket, &enStabilization, sizeof(enStabilization));
 
   udp.beginPacket(host, telemetryPort);
   udp.write(udpPacket, pos);
@@ -724,8 +762,8 @@ void processPids()
   float mg[4] = {0,0,0,0};  // Motors gas
   
   if(yawPid.enabled)
-  {
-    dg = yawPid.run(ypr[0]);
+  {  
+    dg = yawPid.run(ypr[0],true);
     
     mg[1] += dg;
     mg[3] += dg;
@@ -757,7 +795,7 @@ void processPids()
 
   if(pitchPid.enabled)
   {
-    dg = pitchPid.run(ypr[1]);
+    dg = pitchPid.run(ypr[1],true);
 
     mg[1] += dg;
     mg[2] += dg;
@@ -776,7 +814,7 @@ void processPids()
 
   if(rollPid.enabled)
   {
-    dg = rollPid.run(ypr[2]);
+    dg = rollPid.run(ypr[2],true);
     
     mg[0] -= dg;
     mg[1] -= dg;
@@ -809,10 +847,11 @@ void processPids()
     altPid.stop();
   }
 
-  if(yawPid.enabled | pitchPid.enabled | rollPid.enabled | altPid.enabled)
+  if(enStabilization && (yawPid.enabled | pitchPid.enabled | rollPid.enabled | altPid.enabled))
   {
     for(uint8_t i = 0; i < 4; i++)
-      motor[i].addGas(mg[i]/4.f);
+      motor[i].setGas(mg[i]);//motor[i].setGas(mg[i]/4.f);
+      
   }
 }
 

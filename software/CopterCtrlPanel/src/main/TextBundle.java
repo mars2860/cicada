@@ -29,6 +29,7 @@ public class TextBundle extends ListResourceBundle
             
             {"MOTORS", "Motors"},
             {"MOTORS_ENABLED", "Motors enabled"},
+            {"STABILIZATION_ENABLED","Stabilization"},
             {"GAS", "Gas"},
             
             {"CONNECT", "Connect"},
@@ -43,6 +44,8 @@ public class TextBundle extends ListResourceBundle
             {"STOP", "STOP"},
             {"NET", "Net"},
             {"CALIBRATION", "Calibration"},
+            {"UPDATE_PERIODS", "Update Periods"},
+            {"TELEMETRY", "Telemetry"},
             
             {"ALARMS", "Alarms"},
             {"COLLECT_DATA", "Collect Data"},

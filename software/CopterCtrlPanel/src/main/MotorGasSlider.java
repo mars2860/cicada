@@ -14,7 +14,7 @@ public class MotorGasSlider extends javax.swing.JPanel
 	private static final long serialVersionUID = -4207784842035696255L;
 	
 	public static final int MIN_GAS = 0;
-	public static final int MAX_GAS = 1000;
+	public static final int MAX_GAS = 5000;
 	
 	private JSlider mSlider;
 	private JLabel mlbGas;
@@ -67,7 +67,7 @@ public class MotorGasSlider extends javax.swing.JPanel
 	
 	private void createVertical(String name)
 	{
-		this.setLayout(new MigLayout("insets 0 0 0 0","[30!, center]","[][grow]"));
+		this.setLayout(new MigLayout("insets 0 0 0 0","[30!, center]","[][grow][][]"));
 		
 		mSlider = new JSlider(JSlider.VERTICAL, MIN_GAS, MAX_GAS, 0);
 		mlbGas = new JLabel();
@@ -80,14 +80,14 @@ public class MotorGasSlider extends javax.swing.JPanel
 		mSlider.setValue(0);
 		
 		this.add(new JLabel(name),"wrap");
-		this.add(mSlider,"growy,wrap");
+		this.add(mSlider,"grow,wrap");
 		this.add(mlbGas,"wrap");
 		this.add(mlbGasPercent);
 	}
 	
 	private void createHorizontal(String name)
 	{
-		this.setLayout(new MigLayout("insets 0 0 0 0","[][grow]","[center]"));
+		this.setLayout(new MigLayout("insets 0 0 0 0","[][grow][][]","[center]"));
 		
 		mSlider = new JSlider(JSlider.HORIZONTAL, 0, 255, 0);
 		mlbGas = new JLabel();

@@ -85,6 +85,9 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 	private int mMotorGas1;
 	private int mMotorGas2;
 	private int mMotorGas3;
+	private int mTelemetryPeriod;
+	private int mPidPeriod;
+	private int mStabilizationEnabled;
 	
 	private CopterTelemetry()
 	{
@@ -790,6 +793,42 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 		
 		return result;
 	}
+	
+	public int getTelemetryPeriod()
+	{
+		int result;
+		
+		synchronized(objDataSync)
+		{
+			result = mTelemetryPeriod;
+		}
+		
+		return result;
+	}
+	
+	public int getPidPeriod()
+	{
+		int result;
+		
+		synchronized(objDataSync)
+		{
+			result = mPidPeriod;
+		}
+		
+		return result;
+	}
+	
+	public boolean getStabilizationEnabled()
+	{
+		boolean result;
+		
+		synchronized(objDataSync)
+		{
+			result = (mStabilizationEnabled > 0)?true:false;
+		}
+		
+		return result;
+	}
 
 	@Override
 	public void run()
@@ -883,6 +922,11 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 						mMotorGas1 = this.getInt32t(receivePacket);
 						mMotorGas2 = this.getInt32t(receivePacket);
 						mMotorGas3 = this.getInt32t(receivePacket);
+						// Periods
+						mTelemetryPeriod = this.getInt32t(receivePacket);
+						mPidPeriod = this.getInt32t(receivePacket);
+						// Stabilization
+						mStabilizationEnabled = this.getUint8t(receivePacket);
 					}
 
 					this.setChanged();

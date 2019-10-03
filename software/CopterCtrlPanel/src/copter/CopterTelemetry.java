@@ -59,7 +59,7 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 	private float mYaw;
 	private float mPitch;
 	private float mRoll;
-	private int mHeading;
+	private float mHeading;
 	private int mYawPidEnabled;
 	private float mYawPidKp;
 	private float mYawPidKi;
@@ -88,6 +88,10 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 	private int mTelemetryPeriod;
 	private int mPidPeriod;
 	private int mStabilizationEnabled;
+	private float mYawPidOutput;
+	private float mPitchPidOutput;
+	private float mRollPidOutput;
+	private int mLoopTime;
 	
 	private CopterTelemetry()
 	{
@@ -467,13 +471,13 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 		return result;
 	}
 	
-	public int getHeading()
+	public float getHeading()
 	{
-		int result = 0;
+		float result = 0;
 		
 		synchronized(objDataSync)
 		{
-			result = mHeading;
+			result = (float)Math.toDegrees(mHeading);
 		}
 		
 		return result;
@@ -829,6 +833,54 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 		
 		return result;
 	}
+	
+	public float getYawPidOutput()
+	{
+		float result;
+		
+		synchronized(objDataSync)
+		{
+			result = mYawPidOutput;
+		}
+		
+		return result;
+	}
+	
+	public float getPitchPidOutput()
+	{
+		float result;
+		
+		synchronized(objDataSync)
+		{
+			result = mPitchPidOutput;
+		}
+		
+		return result;
+	}
+	
+	public float getRollPidOutput()
+	{
+		float result;
+		
+		synchronized(objDataSync)
+		{
+			result = mRollPidOutput;
+		}
+		
+		return result;
+	}
+	
+	public int getLoopTime()
+	{
+		int result;
+		
+		synchronized(objDataSync)
+		{
+			result = mLoopTime;
+		}
+		
+		return result;
+	}
 
 	@Override
 	public void run()
@@ -891,7 +943,7 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 						mPitch = this.getFloat(receivePacket);
 						mRoll = this.getFloat(receivePacket);
 						// Heading
-						mHeading = this.getInt16t(receivePacket);
+						mHeading = this.getFloat(receivePacket);
 						// Yaw Pid
 						mYawPidEnabled = this.getUint8t(receivePacket);
 						mYawPidKp = this.getFloat(receivePacket);
@@ -927,6 +979,12 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 						mPidPeriod = this.getInt32t(receivePacket);
 						// Stabilization
 						mStabilizationEnabled = this.getUint8t(receivePacket);
+						// PIDs output
+						mYawPidOutput = this.getFloat(receivePacket);
+						mPitchPidOutput = this.getFloat(receivePacket);
+						mRollPidOutput = this.getFloat(receivePacket);
+						// Loop time
+						mLoopTime = this.getInt32t(receivePacket);
 					}
 
 					this.setChanged();

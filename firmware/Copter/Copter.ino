@@ -9,7 +9,8 @@
 #include "I2Cdev.h"
 #include "MPU6050_6Axis_MotionApps20.h"
 #include "QMC5883L.h"
-#include "AutoPID.h"
+//#include "AutoPID.h"
+#include "PID_v1.h"
 
 // Install:
 // 1. https://github.com/enjoyneering/ESP8266-I2C-Driver
@@ -17,6 +18,8 @@
 // 3. https://github.com/jrowberg/i2cdevlib
 // 4. https://github.com/dthain/QMC5883L
 // 5. https://r-downing.github.io/AutoPID/#time-scaling-and-automatic-value-updating
+// https://github.com/br3ttb/Arduino-PID-Library/
+// 6. https://github.com/adafruit/Adafruit_BMP280_Library
 
 /* Apparently M_PI isn't available in all environments. */
 #ifndef M_PI
@@ -88,6 +91,9 @@ uint32_t telemetryTimer;
 uint32_t telemetryPeriod = DEFAULT_TELEMETRY_PERIOD;
 uint32_t pidPeriod = DEFAULT_PID_PERIOD;
 
+uint32_t loopTime;
+uint32_t loopTimer;
+
 uint32_t ledTimer;
 
 //--------------------------------------------------------------------
@@ -107,7 +113,7 @@ MPU6050 mpu;      // 6-axis sensor
 int16_t magnet[3];          // Magnetometer calibrated data
 int16_t magnetOffset[3] = {0,0,0};    // Magnetometer hard-iron calibration offset
 float magnetScale[3] = {1.f,1.f,1.f}; // Magnetometer soft-iron calibration scales
-int16_t heading;            // Heading to magnetic north
+float heading;              // Heading to magnetic north
 int16_t accel[3];           // Accel raw data
 int16_t accelOffset[3];     // Accel calibration offsets
 int16_t gyro[3];            // Gyro raw data
@@ -116,6 +122,7 @@ float ypr[3];               // Yaw, Pitch, Roll (radians)
 Quaternion q;               // [w, x, y, z] quaternion container
 VectorFloat gravity;        // [x, y, z] gravity vector
 uint8_t enStabilization = 1;  // Stabilization is enabled
+int32_t baseGas = 0;        // Base gas level for motor (doesn't affect if alt pid is on)
 
 class Motor
 {
@@ -204,22 +211,23 @@ class MyQMC5883L: public QMC5883L
   }
 } mag;
 
-class MyPID: public AutoPID
+class MyPID: public PID
 {
   protected:
     double apInput;
     double apSetpoint;
     double apOutput;
 
-    void run()
+    /*void run()
     {
       return AutoPID::run();
-    }
+    }*/
   public:
     float kp;
     float ki;
     float kd;
     float target;
+    float output;
     uint8_t enabled;
   public:
     MyPID(  float outMin=-float(MOTORS_PWM_RESOLUTION),
@@ -227,7 +235,8 @@ class MyPID: public AutoPID
             float kp=0,
             float ki=0,
             float kd=0):
-            AutoPID(&this->apInput, &this->apSetpoint, &this->apOutput,outMin,outMax,kp,ki,kd)
+            //AutoPID(&this->apInput, &this->apSetpoint, &this->apOutput,outMin,outMax,kp,ki,kd)
+            PID(&this->apInput, &this->apOutput, &this->apSetpoint, kp, ki, kd, DIRECT)
     {
       this->kp = kp;
       this->ki = ki;
@@ -235,6 +244,18 @@ class MyPID: public AutoPID
       enabled = 0;
       target = 0;
       this->setTimeStep(pidPeriod);
+      this->setOutputRange(outMin, outMax);
+      this->SetMode(AUTOMATIC);
+    }
+
+    void setOutputRange(double outMin, double outMax)
+    {
+      PID::SetOutputLimits(outMin,outMax);
+    }
+
+    void setTimeStep(unsigned long timeStep)
+    {
+      PID::SetSampleTime(timeStep);
     }
 
     void setGains(double kp, double ki, double kd)
@@ -242,8 +263,9 @@ class MyPID: public AutoPID
       this->kp = kp;
       this->ki = ki;
       this->kd = kd;
-
-      return AutoPID::setGains(kp,ki,kd);
+      
+      PID::SetTunings(kp,ki,kd);
+      //return AutoPID::setGains(kp,ki,kd);
     }
 
     float run(float input, bool correctAngle = false)
@@ -259,8 +281,18 @@ class MyPID: public AutoPID
       
       apSetpoint = target;
       apInput = input;
-      AutoPID::run();
-      return (float)apOutput;
+      
+      //AutoPID::run();
+      PID::Compute();
+
+      output = (float)apOutput;
+      return output;
+    }
+
+    void stop()
+    {
+      apInput = target;
+      PID::Compute();
     }
 } yawPid, pitchPid, rollPid, altPid;
 
@@ -274,7 +306,7 @@ uint16_t writeTelemetryPacket(uint16_t pos, byte *packet, void *value, size_t va
 // Reads magnetometer and applies calibration to raw data
 void readMagnet(int16_t *mx, int16_t *my, int16_t *mz);
 // Calcs heading to magnetic north
-int16_t calcHeading(int16_t mx, int16_t my);
+double calcHeading(int16_t mx, int16_t my);
 // Update stored MPU6050 calibration
 void readMpuOffsets();
 
@@ -469,6 +501,9 @@ void setup()
 
 void loop()
 {
+  loopTime = micros() - loopTimer;
+  loopTimer = micros();
+  
   ArduinoOTA.handle();
 
   processTelemetry();
@@ -568,6 +603,7 @@ void processCommand()
         memcpy(&t1, &udpPacket[5], sizeof(int32_t));
         memcpy(&t2, &udpPacket[9], sizeof(int32_t));
         memcpy(&t3, &udpPacket[13], sizeof(int32_t));
+        baseGas = (t0 + t1 + t2 + t3)/4;
         motor[0].setGas(t0);
         motor[1].setGas(t1);
         motor[2].setGas(t2);
@@ -745,6 +781,12 @@ void processTelemetry()
   pos = writeTelemetryPacket(pos, udpPacket, &pidPeriod, sizeof(pidPeriod));
   // Stabilization
   pos = writeTelemetryPacket(pos, udpPacket, &enStabilization, sizeof(enStabilization));
+  // PIDs output
+  pos = writeTelemetryPacket(pos, udpPacket, &yawPid.output, sizeof(yawPid.output));
+  pos = writeTelemetryPacket(pos, udpPacket, &pitchPid.output, sizeof(pitchPid.output));
+  pos = writeTelemetryPacket(pos, udpPacket, &rollPid.output, sizeof(rollPid.output));
+  // Loop Time
+  pos = writeTelemetryPacket(pos, udpPacket, &loopTime, sizeof(loopTime));
 
   udp.beginPacket(host, telemetryPort);
   udp.write(udpPacket, pos);
@@ -758,17 +800,28 @@ void processTelemetry()
 
 void processPids()
 {
+  if(!enStabilization | !motorsEnabled)
+    return;
+    
   float dg = 0;
   float mg[4] = {0,0,0,0};  // Motors gas
+  uint8_t i;
   
   if(yawPid.enabled)
   {  
     dg = yawPid.run(ypr[0],true);
+    //dg = yawPid.run(heading,true);
     
     mg[1] += dg;
     mg[3] += dg;
     mg[0] -= dg;
     mg[2] -= dg;
+
+    for(i = 0; i < 4; i++)
+    {
+      if(mg[i] < 0)
+        mg[i] = 0;
+    }
     
     /*motor[1].addGas(dx);
     motor[3].addGas(dx);
@@ -801,6 +854,12 @@ void processPids()
     mg[2] += dg;
     mg[0] -= dg;
     mg[3] -= dg;
+
+    for(i = 0; i < 4; i++)
+    {
+      if(mg[i] < 0)
+        mg[i] = 0;
+    }
     /*
     motor[1].addGas(dx);
     motor[2].addGas(dx);
@@ -820,6 +879,12 @@ void processPids()
     mg[1] -= dg;
     mg[2] += dg;
     mg[3] += dg;
+
+    for(i = 0; i < 4; i++)
+    {
+      if(mg[i] < 0)
+        mg[i] = 0;
+    }
 
     /*
     motor[0].addGas(-dx);
@@ -845,14 +910,13 @@ void processPids()
   else
   {
     altPid.stop();
+
+    for(i = 0; i < 4; i++)
+      mg[i] += baseGas;
   }
 
-  if(enStabilization && (yawPid.enabled | pitchPid.enabled | rollPid.enabled | altPid.enabled))
-  {
-    for(uint8_t i = 0; i < 4; i++)
-      motor[i].setGas(mg[i]);//motor[i].setGas(mg[i]/4.f);
-      
-  }
+  for(i = 0; i < 4; i++)
+    motor[i].setGas(mg[i]);
 }
 
 void processSensors()
@@ -872,19 +936,22 @@ void processSensors()
     mpu.dmpGetGravity(&gravity, &q);
     mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
     // reset fifo to get fresh data in next cycle
+    //mpu.resetFIFO();
+  }
+
+  if((mpuIntStatus & 0x10) || mpu.getFIFOCount() == 1024)
+  {
+    // reset so we can continue cleanly
     mpu.resetFIFO();
+    Serial.println(F("MPU FIFO overflow!"));
   }
   // read magnetometer (1 millis to execute)
   readMagnet(&magnet[0],&magnet[1],&magnet[2]);
   // correct result according to copter x axis
-  heading = 180 - calcHeading(magnet[0],magnet[1],magnet[2], ypr[1], ypr[2]);
-  if(heading >= 360)
-    heading -= 360;
-  if(heading < 0)
-    heading += 360;
+  heading = calcHeading(magnet[0],magnet[1],magnet[2], ypr[1], ypr[2]);
 }
 
-int16_t calcHeading(int16_t mx, int16_t my, int16_t mz, double pitch, double roll)
+double calcHeading(int16_t mx, int16_t my, int16_t mz, double pitch, double roll)
 {
   double fx = mx;
   double fy = my;
@@ -898,7 +965,13 @@ int16_t calcHeading(int16_t mx, int16_t my, int16_t mz, double pitch, double rol
   double fx1 = fx*cop + fy*sir*sip + fz*cor*sip;
   double fy1 = fy*cor - fz*sir;
   
-  int16_t result = (180.0*atan2(fy1,fx1)/M_PI);
+  //int16_t result = (180.0*atan2(fy1,fx1)/M_PI);
+  double result = M_PI - atan2(fy1,fx1);
+
+  if(result >= 2.0*M_PI)
+    result -= 2.0*M_PI;
+  if(result < 0)
+    result += 2.f*M_PI;
 
   return result;
 }

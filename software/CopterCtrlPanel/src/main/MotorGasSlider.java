@@ -89,7 +89,7 @@ public class MotorGasSlider extends javax.swing.JPanel
 	{
 		this.setLayout(new MigLayout("insets 0 0 0 0","[][grow][][]","[center]"));
 		
-		mSlider = new JSlider(JSlider.HORIZONTAL, 0, 255, 0);
+		mSlider = new JSlider(JSlider.HORIZONTAL, MIN_GAS, MAX_GAS, 0);
 		mlbGas = new JLabel();
 		mlbGasPercent = new JLabel();
 		

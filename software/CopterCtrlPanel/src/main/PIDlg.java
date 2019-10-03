@@ -261,6 +261,10 @@ public class PIDlg extends JDialog
 					mYaw[mDataCount] = CopterTelemetry.instance().getYaw();
 					mPitch[mDataCount] = CopterTelemetry.instance().getPitch();
 					mRoll[mDataCount] = CopterTelemetry.instance().getRoll();
+					mHeading[mDataCount] = CopterTelemetry.instance().getHeading();
+					mYawOutput[mDataCount] = CopterTelemetry.instance().getYawPidOutput();
+					mPitchOutput[mDataCount] = CopterTelemetry.instance().getPitchPidOutput();
+					mRollOutput[mDataCount] = CopterTelemetry.instance().getRollPidOutput();
 					mDataCount++;
 					mlbDataCount.setText(Integer.toString(mDataCount));
 				}
@@ -345,12 +349,28 @@ public class PIDlg extends JDialog
 		}
 	}
 	
+	private class OnDrawData implements ActionListener
+	{
+		@Override
+		public void actionPerformed(ActionEvent e)
+		{
+			PIDlg.this.drawData();
+		}
+	}
+	
 	private OnTelemetryUpdate mObserver;
 	
 	private JCheckBox mcbMotorsEnabled;
 	private MotorGasSlider mSetAllGas;
 	private JCheckBox mcbCollectData;
 	private JLabel mlbDataCount;
+	private JCheckBox mcbDrawYaw;
+	private JCheckBox mcbDrawPitch;
+	private JCheckBox mcbDrawRoll;
+	private JCheckBox mcbDrawHeading;
+	private JCheckBox mcbDrawYawOutput;
+	private JCheckBox mcbDrawPitchOutput;
+	private JCheckBox mcbDrawRollOutput;
 	private PidPanel mYawPid;
 	private PidPanel mPitchPid;
 	private PidPanel mRollPid;
@@ -361,6 +381,10 @@ public class PIDlg extends JDialog
 	private double mYaw[];
 	private double mPitch[];
 	private double mRoll[];
+	private double mHeading[];
+	private double mYawOutput[];
+	private double mPitchOutput[];
+	private double mRollOutput[];
 	private double mTimeData[];
 	private long mCollectDataStartTime;
 
@@ -371,12 +395,16 @@ public class PIDlg extends JDialog
 		mYaw = new double[MAX_DATA_COUNT];
 		mPitch = new double[MAX_DATA_COUNT];
 		mRoll = new double[MAX_DATA_COUNT];
+		mHeading = new double[MAX_DATA_COUNT];
+		mYawOutput = new double[MAX_DATA_COUNT];
+		mPitchOutput = new double[MAX_DATA_COUNT];
+		mRollOutput = new double[MAX_DATA_COUNT];
 		mTimeData = new double[MAX_DATA_COUNT];
 		
 		mObserver = new OnTelemetryUpdate();
 		
 		this.setResizable(true);
-		this.setSize(975,560);
+		this.setSize(975,660);
 		this.setLocationRelativeTo(null);
 		this.setTitle(Text.get("PID"));
 		this.setLayout(new MigLayout("","[]10[]","[center]"));
@@ -405,16 +433,43 @@ public class PIDlg extends JDialog
 		mcbCollectData.addItemListener(new OnCollectData());
 		mlbDataCount = new JLabel("0");
 		
+		mcbDrawYaw = new JCheckBox(Text.get("YAW"));
+		mcbDrawPitch = new JCheckBox(Text.get("PITCH"));
+		mcbDrawRoll = new JCheckBox(Text.get("ROLL"));
+		mcbDrawHeading = new JCheckBox(Text.get("HEADING"));
+		mcbDrawYawOutput = new JCheckBox(Text.get("YAW_OUTPUT"));
+		mcbDrawPitchOutput = new JCheckBox(Text.get("PITCH_OUTPUT"));
+		mcbDrawRollOutput = new JCheckBox(Text.get("ROLL_OUTPUT"));
+		
+		mcbDrawYaw.addActionListener(new OnDrawData());
+		mcbDrawPitch.addActionListener(new OnDrawData());
+		mcbDrawRoll.addActionListener(new OnDrawData());
+		mcbDrawHeading.addActionListener(new OnDrawData());
+		mcbDrawYawOutput.addActionListener(new OnDrawData());
+		mcbDrawPitchOutput.addActionListener(new OnDrawData());
+		mcbDrawRollOutput.addActionListener(new OnDrawData());
+		
 		mChartViewer = new ChartViewer();
+		
+		JPanel pnlDraw = new JPanel(new MigLayout());
+		pnlDraw.setBorder(new TitledBorder(Text.get("PLOT")));
+		pnlDraw.add(mcbDrawYaw);
+		pnlDraw.add(mcbDrawPitch);
+		pnlDraw.add(mcbDrawRoll);
+		pnlDraw.add(mcbDrawHeading,"wrap");
+		pnlDraw.add(mcbDrawYawOutput);
+		pnlDraw.add(mcbDrawPitchOutput);
+		pnlDraw.add(mcbDrawRollOutput);
 		
 		this.add(mcbMotorsEnabled);
 		this.add(mSetAllGas,"spanx 3,growx");
-		this.add(mChartViewer,"spany 6,grow,wrap");
+		this.add(mChartViewer,"spany 7,grow,wrap");
 		this.add(mcbCollectData);
 		this.add(new JLabel(Text.get("DATA_COUNT") + ":"));
 		this.add(mlbDataCount);
 		this.add(new JLabel(Text.get("TELEMETRY") + ":  " + CopterTelemetry.instance().getTelemetryPeriod() + "ms " + 
-				Text.get("PID") + ":  " + CopterTelemetry.instance().getPidPeriod()  + "ms"),"spanx,wrap");
+				Text.get("PID") + ":  " + CopterTelemetry.instance().getPidPeriod()  + "ms"),"grow,wrap");
+		this.add(pnlDraw,"spanx 4,grow,wrap");
 		this.add(mYawPid,"spanx 4,grow,wrap");
 		this.add(mPitchPid,"spanx 4,grow,wrap");
 		this.add(mRollPid,"spanx 4,grow,wrap");
@@ -446,9 +501,9 @@ public class PIDlg extends JDialog
 	private void drawData()
 	{
         // Create a XYChart object of size 250 x 250 pixels
-        XYChart c = new XYChart(500, 500);
+        XYChart c = new XYChart(500, 600);
         // Set the plotarea at (30, 20) and of size 200 x 200 pixels
-        c.setPlotArea(60, 45, 410, 410, -1, -1, 0xc0c0c0, 0xc0c0c0, -1);
+        c.setPlotArea(60, 45, 410, 510, -1, -1, 0xc0c0c0, 0xc0c0c0, -1);
         c.addLegend(60, 5, false);
         // Set scale for axis
         c.xAxis().setTitle("Step");
@@ -457,11 +512,12 @@ public class PIDlg extends JDialog
         c.yAxis().setTitle("YPR");
         c.yAxis().setMargin(0,0);
 
-       	c.yAxis().setLinearScale(-180, 180, 10);
+       	//c.yAxis().setLinearScale(-180, 180, 10);
        	
        	int yawColor = 0x800000;
        	int pitchColor = 0x008000;
        	int rollColor = 0x000080;
+       	int headingColor = 0x00FFFF;
        	
        	if(mDataCount > 0)
        	{
@@ -469,15 +525,48 @@ public class PIDlg extends JDialog
        		float pitchTarget = CopterTelemetry.instance().getPitchPidTarget();
        		float rollTarget = CopterTelemetry.instance().getRollPidTarget();
        		
-       		c.yAxis().addMark(yawTarget, yawColor, "Yaw").setLineWidth(2);
-       		c.yAxis().addMark(pitchTarget, pitchColor, "Pitch").setLineWidth(2);
-       		c.yAxis().addMark(rollTarget, rollColor, "Roll").setLineWidth(2);
-       	
-       		c.addLineLayer(Arrays.copyOf(mYaw, mDataCount), yawColor, "Yaw").setXData(mTimeData);
-       		c.addLineLayer(Arrays.copyOf(mPitch, mDataCount), pitchColor, "Pitch").setXData(mTimeData);
-       		c.addLineLayer(Arrays.copyOf(mRoll, mDataCount), rollColor, "Roll").setXData(mTimeData);
+       		if(mcbDrawYaw.isSelected())
+       		{
+       			c.yAxis().addMark(yawTarget, yawColor, "Yaw").setLineWidth(2);
+       			c.addLineLayer(Arrays.copyOf(mYaw, mDataCount), yawColor, "Yaw").setXData(mTimeData);
+       		}
+       		
+       		if(mcbDrawPitch.isSelected())
+       		{
+       			c.yAxis().addMark(pitchTarget, pitchColor, "Pitch").setLineWidth(2);
+       			c.addLineLayer(Arrays.copyOf(mPitch, mDataCount), pitchColor, "Pitch").setXData(mTimeData);
+       		}
+       		
+       		if(mcbDrawRoll.isSelected())
+       		{
+       			c.yAxis().addMark(rollTarget, rollColor, "Roll").setLineWidth(2);
+       			c.addLineLayer(Arrays.copyOf(mRoll, mDataCount), rollColor, "Roll").setXData(mTimeData);
+       		}
+       		
+       		if(mcbDrawHeading.isSelected())
+       		{
+       			c.yAxis().addMark(yawTarget, yawColor, "Yaw").setLineWidth(2);
+       			c.addLineLayer(Arrays.copyOf(mHeading, mDataCount), headingColor, "Heading").setXData(mTimeData);
+       		}
+       		
+       		if(mcbDrawYawOutput.isSelected())
+       		{
+       			c.addLineLayer(Arrays.copyOf(mYawOutput, mDataCount), -1, "Y-out").setXData(mTimeData);
+       		}
+       		
+       		if(mcbDrawPitchOutput.isSelected())
+       		{
+       			c.addLineLayer(Arrays.copyOf(mPitchOutput, mDataCount), -1, "P-out").setXData(mTimeData);
+       		}
+       		
+       		if(mcbDrawRollOutput.isSelected())
+       		{
+       			c.addLineLayer(Arrays.copyOf(mRollOutput, mDataCount), -1, "R-out").setXData(mTimeData);
+       		}
+       		
 
-           	c.xAxis().setAutoScale();
+           	c.xAxis().setAutoScale();//(0,0);
+           	c.yAxis().setAutoScale();//(0,0);
        	}
 
         mChartViewer.setChart(c);

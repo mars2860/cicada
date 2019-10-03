@@ -164,6 +164,9 @@ public class CopterCtrlPanel implements WindowListener
 			DecimalFormat fmt1 = new DecimalFormat();
 			fmt1.setMaximumFractionDigits(2);
 			fmt1.setMinimumFractionDigits(0);
+			DecimalFormat fmt2 = new DecimalFormat();
+			fmt2.setMaximumFractionDigits(0);
+			fmt2.setGroupingUsed(false);
 			
 			String batState = fmt1.format(CopterTelemetry.instance().getBatteryVoltage()) + "V/" + 
 								fmt1.format(CopterTelemetry.instance().getBatteryPercent()) + "%";
@@ -181,7 +184,8 @@ public class CopterCtrlPanel implements WindowListener
 			mlbYawValue.setText(fmt1.format(yaw) + "/" + fmt1.format(yawTarget));
 			mlbPitchValue.setText(fmt1.format(pitch) + "/" + fmt1.format(pitchTarget));
 			mlbRollValue.setText(fmt1.format(roll) + "/" + fmt1.format(rollTarget));
-			mlbHeading.setText(fmt1.format(CopterTelemetry.instance().getHeading()));
+			mlbHeading.setText(fmt2.format(CopterTelemetry.instance().getHeading()));
+			mlbLoopTime.setText(fmt2.format(CopterTelemetry.instance().getLoopTime()));
 			
 			mlbYaw.setIcon(rotateImageIcon(mIconYaw, yaw));
 			mlbPitch.setIcon(rotateImageIcon(mIconPitch, pitch));
@@ -308,6 +312,7 @@ public class CopterCtrlPanel implements WindowListener
 	private JLabel mlbRoll;
 	private JLabel mlbRollValue;
 	private JLabel mlbHeading;
+	private JLabel mlbLoopTime;
 	
 	private JCheckBox mcbMotorsEnabled;
 	private JCheckBox mcbStabilizationEnabled;
@@ -325,6 +330,7 @@ public class CopterCtrlPanel implements WindowListener
 	private ImageIcon mIconPitch;
 	private ImageIcon mIconRoll;
 	private ImageIcon mIconHeading;
+	private ImageIcon mIconLoopTime;
 		
 	public CopterCtrlPanel() {}
 	
@@ -473,6 +479,9 @@ public class CopterCtrlPanel implements WindowListener
 		mlbPitch = new JLabel(mIconPitch);
 		mlbRoll = new JLabel(mIconRoll);
 		
+		mlbLoopTime = new JLabel();
+		mlbLoopTime.setHorizontalAlignment(JLabel.CENTER);
+		
 		pnlStatus.add(new JLabel(mIconBat));
 		pnlStatus.add(mlbBattery,"w 80!");
 		pnlStatus.add(new JLabel(mIconWifi));
@@ -485,6 +494,8 @@ public class CopterCtrlPanel implements WindowListener
 		pnlStatus.add(mlbRollValue,"w 80!");
 		pnlStatus.add(new JLabel(mIconHeading));
 		pnlStatus.add(mlbHeading,"w 30!");
+		pnlStatus.add(new JLabel(mIconLoopTime));
+		pnlStatus.add(mlbLoopTime,"w 40!");
 		
 		return pnlStatus;
 	}
@@ -522,6 +533,9 @@ public class CopterCtrlPanel implements WindowListener
 		
 		java.net.URL headingUrl = this.getClass().getResource("images/heading.png");
 		mIconHeading = new ImageIcon(new ImageIcon(headingUrl).getImage().getScaledInstance(statusIconWidth,statusIconHeight,Image.SCALE_SMOOTH));
+		
+		java.net.URL looptimeUrl = this.getClass().getResource("images/cputime.png");
+		mIconLoopTime = new ImageIcon(new ImageIcon(looptimeUrl).getImage().getScaledInstance(statusIconWidth,statusIconHeight,Image.SCALE_SMOOTH));
 	}
 	
 	public void start()

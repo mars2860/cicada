@@ -27,6 +27,7 @@ import ChartDirector.XYChart;
 import copter.CopterCommander;
 import copter.CopterTelemetry;
 import copter.commands.CmdSetAltPid;
+import copter.commands.CmdSetAltitude;
 import copter.commands.CmdSetMotorsGas;
 import copter.commands.CmdSetPitchPid;
 import copter.commands.CmdSetRollPid;
@@ -68,7 +69,7 @@ public class PIDlg extends JDialog
 			}	
 		}
 		
-		public PidPanel(String title)
+		public PidPanel(String title, int minTarget, int maxTarget)
 		{
 			super();
 			
@@ -87,7 +88,7 @@ public class PIDlg extends JDialog
 			mlbKd = new JLabel("0");		
 			mlbEnabled = new JLabel();
 			mcbEnabled = new JCheckBox(Text.get("PID_ENABLED"));
-			mslTarget = new JSlider(JSlider.HORIZONTAL, -180, 180, 0);
+			mslTarget = new JSlider(JSlider.HORIZONTAL, minTarget, maxTarget, 0);
 			mslTarget.setMinorTickSpacing(1);
 			mlbTarget = new JLabel(Integer.toString(mslTarget.getValue()));
 			
@@ -209,7 +210,7 @@ public class PIDlg extends JDialog
 		}
 	}
 	
-	private class TargetChanged implements ChangeListener
+	private class YprTargetChanged implements ChangeListener
 	{
 		@Override
 		public void stateChanged(ChangeEvent e)
@@ -225,6 +226,22 @@ public class PIDlg extends JDialog
 				CopterCommander.instance().addCmd(cmd);
 			}
 		}
+	}
+	
+	private class AltitudeTargetChanged implements ChangeListener
+	{
+		@Override
+		public void stateChanged(ChangeEvent e)
+		{
+			JSlider sl = (JSlider)e.getSource();
+			
+			if(!sl.getValueIsAdjusting())
+			{
+				float alt = ((float)sl.getValue()) / 100.f;
+				CmdSetAltitude cmd = new CmdSetAltitude(alt);
+				CopterCommander.instance().addCmd(cmd);
+			}			
+		}	
 	}
 	
 	private class OnTelemetryUpdate implements Observer
@@ -261,10 +278,19 @@ public class PIDlg extends JDialog
 					mYaw[mDataCount] = CopterTelemetry.instance().getYaw();
 					mPitch[mDataCount] = CopterTelemetry.instance().getPitch();
 					mRoll[mDataCount] = CopterTelemetry.instance().getRoll();
+					mAltitude[mDataCount] = CopterTelemetry.instance().getAltitude();
 					mHeading[mDataCount] = CopterTelemetry.instance().getHeading();
 					mYawOutput[mDataCount] = CopterTelemetry.instance().getYawPidOutput();
 					mPitchOutput[mDataCount] = CopterTelemetry.instance().getPitchPidOutput();
 					mRollOutput[mDataCount] = CopterTelemetry.instance().getRollPidOutput();
+					mAltitudeOutput[mDataCount] = CopterTelemetry.instance().getAltPidOutput();
+					mGyroX[mDataCount] = CopterTelemetry.instance().getGyroX();
+					mGyroY[mDataCount] = CopterTelemetry.instance().getGyroY();
+					mGyroZ[mDataCount] = CopterTelemetry.instance().getGyroZ();
+					mM0[mDataCount] = CopterTelemetry.instance().getMotorGas0();
+					mM1[mDataCount] = CopterTelemetry.instance().getMotorGas1();
+					mM2[mDataCount] = CopterTelemetry.instance().getMotorGas2();
+					mM3[mDataCount] = CopterTelemetry.instance().getMotorGas3();
 					mDataCount++;
 					mlbDataCount.setText(Integer.toString(mDataCount));
 				}
@@ -368,9 +394,18 @@ public class PIDlg extends JDialog
 	private JCheckBox mcbDrawPitch;
 	private JCheckBox mcbDrawRoll;
 	private JCheckBox mcbDrawHeading;
+	private JCheckBox mcbDrawAlt;
 	private JCheckBox mcbDrawYawOutput;
 	private JCheckBox mcbDrawPitchOutput;
 	private JCheckBox mcbDrawRollOutput;
+	private JCheckBox mcbDrawAltOutput;
+	private JCheckBox mcbDrawGyroX;
+	private JCheckBox mcbDrawGyroY;
+	private JCheckBox mcbDrawGyroZ;
+	private JCheckBox mcbDrawM0;
+	private JCheckBox mcbDrawM1;
+	private JCheckBox mcbDrawM2;
+	private JCheckBox mcbDrawM3;
 	private PidPanel mYawPid;
 	private PidPanel mPitchPid;
 	private PidPanel mRollPid;
@@ -381,11 +416,20 @@ public class PIDlg extends JDialog
 	private double mYaw[];
 	private double mPitch[];
 	private double mRoll[];
+	private double mAltitude[];
 	private double mHeading[];
 	private double mYawOutput[];
 	private double mPitchOutput[];
 	private double mRollOutput[];
+	private double mAltitudeOutput[];
 	private double mTimeData[];
+	private double mGyroX[];
+	private double mGyroY[];
+	private double mGyroZ[];
+	private double mM0[];
+	private double mM1[];
+	private double mM2[];
+	private double mM3[];
 	private long mCollectDataStartTime;
 
 	public PIDlg(JFrame owner)
@@ -399,12 +443,21 @@ public class PIDlg extends JDialog
 		mYawOutput = new double[MAX_DATA_COUNT];
 		mPitchOutput = new double[MAX_DATA_COUNT];
 		mRollOutput = new double[MAX_DATA_COUNT];
+		mAltitude = new double[MAX_DATA_COUNT];
+		mAltitudeOutput = new double[MAX_DATA_COUNT];
+		mGyroX = new double[MAX_DATA_COUNT];
+		mGyroY = new double[MAX_DATA_COUNT];
+		mGyroZ = new double[MAX_DATA_COUNT];
+		mM0 = new double[MAX_DATA_COUNT];
+		mM1 = new double[MAX_DATA_COUNT];
+		mM2 = new double[MAX_DATA_COUNT];
+		mM3 = new double[MAX_DATA_COUNT];
 		mTimeData = new double[MAX_DATA_COUNT];
 		
 		mObserver = new OnTelemetryUpdate();
 		
 		this.setResizable(true);
-		this.setSize(975,660);
+		this.setSize(1060,660);
 		this.setLocationRelativeTo(null);
 		this.setTitle(Text.get("PID"));
 		this.setLayout(new MigLayout("","[]10[]","[center]"));
@@ -415,19 +468,20 @@ public class PIDlg extends JDialog
 		mcbMotorsEnabled.setMnemonic('Q');
 		
 		mSetAllGas = new MotorGasSlider(Text.get("GAS"),true);
-		mYawPid = new PidPanel(Text.get("YAW_PID"));
-		mPitchPid = new PidPanel(Text.get("PITCH_PID"));
-		mRollPid = new PidPanel(Text.get("ROLL_PID"));
-		mAltPid = new PidPanel(Text.get("ALT_PID"));
+		mYawPid = new PidPanel(Text.get("YAW_PID"),-180,180);
+		mPitchPid = new PidPanel(Text.get("PITCH_PID"),-180,180);
+		mRollPid = new PidPanel(Text.get("ROLL_PID"),-180,180);
+		mAltPid = new PidPanel(Text.get("ALT_PID"),0,200);
 		
 		mSetAllGas.addChangeListener(new GasChanged());
 		mYawPid.onSet(new OnSetYawPid());
-		mYawPid.onTarget(new TargetChanged());
+		mYawPid.onTarget(new YprTargetChanged());
 		mPitchPid.onSet(new OnSetPitchPid());
-		mPitchPid.onTarget(new TargetChanged());
+		mPitchPid.onTarget(new YprTargetChanged());
 		mRollPid.onSet(new OnSetRollPid());
-		mRollPid.onTarget(new TargetChanged());
+		mRollPid.onTarget(new YprTargetChanged());
 		mAltPid.onSet(new OnSetAltPid());
+		mAltPid.onTarget(new AltitudeTargetChanged());
 		
 		mcbCollectData = new JCheckBox(Text.get("COLLECT_DATA"));
 		mcbCollectData.addItemListener(new OnCollectData());
@@ -440,6 +494,15 @@ public class PIDlg extends JDialog
 		mcbDrawYawOutput = new JCheckBox(Text.get("YAW_OUTPUT"));
 		mcbDrawPitchOutput = new JCheckBox(Text.get("PITCH_OUTPUT"));
 		mcbDrawRollOutput = new JCheckBox(Text.get("ROLL_OUTPUT"));
+		mcbDrawAlt = new JCheckBox(Text.get("ALTITUDE"));
+		mcbDrawAltOutput = new JCheckBox(Text.get("ALT_OUTPUT"));
+		mcbDrawGyroX = new JCheckBox("GyroX");
+		mcbDrawGyroY = new JCheckBox("GyroY");
+		mcbDrawGyroZ = new JCheckBox("GyroZ");
+		mcbDrawM0 = new JCheckBox("M1");
+		mcbDrawM1 = new JCheckBox("M2");
+		mcbDrawM2 = new JCheckBox("M3");
+		mcbDrawM3 = new JCheckBox("M4");
 		
 		mcbDrawYaw.addActionListener(new OnDrawData());
 		mcbDrawPitch.addActionListener(new OnDrawData());
@@ -448,6 +511,15 @@ public class PIDlg extends JDialog
 		mcbDrawYawOutput.addActionListener(new OnDrawData());
 		mcbDrawPitchOutput.addActionListener(new OnDrawData());
 		mcbDrawRollOutput.addActionListener(new OnDrawData());
+		mcbDrawAlt.addActionListener(new OnDrawData());
+		mcbDrawAltOutput.addActionListener(new OnDrawData());
+		mcbDrawGyroX.addActionListener(new OnDrawData());
+		mcbDrawGyroY.addActionListener(new OnDrawData());
+		mcbDrawGyroZ.addActionListener(new OnDrawData());
+		mcbDrawM0.addActionListener(new OnDrawData());
+		mcbDrawM1.addActionListener(new OnDrawData());
+		mcbDrawM2.addActionListener(new OnDrawData());
+		mcbDrawM3.addActionListener(new OnDrawData());
 		
 		mChartViewer = new ChartViewer();
 		
@@ -456,10 +528,19 @@ public class PIDlg extends JDialog
 		pnlDraw.add(mcbDrawYaw);
 		pnlDraw.add(mcbDrawPitch);
 		pnlDraw.add(mcbDrawRoll);
+		pnlDraw.add(mcbDrawAlt);
+		pnlDraw.add(mcbDrawGyroX);
+		pnlDraw.add(mcbDrawGyroY);
+		pnlDraw.add(mcbDrawGyroZ);
 		pnlDraw.add(mcbDrawHeading,"wrap");
 		pnlDraw.add(mcbDrawYawOutput);
 		pnlDraw.add(mcbDrawPitchOutput);
 		pnlDraw.add(mcbDrawRollOutput);
+		pnlDraw.add(mcbDrawAltOutput);
+		pnlDraw.add(mcbDrawM0);
+		pnlDraw.add(mcbDrawM1);
+		pnlDraw.add(mcbDrawM2);
+		pnlDraw.add(mcbDrawM3);
 		
 		this.add(mcbMotorsEnabled);
 		this.add(mSetAllGas,"spanx 3,growx");
@@ -518,12 +599,14 @@ public class PIDlg extends JDialog
        	int pitchColor = 0x008000;
        	int rollColor = 0x000080;
        	int headingColor = 0x00FFFF;
+       	int altColor = 0x7FFFD4;
        	
        	if(mDataCount > 0)
        	{
        		float yawTarget = CopterTelemetry.instance().getYawPidTarget();
        		float pitchTarget = CopterTelemetry.instance().getPitchPidTarget();
        		float rollTarget = CopterTelemetry.instance().getRollPidTarget();
+       		float altTarget = CopterTelemetry.instance().getAltPidTarget();
        		
        		if(mcbDrawYaw.isSelected())
        		{
@@ -564,6 +647,51 @@ public class PIDlg extends JDialog
        			c.addLineLayer(Arrays.copyOf(mRollOutput, mDataCount), -1, "R-out").setXData(mTimeData);
        		}
        		
+       		if(mcbDrawAlt.isSelected())
+       		{
+       			c.yAxis().addMark(altTarget, altColor, "Alt").setLineWidth(2);
+       			c.addLineLayer(Arrays.copyOf(mAltitude, mDataCount), altColor, "Alt").setXData(mTimeData);
+       		}
+       		
+       		if(mcbDrawAltOutput.isSelected())
+       		{
+       			c.addLineLayer(Arrays.copyOf(mAltitudeOutput, mDataCount), -1, "A-out").setXData(mTimeData);
+       		}
+       		
+       		if(mcbDrawGyroX.isSelected())
+       		{
+       			c.addLineLayer(Arrays.copyOf(mGyroX, mDataCount), -1, "GyroX").setXData(mTimeData);
+       		}
+       		
+       		if(mcbDrawGyroY.isSelected())
+       		{
+       			c.addLineLayer(Arrays.copyOf(mGyroY, mDataCount), -1, "GyroY").setXData(mTimeData);
+       		}
+       		
+       		if(mcbDrawGyroZ.isSelected())
+       		{
+       			c.addLineLayer(Arrays.copyOf(mGyroZ, mDataCount), -1, "GyroZ").setXData(mTimeData);
+       		}
+       		
+       		if(mcbDrawM0.isSelected())
+       		{
+       			c.addLineLayer(Arrays.copyOf(mM0, mDataCount), -1, "M0").setXData(mTimeData);
+       		}
+       		
+       		if(mcbDrawM1.isSelected())
+       		{
+       			c.addLineLayer(Arrays.copyOf(mM1, mDataCount), -1, "M1").setXData(mTimeData);
+       		}
+       		
+       		if(mcbDrawM2.isSelected())
+       		{
+       			c.addLineLayer(Arrays.copyOf(mM2, mDataCount), -1, "M2").setXData(mTimeData);
+       		}
+       		
+       		if(mcbDrawM3.isSelected())
+       		{
+       			c.addLineLayer(Arrays.copyOf(mM3, mDataCount), -1, "M3").setXData(mTimeData);
+       		}
 
            	c.xAxis().setAutoScale();//(0,0);
            	c.yAxis().setAutoScale();//(0,0);

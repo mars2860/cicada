@@ -1,12 +1,16 @@
 package main;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.text.DecimalFormat;
 
 import javax.swing.JLabel;
 import javax.swing.JSlider;
+import javax.swing.JTextField;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import helper.NumericDocument;
 import net.miginfocom.swing.MigLayout;
 
 public class MotorGasSlider extends javax.swing.JPanel
@@ -17,7 +21,7 @@ public class MotorGasSlider extends javax.swing.JPanel
 	public static final int MAX_GAS = 5000;
 	
 	private JSlider mSlider;
-	private JLabel mlbGas;
+	private JTextField mlbGas;
 	private JLabel mlbGasPercent;
 	private ChangeListener mcl;
 	private boolean mValueAdjusting;
@@ -42,13 +46,28 @@ public class MotorGasSlider extends javax.swing.JPanel
 			mlbGas.setText(Integer.toString(value));
 			mlbGasPercent.setText(fmt.format(percent) + "%");
 			
-			if(mSlider.getValueIsAdjusting() == false && mValueAdjusting == true)
+			/*if(mSlider.getValueIsAdjusting() == false && mValueAdjusting == true)
 			{
 				if(mcl != null)
 					mcl.stateChanged(e);
 				
 				mValueAdjusting = false;
-			}
+			}*/
+			if(mcl != null && mValueAdjusting)
+				mcl.stateChanged(e);
+			
+			if(mSlider.getValueIsAdjusting() == false && mValueAdjusting == true)
+				mValueAdjusting = false;
+		}
+	}
+	
+	private class OnGasSubmit implements ActionListener
+	{
+		@Override
+		public void actionPerformed(ActionEvent e)
+		{
+			int gas = Integer.parseInt(mlbGas.getText());
+			setGas(gas,true);
 		}
 	}
 	
@@ -67,11 +86,15 @@ public class MotorGasSlider extends javax.swing.JPanel
 	
 	private void createVertical(String name)
 	{
-		this.setLayout(new MigLayout("insets 0 0 0 0","[30!, center]","[][grow][][]"));
+		this.setLayout(new MigLayout("insets 0 0 0 0","[35!, center]","[][grow][][]"));
 		
 		mSlider = new JSlider(JSlider.VERTICAL, MIN_GAS, MAX_GAS, 0);
-		mlbGas = new JLabel();
+		mlbGas = new JTextField();
 		mlbGasPercent = new JLabel();
+		
+		mlbGas.setHorizontalAlignment(JTextField.CENTER);
+		mlbGas.setDocument(new NumericDocument(0,false));
+		mlbGas.addActionListener(new OnGasSubmit());
 		
 		mSlider.setMinorTickSpacing(1);
 		mSlider.addChangeListener(new OnGasChanged());
@@ -81,7 +104,7 @@ public class MotorGasSlider extends javax.swing.JPanel
 		
 		this.add(new JLabel(name),"wrap");
 		this.add(mSlider,"grow,wrap");
-		this.add(mlbGas,"wrap");
+		this.add(mlbGas,"grow,wrap");
 		this.add(mlbGasPercent);
 	}
 	
@@ -90,7 +113,7 @@ public class MotorGasSlider extends javax.swing.JPanel
 		this.setLayout(new MigLayout("insets 0 0 0 0","[][grow][][]","[center]"));
 		
 		mSlider = new JSlider(JSlider.HORIZONTAL, MIN_GAS, MAX_GAS, 0);
-		mlbGas = new JLabel();
+		mlbGas = new JTextField();
 		mlbGasPercent = new JLabel();
 		
 		mlbGas.setHorizontalAlignment(JLabel.CENTER);
@@ -104,7 +127,7 @@ public class MotorGasSlider extends javax.swing.JPanel
 		
 		this.add(new JLabel(name));
 		this.add(mSlider,"growx");
-		this.add(mlbGas,"w 30!");
+		this.add(mlbGas,"w 35!");
 		this.add(mlbGasPercent,"w 30!");
 	}
 	
@@ -130,6 +153,11 @@ public class MotorGasSlider extends javax.swing.JPanel
 			if(invokeListener)
 				mSlider.setValueIsAdjusting(false);
 		}
+	}
 	
+	public void setMinMax(int min, int max)
+	{
+		mSlider.setMinimum(min);
+		mSlider.setMaximum(max);
 	}
 }

@@ -35,6 +35,7 @@ import copter.commands.CmdCalibrateAccel;
 import copter.commands.CmdCalibrateGyro;
 import copter.commands.CmdCalibrateMagnet;
 import copter.commands.CmdEnableStabilization;
+import copter.commands.CmdResetAltitude;
 import copter.commands.CmdSetAltPid;
 import copter.commands.CmdSetMotorsGas;
 import copter.commands.CmdSetPeriods;
@@ -164,6 +165,7 @@ public class CopterCtrlPanel implements WindowListener
 			DecimalFormat fmt1 = new DecimalFormat();
 			fmt1.setMaximumFractionDigits(2);
 			fmt1.setMinimumFractionDigits(0);
+			fmt1.setGroupingUsed(false);
 			DecimalFormat fmt2 = new DecimalFormat();
 			fmt2.setMaximumFractionDigits(0);
 			fmt2.setGroupingUsed(false);
@@ -186,6 +188,11 @@ public class CopterCtrlPanel implements WindowListener
 			mlbRollValue.setText(fmt1.format(roll) + "/" + fmt1.format(rollTarget));
 			mlbHeading.setText(fmt2.format(CopterTelemetry.instance().getHeading()));
 			mlbLoopTime.setText(fmt2.format(CopterTelemetry.instance().getLoopTime()));
+			mlbTemperature.setText(fmt1.format(CopterTelemetry.instance().getTemperature()));
+			mlbPressure.setText(fmt1.format(CopterTelemetry.instance().getPressure()) + "/" +
+								fmt1.format(CopterTelemetry.instance().getSeaLevelPressure()));
+			mlbAltitude.setText(fmt1.format(CopterTelemetry.instance().getAltitude()) + "/" +
+								fmt1.format(CopterTelemetry.instance().getAltPidTarget()));
 			
 			mlbYaw.setIcon(rotateImageIcon(mIconYaw, yaw));
 			mlbPitch.setIcon(rotateImageIcon(mIconPitch, pitch));
@@ -255,6 +262,8 @@ public class CopterCtrlPanel implements WindowListener
 			dy = Settings.instance().getPidPeriod();
 			CmdSetPeriods cmd8 = new CmdSetPeriods(dx,dy);
 			
+			CmdResetAltitude cmd9 = new CmdResetAltitude();
+			
 			CopterCommander.instance().addCmd(cmd1);
 			CopterCommander.instance().addCmd(cmd1);
 			CopterCommander.instance().addCmd(cmd1);
@@ -286,6 +295,10 @@ public class CopterCtrlPanel implements WindowListener
 			CopterCommander.instance().addCmd(cmd8);
 			CopterCommander.instance().addCmd(cmd8);
 			CopterCommander.instance().addCmd(cmd8);
+			
+			CopterCommander.instance().addCmd(cmd9);
+			CopterCommander.instance().addCmd(cmd9);
+			CopterCommander.instance().addCmd(cmd9);
 		}
 	}
 	
@@ -313,6 +326,9 @@ public class CopterCtrlPanel implements WindowListener
 	private JLabel mlbRollValue;
 	private JLabel mlbHeading;
 	private JLabel mlbLoopTime;
+	private JLabel mlbTemperature;
+	private JLabel mlbPressure;
+	private JLabel mlbAltitude;
 	
 	private JCheckBox mcbMotorsEnabled;
 	private JCheckBox mcbStabilizationEnabled;
@@ -331,6 +347,9 @@ public class CopterCtrlPanel implements WindowListener
 	private ImageIcon mIconRoll;
 	private ImageIcon mIconHeading;
 	private ImageIcon mIconLoopTime;
+	private ImageIcon mIconTemperature;
+	private ImageIcon mIconPressure;
+	private ImageIcon mIconAltitude;
 		
 	public CopterCtrlPanel() {}
 	
@@ -344,12 +363,12 @@ public class CopterCtrlPanel implements WindowListener
 		mMainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		mMainFrame.addWindowListener(this);
 		
-		mMainFrame.setLayout(new MigLayout("","[grow][]","[][grow]"));
+		mMainFrame.setLayout(new MigLayout("","[][grow][]","[][grow]"));
 
-		mMainFrame.add(this.createAlarmPanel(),"grow");
+		mMainFrame.add(this.createAlarmPanel(),"spanx 2,grow");
 		mMainFrame.add(this.createSettingsPanel(),"grow,wrap");
-		mMainFrame.add(this.createStatusPanel(),"span,grow,wrap");
-		mMainFrame.add(this.createMotorsPanel(),"grow");
+		mMainFrame.add(this.createStatusPanel(),"growy");
+		mMainFrame.add(this.createMotorsPanel(),"growy");
 	}
 	
 	private JPanel createSettingsPanel()
@@ -396,7 +415,7 @@ public class CopterCtrlPanel implements WindowListener
 	
 	private JPanel createMotorsPanel()
 	{
-		JPanel pnlMotorsGas = new JPanel(new MigLayout("","","[][grow]"));
+		JPanel pnlMotorsGas = new JPanel(new MigLayout("","","[][][grow]"));
 		pnlMotorsGas.setBorder(new TitledBorder(Text.get("MOTORS")));
 		
 		mcbMotorsEnabled = new JCheckBox(Text.get("MOTORS_ENABLED"));
@@ -454,48 +473,63 @@ public class CopterCtrlPanel implements WindowListener
 	
 	private JPanel createStatusPanel()
 	{
-		JPanel pnlStatus = new JPanel(new MigLayout("","","[center]"));
+		JPanel pnlStatus = new JPanel(new MigLayout("","[][90!]",""));
 		pnlStatus.setBorder(new TitledBorder(Text.get("STATUS")));
 
 		mlbBattery = new JLabel();
-		mlbBattery.setHorizontalAlignment(JLabel.CENTER);
+		//mlbBattery.setHorizontalAlignment(JLabel.CENTER);
 		
 		mlbWifiLevel = new JLabel();
-		mlbWifiLevel.setHorizontalAlignment(JLabel.CENTER);
+		//mlbWifiLevel.setHorizontalAlignment(JLabel.CENTER);
 		
 		mlbYawValue = new JLabel();
-		mlbYawValue.setHorizontalAlignment(JLabel.CENTER);
+		//mlbYawValue.setHorizontalAlignment(JLabel.CENTER);
 		
 		mlbPitchValue = new JLabel();
-		mlbPitchValue.setHorizontalAlignment(JLabel.CENTER);
+		//mlbPitchValue.setHorizontalAlignment(JLabel.CENTER);
 		
 		mlbRollValue = new JLabel();
-		mlbRollValue.setHorizontalAlignment(JLabel.CENTER);
+		//mlbRollValue.setHorizontalAlignment(JLabel.CENTER);
 		
 		mlbHeading = new JLabel();
-		mlbHeading.setHorizontalAlignment(JLabel.CENTER);
+		//mlbHeading.setHorizontalAlignment(JLabel.CENTER);
 		
 		mlbYaw = new JLabel(mIconYaw);
 		mlbPitch = new JLabel(mIconPitch);
 		mlbRoll = new JLabel(mIconRoll);
 		
 		mlbLoopTime = new JLabel();
-		mlbLoopTime.setHorizontalAlignment(JLabel.CENTER);
+		//mlbLoopTime.setHorizontalAlignment(JLabel.CENTER);
+		
+		mlbTemperature = new JLabel();
+		//mlbTemperature.setHorizontalAlignment(JLabel.CENTER);
+		
+		mlbPressure = new JLabel();
+		//mlbPressure.setHorizontalAlignment(JLabel.CENTER);
+		
+		mlbAltitude = new JLabel();
+		//mlbAltitude.setHorizontalAlignment(JLabel.CENTER);
 		
 		pnlStatus.add(new JLabel(mIconBat));
-		pnlStatus.add(mlbBattery,"w 80!");
+		pnlStatus.add(mlbBattery,"wrap");
 		pnlStatus.add(new JLabel(mIconWifi));
-		pnlStatus.add(mlbWifiLevel,"w 30!");
+		pnlStatus.add(mlbWifiLevel,"wrap");
 		pnlStatus.add(mlbYaw);
-		pnlStatus.add(mlbYawValue,"w 80!");
+		pnlStatus.add(mlbYawValue,"wrap");
 		pnlStatus.add(mlbPitch);
-		pnlStatus.add(mlbPitchValue,"w 80!");
+		pnlStatus.add(mlbPitchValue,"wrap");
 		pnlStatus.add(mlbRoll);
-		pnlStatus.add(mlbRollValue,"w 80!");
+		pnlStatus.add(mlbRollValue,"wrap");
 		pnlStatus.add(new JLabel(mIconHeading));
-		pnlStatus.add(mlbHeading,"w 30!");
+		pnlStatus.add(mlbHeading,"wrap");
+		pnlStatus.add(new JLabel(mIconAltitude));
+		pnlStatus.add(mlbAltitude,"wrap");
+		pnlStatus.add(new JLabel(mIconTemperature));
+		pnlStatus.add(mlbTemperature,"wrap");
+		pnlStatus.add(new JLabel(mIconPressure));
+		pnlStatus.add(mlbPressure,"wrap");
 		pnlStatus.add(new JLabel(mIconLoopTime));
-		pnlStatus.add(mlbLoopTime,"w 40!");
+		pnlStatus.add(mlbLoopTime,"wrap");
 		
 		return pnlStatus;
 	}
@@ -536,6 +570,15 @@ public class CopterCtrlPanel implements WindowListener
 		
 		java.net.URL looptimeUrl = this.getClass().getResource("images/cputime.png");
 		mIconLoopTime = new ImageIcon(new ImageIcon(looptimeUrl).getImage().getScaledInstance(statusIconWidth,statusIconHeight,Image.SCALE_SMOOTH));
+		
+		java.net.URL temperatureUrl = this.getClass().getResource("images/temperature.png");
+		mIconTemperature = new ImageIcon(new ImageIcon(temperatureUrl).getImage().getScaledInstance(statusIconWidth,statusIconHeight,Image.SCALE_SMOOTH));
+		
+		java.net.URL pressureUrl = this.getClass().getResource("images/pressure.png");
+		mIconPressure = new ImageIcon(new ImageIcon(pressureUrl).getImage().getScaledInstance(statusIconWidth,statusIconHeight,Image.SCALE_SMOOTH));
+		
+		java.net.URL altitudeUrl = this.getClass().getResource("images/altitude.png");
+		mIconAltitude = new ImageIcon(new ImageIcon(altitudeUrl).getImage().getScaledInstance(statusIconWidth,statusIconHeight,Image.SCALE_SMOOTH));
 	}
 	
 	public void start()

@@ -91,7 +91,12 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 	private float mYawPidOutput;
 	private float mPitchPidOutput;
 	private float mRollPidOutput;
+	private float mAltPidOutput;
 	private int mLoopTime;
+	private float mTemperature;
+	private float mPressure;
+	private float mAltitude;
+	private float mSeaLevelPressure;
 	
 	private CopterTelemetry()
 	{
@@ -870,6 +875,18 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 		return result;
 	}
 	
+	public float getAltPidOutput()
+	{
+		float result;
+		
+		synchronized(objDataSync)
+		{
+			result = mAltPidOutput;
+		}
+		
+		return result;
+	}
+	
 	public int getLoopTime()
 	{
 		int result;
@@ -877,6 +894,54 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 		synchronized(objDataSync)
 		{
 			result = mLoopTime;
+		}
+		
+		return result;
+	}
+	
+	public float getTemperature()
+	{
+		float result;
+		
+		synchronized(objDataSync)
+		{
+			result = mTemperature;
+		}
+		
+		return result;
+	}
+	
+	public float getPressure()
+	{
+		float result;
+		
+		synchronized(objDataSync)
+		{
+			result = mPressure;
+		}
+		
+		return result;
+	}
+	
+	public float getAltitude()
+	{
+		float result;
+		
+		synchronized(objDataSync)
+		{
+			result = mAltitude;
+		}
+		
+		return result;
+	}
+	
+	public float getSeaLevelPressure()
+	{
+		float result;
+		
+		synchronized(objDataSync)
+		{
+			result = mSeaLevelPressure;
 		}
 		
 		return result;
@@ -983,8 +1048,14 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 						mYawPidOutput = this.getFloat(receivePacket);
 						mPitchPidOutput = this.getFloat(receivePacket);
 						mRollPidOutput = this.getFloat(receivePacket);
+						mAltPidOutput = this.getFloat(receivePacket);
 						// Loop time
 						mLoopTime = this.getInt32t(receivePacket);
+						// Baro
+						mTemperature = this.getFloat(receivePacket);
+						mPressure = this.getFloat(receivePacket);
+						mAltitude = this.getFloat(receivePacket);
+						mSeaLevelPressure = this.getFloat(receivePacket);
 					}
 
 					this.setChanged();

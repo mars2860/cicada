@@ -648,12 +648,6 @@ Text Label 5100 6950 2    50   ~ 0
 SDA
 Text Label 5100 7050 2    50   ~ 0
 SCL
-Text Label 5100 2750 2    50   ~ 0
-SHIFT
-Text Label 5100 3750 2    50   ~ 0
-CLOCK
-Text Label 5100 2950 2    50   ~ 0
-LATCH
 Entry Wire Line
 	5150 3650 5250 3750
 Entry Wire Line
@@ -670,8 +664,6 @@ Text Label 5100 3450 2    50   ~ 0
 MOSI
 Text Label 5100 3550 2    50   ~ 0
 SCK
-Text Label 5100 3650 2    50   ~ 0
-~CAM\~SD
 $Comp
 L 74xx:74HC595 U2
 U 1 1 5CD48003
@@ -1570,8 +1562,6 @@ Wire Wire Line
 	1000 5700 1000 5850
 Wire Wire Line
 	1000 6150 1000 6800
-Text Label 5400 1800 0    50   ~ 0
-SHIFT
 Entry Wire Line
 	5150 5900 5250 6000
 Wire Wire Line
@@ -1629,4 +1619,14 @@ Wire Bus Line
 	2400 5450 2400 7400
 Wire Bus Line
 	5250 1750 5250 7400
+Text Label 5100 3750 2    50   ~ 0
+M4
+Text Label 5100 2750 2    50   ~ 0
+M3
+Text Label 5100 2950 2    50   ~ 0
+M2
+Text Label 5100 3650 2    50   ~ 0
+M1
+Text Label 5400 1800 0    50   ~ 0
+M3
 $EndSCHEMATC

@@ -15,6 +15,12 @@
 #include "RTFusionRTQF.h"
 #include "altitude_kf.h"
 
+extern "C"
+{
+  #include "pwm.h"
+  #include "user_interface.h"
+}
+
 // Install:
 // 1. https://github.com/enjoyneering/ESP8266-I2C-Driver
 // 2. https://github.com/porrey/MAX1704X
@@ -35,10 +41,10 @@
 // HARDWARE
 
 #define ESP8266_LED     2
-#define HC595_DATA      0
-#define HC595_LATCH     2
-#define HC595_CLOCK     16
-#define CAM_SD          15
+#define M1              15
+#define M2              2
+#define M3              0
+#define M4              16
 
 //---------------------------------------------------------------
 // SETTINGS
@@ -69,6 +75,9 @@ unsigned int telemetryPort = 4211;    // local port to send telemetry data
 #define TELEMETRY_MAX_PACKET_SIZE 255
 
 #define MPU_1G 8192
+
+// COMPILE SETTINGS
+
 #define USE_MPU6050_DMP
 
 //---------------------------------------------------------------
@@ -113,16 +122,51 @@ uint32_t mpuTimer;
 
 uint32_t ledTimer;
 
-//--------------------------------------------------------------------
-// PWM
-uint8_t escOutputs = 0;             // state of outputs of escaper, one bit per channel
-
 uint8_t motorsEnabled = 0;
 
-volatile uint32_t pwmStepTicks;              // ticks of timer to next pwm step
-volatile uint32_t pwmPeriodTicks;            // ticks of timer per one pwm period
-volatile uint32_t pwmNext = 0;               // ticks to next pwm timer interrupt
-volatile uint32_t pwmTimer = 0;              // count ticks from pwm period start
+//--------------------------------------------------------------------
+// PWM
+
+#define PWM_PERIOD 5000
+
+// PWM channels
+
+#define PWM_CHANNELS 4
+
+// PWM setup (choice all pins that you use PWM)
+
+uint32 io_info[PWM_CHANNELS][3] =
+{
+  // MUX, FUNC, PIN
+//  {PERIPHS_IO_MUX_GPIO5_U, FUNC_GPIO5,   5}, // D1
+//  {PERIPHS_IO_MUX_GPIO4_U, FUNC_GPIO4,   4}, // D2
+  {PERIPHS_IO_MUX_GPIO0_U, FUNC_GPIO0,   0}, // D3
+  {PERIPHS_IO_MUX_GPIO2_U, FUNC_GPIO2,   2}, // D4
+//  {PERIPHS_IO_MUX_MTMS_U,  FUNC_GPIO14, 14}, // D5
+//  {PERIPHS_IO_MUX_MTDI_U,  FUNC_GPIO12, 12}, // D6
+//  {PERIPHS_IO_MUX_MTCK_U,  FUNC_GPIO13, 13}, // D7
+  {PERIPHS_IO_MUX_MTDO_U,  FUNC_GPIO15 ,15}, // D8
+  {0,0 ,16}, // D0
+};
+
+// PWM initial duty: all off
+
+uint32 pwm_duty_init[PWM_CHANNELS];
+
+
+/*
+volatile uint32_t pwmStepTicks;                               // ticks of timer to next pwm step
+volatile uint32_t pwmPeriodTicks;                             // ticks of timer per one pwm period
+volatile uint32_t pwmNext = 0;                                // ticks to next pwm timer interrupt
+volatile uint32_t pwmSetMask = 0;                             // bit mask to set GPIO0-15 and GPIO16 when pwm period starts
+volatile uint32_t pwmClearMask[5] = {0,0,0,0,0};              // bit mask to clear GPIO0-15 when pwm timer interrupt is
+volatile uint32_t pwmTicks[5] = {1000,1000,1000,1000,1000};   // sorted precalculated ticks to next pwm timer interrupt
+volatile uint8_t pwmLoop = 0;                                 // index
+volatile uint8_t pwmMaxLoop = 0;                              // max index
+
+// Updates pwm variables
+void pwmUpdate();
+*/
 //-------------------------------------------------------------------
 
 MPU6050 mpu;      // 6-axis sensor
@@ -141,7 +185,7 @@ VectorInt16 aa;             // [x, y, z]            accel sensor measurements
 VectorInt16 aaReal;         // [x, y, z]            gravity-free accel sensor measurements
 VectorInt16 aaWorld;        // [x, y, z]            world-frame accel sensor measurements
 VectorFloat gravity;        // [x, y, z] gravity vector
-uint8_t enStabilization = 1;  // Stabilization is enabled
+uint8_t enStabilization = 0;  // Stabilization is enabled
 int32_t baseGas = 0;        // Base gas level for motor (doesn't affect if alt pid is on)
 
 Adafruit_BMP280 baro;
@@ -160,25 +204,18 @@ RTFusionRTQF rtFusion;      // Another one 9DOF IMU processor
 class Motor
 {
   public:
-    int32_t gas;                     // count of pwm steps (use setGas function to change value)
-    uint32_t gasTicks;                // count of ticks of pwm timer
-    uint8_t setMask;                  // bit mask to update escOutput
-    uint8_t clearMask;                // bit mask to update escOutput
-
+    static uint32_t pwmTicks[4];
+    static uint8_t pwmLoop;
   public:
-    Motor()
+    int32_t gas;                     // count of pwm steps (use setGas function to change value)
+    uint32_t gasTicks;               // count of ticks of pwm timer
+    uint8_t pin;
+  public:
+    Motor(uint8_t pin)
     {
       gas = 0;
       gasTicks = 0;
-      setMask = 0;
-      clearMask = 0xFF;
-    }
-    
-    void setNum(uint8_t num)
-    {
-      setMask = 1 << num;
-      clearMask = ~setMask;
-      
+      this->pin = pin;
     }
 
     void setGas(int32_t value)
@@ -190,11 +227,13 @@ class Motor
         value = -limit;
 
       gas = value;
-      
+
+      /*
       if(gas > 0)
         gasTicks = gas * pwmStepTicks;
       else
         gasTicks = 0;
+      */
     }
 
     void addGas(int32_t dx)
@@ -204,7 +243,7 @@ class Motor
 
       setGas(value);
     }
-} motor[4];
+} motor[4] = {(2),(1),(0),(3)};//{(M1),(M2),(M3),(M4)};
 
 class MAX17040: public MAX1704X
 {
@@ -379,8 +418,6 @@ static inline ICACHE_RAM_ATTR void setPin(uint8_t pin);
 // switch GPIO to LOW state
 static inline ICACHE_RAM_ATTR void clearPin(uint8_t pin);
 
-// Updates escaper outputs. Each bit of state represents one channel state. DONT USE - DEPRECATED, RESULT IS NOT PREDICTABLE
-void ICACHE_RAM_ATTR escaperUpdate(uint8_t state);
 // Writes data to telemetry packet at given position. Returns new position to write
 uint16_t writeTelemetryPacket(uint16_t pos, byte *packet, void *value, size_t valueSize);
 // Reads magnetometer and applies calibration to raw data
@@ -399,10 +436,7 @@ void processPids();
 //--------------------------------------------------------------
 // INTERRUPTS
 
-volatile uint32_t tmp32;
-volatile uint8_t tmp8;
-volatile uint32_t gpioMask;
-
+/*
 bool mti = false;
 uint32_t escIsrTimer = 0;
 uint32_t tEscUpdate;
@@ -410,112 +444,87 @@ uint32_t tCalcNextPeriod;
 uint32_t tDigWrite;
 uint32_t ccount;
 
+//I don't understand. My interrupt handler takes 190 cycles. How PWM from sdk can work with resolution 45 ns ???
+
+// Speed critical bits
+#pragma GCC optimize ("O2")
+// Normally would not want two copies like this, but due to different
+// optimization levels the inline attribute gets lost if we try the
+// other version.
+
+static inline ICACHE_RAM_ATTR uint32_t GetCycleCountIRQ() {
+  uint32_t ccount;
+  __asm__ __volatile__("rsr %0,ccount":"=a"(ccount));
+  return ccount;
+}
+
 void ICACHE_RAM_ATTR onTimerISR()
 {
-  if(!mti)
-  {
+  //if(!mti)
+  //{
     motorsEnabled = 1;
-    __asm__ __volatile__("esync; rsr %0,ccount":"=a" (ccount));
-    escIsrTimer = ccount;
-  }
+    escIsrTimer = GetCycleCountIRQ();
+  //}
     
-  pwmTimer += pwmNext;
-
-   // New period
-  if(pwmTimer >= pwmPeriodTicks)
-    pwmTimer = 0;
-
-  // Calc ticks to next interrupt
-  pwmNext = pwmPeriodTicks - pwmTimer;
-  for(tmp8 = 0; tmp8 < 4; tmp8++)
-  {
-    if(motor[tmp8].gasTicks > pwmTimer)
-    {
-      escOutputs |= motor[tmp8].setMask;
-      tmp32 = motor[tmp8].gasTicks - pwmTimer;
-      if(tmp32 < pwmNext && tmp32 > 0)
-        pwmNext = tmp32;
-    }
-    else
-    {
-      escOutputs &= motor[tmp8].clearMask;
-    }
-  }
-
-  // there is a bug in core, when next timer value less 2 then next timer interrupt will come over ~2secs
-  if(pwmNext < 3)
-    pwmNext = 3;
-
-  // the code above needs 248 cpu cycles to execute
-
-  if(!mti)
-  {
-    __asm__ __volatile__("esync; rsr %0,ccount":"=a" (ccount));
-    tCalcNextPeriod = ccount - escIsrTimer;
-  }
-
-  // update outputs
-  for(tmp8 = 8; tmp8 > 0; tmp8--)
-  {
-    // set data
-    if(escOutputs & (1 << (tmp8 - 1)))
-      setPin(HC595_DATA);
-    else
-      clearPin(HC595_DATA);
-    // clock out data
-    //clearPin(HC595_CLOCK);
-    //setPin(HC595_CLOCK);
-  }
-
   if(motorsEnabled)
   {
-    // apply data to HC595 output
-    setPin(HC595_LATCH);
-    clearPin(HC595_LATCH);
+    if(pwmLoop == 0)
+    {
+      // it takes 107 instructions
+      GPOS = pwmSetMask;
+      GP16O = pwmSetMask >> 16;
+    }
+    
+    pwmNext = pwmTicks[pwmLoop];
+    GPOC = pwmClearMask[pwmLoop];
+    if(pwmClearMask[pwmLoop] >> 16);
+      GP16O = 0;
+      
+    pwmLoop++;
+    
+    if(pwmLoop > pwmMaxLoop)
+      pwmLoop = 0;
   }
   else
   {
-    setPin(HC595_LATCH);
+    clearPin(M1);
+    clearPin(M2);
+    clearPin(M3);
+    clearPin(M4);
+    pwmNext = pwmPeriodTicks;
   }
 
-  // HC595 updating needs 1286 cpu cycles
-
-  if(!mti)
-  {
-    __asm__ __volatile__("esync; rsr %0,ccount":"=a" (ccount));
-    tEscUpdate = ccount - escIsrTimer; 
-  }
-
+  if(pwmNext < 4) // there is a bug inside core, if we set period < 4 next interrupt will be after max counter value
+    pwmNext = 4;
+  GPOS = 1;
+  GP16O = 1;
+  pwmNext = pwmPeriodTicks;
   // update timer
   timer1_write(pwmNext);
 
-  if(!mti)
-  {
-    __asm__ __volatile__("esync; rsr %0,ccount":"=a" (ccount));
-    escIsrTimer = ccount - escIsrTimer;
-    mti = true;
-  }
+  //if(!mti)
+  //{
+    
+    escIsrTimer = GetCycleCountIRQ() - escIsrTimer;
+  //  mti = true;
+  //}
 }
+*/
 
 void setup()
 {
   // GPIO config
-  pinMode(HC595_LATCH, OUTPUT);
-  digitalWrite(HC595_LATCH, HIGH);  // Disable OE pin of HC595
-  pinMode(HC595_DATA, OUTPUT);
-  pinMode(HC595_CLOCK, OUTPUT);
-  pinMode(CAM_SD, OUTPUT);
-
-  // GPIO reset
-  digitalWrite(HC595_DATA, LOW);  // digitalWrite needs 175 cpu cycles to execute!
-  digitalWrite(HC595_LATCH, HIGH);  // Disable OE pin of HC595
-  digitalWrite(HC595_CLOCK, LOW);
-  tDigWrite = ESP.getCycleCount();
-  digitalWrite(CAM_SD, LOW);
-  tDigWrite = ESP.getCycleCount() - tDigWrite;
+  pinMode(M1, OUTPUT);
+  pinMode(M2, OUTPUT);
+  pinMode(M3, OUTPUT);
+  pinMode(M4, OUTPUT);
+  digitalWrite(M1, LOW);  // digitalWrite needs 175 cpu cycles to execute!
+  digitalWrite(M2, LOW);
+  digitalWrite(M3, LOW);
+  digitalWrite(M4, LOW);
 
   Serial.begin(115200);
- 
+
   Serial.println("Booting");
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
@@ -596,11 +605,9 @@ void setup()
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
 
-  // Setup motors
-  for(uint8_t i = 0; i < 4; i++)
-    motor[i].setNum(i);
-
   // Setup PWM
+
+  /*
   pwmStepTicks = (10000000UL / (2*MOTORS_PWM_FREQ*MOTORS_PWM_RESOLUTION)); // (1 / freq*res) / 0.2 us (timer step)
   
   if(pwmStepTicks == 0)
@@ -611,11 +618,30 @@ void setup()
   if(pwmPeriodTicks == 0)
     pwmPeriodTicks = 1;
     
+  pwmUpdate();
+    
   timer1_isr_init();
   timer1_attachInterrupt(onTimerISR);
   timer1_enable(TIM_DIV16, TIM_EDGE, TIM_SINGLE);
   timer1_write(pwmPeriodTicks);
+  */
 
+  //analogWriteFreq(MOTORS_PWM_FREQ);
+  //analogWriteRange(MOTORS_PWM_RESOLUTION);
+  // Initial duty -> all off
+
+  for (uint8_t channel = 0; channel < PWM_CHANNELS; channel++) {
+    pwm_duty_init[channel] = 0;
+  }
+
+  // Period
+
+  uint32_t period = PWM_PERIOD;
+
+  // Initialize
+
+  pwm_init(period, pwm_duty_init, PWM_CHANNELS, io_info);
+  
   // Setup program timers
   ledTimer = millis();
   telemetryTimer = millis();
@@ -664,7 +690,8 @@ void setup()
   //Setup clock again because it could be reset by some sensor constructor
   Wire.setClock(200000UL);    // there are bad SCL fronts if set greater 200000, if set 400000 the system hugs
   // Setup PIDs
-  
+
+  FuelGauge.quickstart();
   // Start WiFi
   udp.begin(cmdPort);
 }
@@ -683,12 +710,36 @@ void loop()
   
   
   //Serial.print("pwmNext = "); Serial.println(pwmNext);
-  Serial.print("PWM ISR time = "); Serial.println(escIsrTimer);
-  Serial.print("PWM calc next period = "); Serial.println(tCalcNextPeriod);
-  Serial.print("PWM escUpdate = "); Serial.println(tEscUpdate);
-  Serial.print("DigWrite = "); Serial.println(tDigWrite);
+  //Serial.print("PWM ISR time = "); Serial.println(escIsrTimer);
+  //Serial.print("PWM calc next period = "); Serial.println(tCalcNextPeriod);
+  //Serial.print("PWM escUpdate = "); Serial.println(tEscUpdate);
+  //Serial.print("DigWrite = "); Serial.println(tDigWrite);
 
   //processEspLed(); // just for debug
+  //pwmUpdate();
+
+  if(!motorsEnabled)
+  {
+    baseGas = 0;
+    motor[0].setGas(0);
+    motor[1].setGas(0);
+    motor[2].setGas(0);
+    motor[3].setGas(0);
+  }
+
+  bool pwm_up = false;
+  
+  for(uint8_t i = 0; i < 4; i++)
+  {
+    if(pwm_get_duty(motor[i].pin) != motor[i].gas)
+    {
+      pwm_set_duty(motor[i].gas,motor[i].pin);
+      pwm_up = true;
+    }
+  }
+
+  if(pwm_up)
+    pwm_start();
 }
 
 static inline ICACHE_RAM_ATTR void setPin(uint8_t pin)
@@ -707,31 +758,96 @@ static inline ICACHE_RAM_ATTR void clearPin(uint8_t pin)
      GP16O &= ~1;
 }
 
-void ICACHE_RAM_ATTR escaperUpdate(uint8_t state)
+/*
+void pwmUpdate()
 {
-  for(uint8_t i = 8; i > 0; i--)
+  uint32_t pwmNewSetMask = 0;
+  uint32_t pwmNewClearMask[5] = {0,0,0,0,0};
+  uint32_t pwmNewTicks[5] = {pwmPeriodTicks,pwmPeriodTicks,pwmPeriodTicks,pwmPeriodTicks,pwmPeriodTicks};
+  uint32_t pwmGasTicks[4] = {pwmPeriodTicks,pwmPeriodTicks,pwmPeriodTicks,pwmPeriodTicks};
+  uint32_t p = pwmPeriodTicks;
+  uint8_t i = 0, j = 0, k = 0;
+  uint8_t pwmNewMaxLoop = 0;
+  uint8_t oldMotorsEnabled = motorsEnabled;
+
+  // sort gasTicks
+  for(i = 0; i < 4; i++)
   {
-    // Set data
-    if(state & (1 << (i - 1)))
-      digitalWrite(HC595_DATA, HIGH);
-    else
-      digitalWrite(HC595_DATA, LOW);
-    // Clock out data
-    digitalWrite(HC595_CLOCK, LOW);
-    digitalWrite(HC595_CLOCK, HIGH);
+    if(motor[i].gasTicks > 0)
+      pwmNewSetMask |= (1 << motor[i].pin);
+
+    for(j = 0; j < 4; j++)
+    {
+      if(motor[i].gasTicks == pwmGasTicks[j])
+      {
+        pwmNewClearMask[j] |= (1 << motor[i].pin);
+        break;
+      }
+      
+      if(motor[i].gasTicks < pwmGasTicks[j] && motor[i].gasTicks > 0)
+      {
+        for(k = 3; j > i; j--)
+        {
+          pwmGasTicks[k] = pwmGasTicks[k-1];
+          pwmNewClearMask[k] = pwmNewClearMask[k-1];
+        }
+        
+        pwmGasTicks[j] = motor[i].gasTicks;
+        pwmNewClearMask[j] = (1 << motor[i].pin);
+        pwmNewMaxLoop++;
+      }
+    }
   }
 
-  if(motorsEnabled)
+  for(i = 0; i < 4; i++)
   {
-    // Apply data to HC595 output
-    digitalWrite(HC595_LATCH, HIGH);
-    digitalWrite(HC595_LATCH, LOW);
+    Serial.print("pwmGasTicks = ");Serial.println(pwmGasTicks[i]);
+    Serial.print("pwmNewClearMask = ");Serial.println(pwmNewClearMask[i]);
   }
+
+  for(i = 0; i < pwmNewMaxLoop; i++)
+  {
+    if(i > 0)
+      pwmNewTicks[i] = pwmGasTicks[i] - pwmGasTicks[i - 1];
+    else
+      pwmNewTicks[i] = pwmGasTicks[i];
+  }
+
+  if(pwmNewMaxLoop > 0 && pwmNewMaxLoop < 5)
+    pwmNewTicks[pwmNewMaxLoop] = p - pwmGasTicks[pwmNewMaxLoop - 1];
   else
+    pwmNewTicks[0] = pwmPeriodTicks;
+
+  for(i = pwmNewMaxLoop; i > 1; i--)
+    pwmNewClearMask[i] = pwmNewClearMask[i-1];
+
+  for(i = 0; i < 4; i++)
   {
-    digitalWrite(HC595_LATCH, HIGH);
+    if(!(pwmNewSetMask & (1 << motor[i].pin)))
+      pwmNewClearMask[0] |= (1 << motor[i].pin);
   }
+
+  // copy new pwm values
+  motorsEnabled = 0;
+  pwmMaxLoop = pwmNewMaxLoop;
+  pwmSetMask = pwmNewSetMask;
+  Serial.print("pwmPeriodTicks = ");Serial.println(pwmPeriodTicks);
+  Serial.print("pwmStepTicks = ");Serial.println(pwmStepTicks);
+  Serial.print("pwmLoop = ");Serial.println(pwmLoop);
+  Serial.print("pwmNext = ");Serial.println(pwmNext);
+  Serial.print("pwmMaxLoop = ");Serial.println(pwmMaxLoop);
+  Serial.print("pwmSetMask = ");Serial.println(pwmSetMask);
+  for(i = 0; i <= pwmNewMaxLoop && i < 5; i++)
+  {
+    pwmClearMask[i] = pwmNewClearMask[i];
+    pwmTicks[i] = pwmNewTicks[i];
+
+    Serial.print("pwmClearMask = ");Serial.println(pwmClearMask[i]);
+    Serial.print("pwmTicks = ");Serial.println(pwmTicks[i]);
+  }
+  motorsEnabled = oldMotorsEnabled;
 }
+*/
 
 uint16_t writeTelemetryPacket(uint16_t pos, byte *packet, void *value, size_t valueSize)
 {
@@ -787,6 +903,8 @@ void processCommand()
           pitchPid.setTarget(0);
           rollPid.setTarget(0);
         }
+        else
+          FuelGauge.quickstart();
         baseGas = 0;
         motor[0].setGas(0);
         motor[1].setGas(0);

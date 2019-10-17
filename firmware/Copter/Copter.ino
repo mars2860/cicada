@@ -69,8 +69,8 @@ unsigned int telemetryPort = 4211;    // local port to send telemetry data
 
 // good video about pwm freq https://www.youtube.com/watch?v=paXW_8Fn69Y
 // and thread https://community.micro-motor-warehouse.com/t/brushed-pwm-rate-and-hidden-thrust/3182/10
-#define MOTORS_PWM_FREQ           1000UL
-#define MOTORS_PWM_RESOLUTION     5000UL
+//#define MOTORS_PWM_FREQ           1000UL
+#define MOTORS_PWM_RESOLUTION     2000UL
 
 #define TELEMETRY_MAX_PACKET_SIZE 255
 
@@ -78,7 +78,7 @@ unsigned int telemetryPort = 4211;    // local port to send telemetry data
 
 // COMPILE SETTINGS
 
-#define USE_MPU6050_DMP
+//#define USE_MPU6050_DMP
 
 //---------------------------------------------------------------
 // COMMANDS
@@ -126,10 +126,6 @@ uint8_t motorsEnabled = 0;
 
 //--------------------------------------------------------------------
 // PWM
-
-#define PWM_PERIOD 5000
-
-// PWM channels
 
 #define PWM_CHANNELS 4
 
@@ -636,7 +632,7 @@ void setup()
 
   // Period
 
-  uint32_t period = PWM_PERIOD;
+  uint32_t period = MOTORS_PWM_RESOLUTION;
 
   // Initialize
 
@@ -903,8 +899,6 @@ void processCommand()
           pitchPid.setTarget(0);
           rollPid.setTarget(0);
         }
-        else
-          FuelGauge.quickstart();
         baseGas = 0;
         motor[0].setGas(0);
         motor[1].setGas(0);
@@ -1336,7 +1330,8 @@ void processSensors()
   uint8_t fifoBuffer[64];                           // FIFO storage buffer
   uint16_t packetSize = mpu.dmpGetFIFOPacketSize();
 
-  if((mpuIntStatus & MPU6050_INTERRUPT_DMP_INT_BIT) && mpu.dmpPacketAvailable())
+  //if((mpuIntStatus & MPU6050_INTERRUPT_DMP_INT_BIT) && mpu.dmpPacketAvailable())
+  if(mpu.dmpPacketAvailable())
   {
     //uint32_t profDt = micros();
 

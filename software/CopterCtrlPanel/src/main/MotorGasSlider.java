@@ -18,7 +18,7 @@ public class MotorGasSlider extends javax.swing.JPanel
 	private static final long serialVersionUID = -4207784842035696255L;
 	
 	public static final int MIN_GAS = 0;
-	public static final int MAX_GAS = 5000;
+	public static final int MAX_GAS = 2000;
 	
 	private JSlider mSlider;
 	private JTextField mlbGas;

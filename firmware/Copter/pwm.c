@@ -26,6 +26,7 @@
 #endif
 #define PWM_DEBUG 0
 #define PWM_USE_NMI 0
+#define PWM_ON_GPIO16_ENABLED 1
 
 /* no user servicable parts beyond this point */
 
@@ -35,6 +36,11 @@
 #define PWM_DUTY_TO_TICKS(x) (x * 5)
 #define PWM_MAX_DUTY (PWM_MAX_TICKS * 0.2)
 #define PWM_MAX_PERIOD (PWM_MAX_TICKS * 5)
+#elif PWM_ON_GPIO16_ENABLED
+#define PWM_PERIOD_TO_TICKS(x) (x*80)
+#define PWM_DUTY_TO_TICKS(x) (x*80)
+#define PWM_MAX_DUTY PWM_MAX_TICKS
+#define PWM_MAX_PERIOD PWM_MAX_TICKS
 #else
 #define PWM_PERIOD_TO_TICKS(x) (x)
 #define PWM_DUTY_TO_TICKS(x) (x)
@@ -55,7 +61,9 @@ struct pwm_phase {
 	uint32_t ticks;    ///< delay until next phase, in 200ns units
 	uint32_t on_mask;  ///< GPIO mask to switch on
 	uint32_t off_mask; ///< GPIO mask to switch off
-	//uint32_t out16;	   ///< GPIO16 state
+#if PWM_ON_GPIO16_ENABLED
+	uint32_t out16;	   ///< GPIO16 state
+#endif
 };
 
 /* Three sets of PWM phases, the active one, the one used
@@ -96,11 +104,13 @@ struct gpio_regs {
 };
 static struct gpio_regs* gpio = (struct gpio_regs*)(0x60000300);
 
+#if PWM_ON_GPIO16_ENABLED
 struct gpio16_regs {
 	uint32_t out;		  /* 0x60000768 */
 };
 
 static struct gpio16_regs* gpio16 = (struct gpio16_regs*)(0x60000768);
+#endif
 
 struct timer_regs {
 	uint32_t frc1_load;   /* 0x60000600 */
@@ -131,15 +141,32 @@ pwm_intr_handler(void)
 
 		gpio->out_w1ts = (pwm_state.current_set[pwm_state.current_phase].on_mask);
 		gpio->out_w1tc = (pwm_state.current_set[pwm_state.current_phase].off_mask);
-		if(pwm_state.current_set[pwm_state.current_phase].on_mask & 0x10000)
-			gpio16->out = 1;
-		if(pwm_state.current_set[pwm_state.current_phase].off_mask & 0x10000)
-			gpio16->out = 0;
+#if PWM_ON_GPIO16_ENABLED
+		gpio16->out = pwm_state.current_set[pwm_state.current_phase].out16;
+#endif
 
 		uint32_t ticks = pwm_state.current_set[pwm_state.current_phase].ticks;
 
 		pwm_state.current_phase++;
 
+#if PWM_ON_GPIO16_ENABLED
+		if (ticks) {
+			if (ticks >= 300) {
+				// constant interrupt overhead
+				ticks -= 200;
+				timer->frc1_int &= ~FRC1_INT_CLR_MASK;
+				WRITE_PERI_REG(&timer->frc1_load, ticks);
+				return;
+			}
+
+      ticks = ((ticks*58)>>8) - 2; // 58/256
+			do {
+				ticks -= 1;
+				// stop compiler from optimizing delay loop to noop
+				asm volatile ("" : : : "memory");
+			} while (ticks > 0);
+		}
+#else
 		if (ticks) {
 			if (ticks >= 16) {
 				// constant interrupt overhead
@@ -156,8 +183,9 @@ pwm_intr_handler(void)
 				asm volatile ("" : : : "memory");
 			} while (ticks > 0);
 		}
-
+#endif
 	} while (1);
+
 }
 
 /**
@@ -181,6 +209,9 @@ pwm_init(uint32_t period, uint32_t *duty, uint32_t pwm_channel_num,
 			pwm_phases[i][j].ticks = 0;
 			pwm_phases[i][j].on_mask = 0;
 			pwm_phases[i][j].off_mask = 0;
+#if PWM_ON_GPIO16_ENABLED
+			pwm_phases[i][j].out16 = 0;
+#endif
 		}
 	}
 	pwm_state.current_set = pwm_state.next_set = 0;
@@ -190,14 +221,17 @@ pwm_init(uint32_t period, uint32_t *duty, uint32_t pwm_channel_num,
 	// PIN info: MUX-Register, Mux-Setting, PIN-Nr
 	for (n = 0; n < pwm_channels; n++) {
 		pin_info_type* pin_info = &pin_info_list[n];
-		//PIN_FUNC_SELECT((*pin_info)[0], (*pin_info)[1]);
 		gpio_mask[n] = 1 << (*pin_info)[2];
-		all |= 1 << (*pin_info)[2];
+		if((*pin_info)[2] < 16) {
+			PIN_FUNC_SELECT((*pin_info)[0], (*pin_info)[1]);
+			all |= 1 << (*pin_info)[2];
+		}
 		if (duty)
 			pwm_set_duty(duty[n], n);
 	}
-	//GPIO_REG_WRITE(GPIO_OUT_W1TC_ADDRESS, all);
-	//GPIO_REG_WRITE(GPIO_ENABLE_W1TS_ADDRESS, all);
+	
+	GPIO_REG_WRITE(GPIO_OUT_W1TC_ADDRESS, all);
+	GPIO_REG_WRITE(GPIO_ENABLE_W1TS_ADDRESS, all);
 
 	pwm_set_period(period);
 
@@ -225,7 +259,9 @@ _pwm_phases_prep(struct pwm_phase* pwm)
 		pwm[n].ticks = 0;
 		pwm[n].on_mask = 0;
 		pwm[n].off_mask = 0;
-		//pwm[n].out16 = 0;
+#if PWM_ON_GPIO16_ENABLED
+		pwm[n].out16 = 0;
+#endif
 	}
 	phases = 1;
 	for (n = 0; n < pwm_channels; n++) {
@@ -353,18 +389,21 @@ _pwm_phases_prep(struct pwm_phase* pwm)
 		}
 	}
 	
+#if PWM_ON_GPIO16_ENABLED
 	// remove gpio16 from on_mask & off_mask
-	/*uint32_t gp16_state = 0;
+	uint32_t gp16_state = 0;
 	for (n = 0; n < pwm_channels + 2; n++)
 	{
 		if(pwm[n].on_mask >> 16)
 			gp16_state = 1;
 		if(pwm[n].off_mask >> 16)
 			gp16_state = 0;
-		pwm[n].on_mask &= 0xFFFF;
-		pwm[n].off_mask &= 0xFFFF;
+		// don't remove gp16 state from mask else it will cause phase reset in ISR
+		//pwm[n].on_mask &= 0xFFFF;
+		//pwm[n].off_mask &= 0xFFFF;
 		pwm[n].out16 = gp16_state;
-	}*/
+	}
+#endif
 
 #if PWM_DEBUG
 	for (t = 0; t <= phases; t++) {
@@ -403,10 +442,13 @@ pwm_start(void)
 
 		GPIO_REG_WRITE(GPIO_OUT_W1TS_ADDRESS, (*pwm)[0].on_mask);
 		GPIO_REG_WRITE(GPIO_OUT_W1TC_ADDRESS, (*pwm)[0].off_mask);
+		
+#if PWM_ON_GPIO16_ENABLED
 		if((*pwm)[0].on_mask & 0x10000)
 			gpio16->out = 1;
 		if((*pwm)[0].off_mask & 0x10000)
 			gpio16->out = 0;
+#endif
 
 		return;
 	}
@@ -420,7 +462,11 @@ pwm_start(void)
 		pwm_state.current_phase = phases - 1;
 		ETS_FRC1_INTR_ENABLE();
 		RTC_REG_WRITE(FRC1_LOAD_ADDRESS, 0);
+#if PWM_ON_GPIO16_ENABLED
+		timer->frc1_ctrl = TIMER1_ENABLE_TIMER;
+#else
 		timer->frc1_ctrl = TIMER1_DIVIDE_BY_16 | TIMER1_ENABLE_TIMER;
+#endif
 		return;
 	}
 
@@ -475,4 +521,3 @@ set_pwm_debug_en(uint8_t print_en)
 {
 	(void) print_en;
 }
-

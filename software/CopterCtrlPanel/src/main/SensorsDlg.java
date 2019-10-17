@@ -5,8 +5,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.text.DecimalFormat;
-import java.util.Arrays;
-import java.util.DoubleSummaryStatistics;
+import java.util.Collections;
+import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 
@@ -30,6 +30,7 @@ import copter.commands.CmdCalibrateGyro;
 import copter.commands.CmdCalibrateMagnet;
 import copter.commands.CmdSelfCalibrateAccel;
 import copter.commands.CmdSelfCalibrateGyro;
+import helper.ArrayHelper;
 import net.miginfocom.swing.MigLayout;
 
 public class SensorsDlg extends JDialog
@@ -120,17 +121,17 @@ public class SensorsDlg extends JDialog
 			{
 				if(mDataCount < MAX_DATA_COUNT)
 				{
-					mAccelX[mDataCount] = CopterTelemetry.instance().getAccelX();
-					mAccelY[mDataCount] = CopterTelemetry.instance().getAccelY();
-					mAccelZ[mDataCount] = CopterTelemetry.instance().getAccelZ();
+					mAccelX[mDataCount] = (double)CopterTelemetry.instance().getAccelX();
+					mAccelY[mDataCount] = (double)CopterTelemetry.instance().getAccelY();
+					mAccelZ[mDataCount] = (double)CopterTelemetry.instance().getAccelZ();
 					
-					mGyroX[mDataCount] = CopterTelemetry.instance().getGyroX();
-					mGyroY[mDataCount] = CopterTelemetry.instance().getGyroY();
-					mGyroZ[mDataCount] = CopterTelemetry.instance().getGyroZ();
+					mGyroX[mDataCount] = (double)CopterTelemetry.instance().getGyroX();
+					mGyroY[mDataCount] = (double)CopterTelemetry.instance().getGyroY();
+					mGyroZ[mDataCount] = (double)CopterTelemetry.instance().getGyroZ();
 				
-					mMagnetX[mDataCount] = CopterTelemetry.instance().getMagnetX();
-					mMagnetY[mDataCount] = CopterTelemetry.instance().getMagnetY();
-					mMagnetZ[mDataCount] = CopterTelemetry.instance().getMagnetZ();
+					mMagnetX[mDataCount] = (double)CopterTelemetry.instance().getMagnetX();
+					mMagnetY[mDataCount] = (double)CopterTelemetry.instance().getMagnetY();
+					mMagnetZ[mDataCount] = (double)CopterTelemetry.instance().getMagnetZ();
 				}
 				
 				mDataCount++;
@@ -296,7 +297,8 @@ public class SensorsDlg extends JDialog
 			 */
 			
 			// AN2272
-			
+			// This work only on Java 8
+			/*
 			DoubleSummaryStatistics dss = Arrays.stream(mMagnetX).summaryStatistics();
 			double maxMx = dss.getMax();
 			double minMx = dss.getMin();
@@ -308,8 +310,18 @@ public class SensorsDlg extends JDialog
 			dss = Arrays.stream(mMagnetZ).summaryStatistics();
 			double maxMz = dss.getMax();
 			double minMz = dss.getMin();
-	
+			*/
+			List<Double> liMagnetX = ArrayHelper.asList(mMagnetX, mDataCount);
+			List<Double> liMagnetY = ArrayHelper.asList(mMagnetY, mDataCount);
+			List<Double> liMagnetZ = ArrayHelper.asList(mMagnetZ, mDataCount);
 			
+			double maxMx = Collections.max(liMagnetX);
+			double minMx = Collections.min(liMagnetX);
+			double maxMy = Collections.max(liMagnetY);
+			double minMy = Collections.min(liMagnetY);
+			double maxMz = Collections.max(liMagnetZ);
+			double minMz = Collections.min(liMagnetZ);
+				
 			double sx = Math.max((maxMy - minMy)/(maxMx - minMx), 1.0);
 			double sy = Math.max((maxMx - minMx)/(maxMy - minMy), 1.0);
 			double sz = Math.max((maxMy - minMy)/(maxMz - minMz), 1.0);

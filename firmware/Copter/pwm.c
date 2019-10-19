@@ -228,6 +228,8 @@ pwm_init(uint32_t period, uint32_t *duty, uint32_t pwm_channel_num,
 		}
 		if (duty)
 			pwm_set_duty(duty[n], n);
+		else
+		  pwm_set_duty(0, n);
 	}
 	
 	GPIO_REG_WRITE(GPIO_OUT_W1TC_ADDRESS, all);
@@ -254,7 +256,6 @@ _pwm_phases_prep(struct pwm_phase* pwm)
 {
 	uint8_t n, phases;
 
-	uint32_t off_mask = 0;
 	for (n = 0; n < pwm_channels + 2; n++) {
 		pwm[n].ticks = 0;
 		pwm[n].on_mask = 0;
@@ -461,7 +462,7 @@ pwm_start(void)
 		pwm_state.current_set = pwm_state.next_set = *pwm;
 		pwm_state.current_phase = phases - 1;
 		ETS_FRC1_INTR_ENABLE();
-		RTC_REG_WRITE(FRC1_LOAD_ADDRESS, 0);
+		TIMER_REG_WRITE(FRC1_LOAD_ADDRESS, 0);
 #if PWM_ON_GPIO16_ENABLED
 		timer->frc1_ctrl = TIMER1_ENABLE_TIMER;
 #else

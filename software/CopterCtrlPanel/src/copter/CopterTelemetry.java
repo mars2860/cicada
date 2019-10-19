@@ -969,10 +969,9 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 					{
 						mParsePos = 0;
 						// Battery voltage
-						mBatteryVoltage = (float)(this.getUint16t(receivePacket)) * 0.00125f;
+						mBatteryVoltage = this.getFloat(receivePacket);
 						// Battery percent
-						int temp = this.getUint16t(receivePacket);
-						mBatteryPercent = (float)(temp>>8) + ((float)(temp & 0xFF))/256.f;
+						mBatteryPercent = this.getFloat(receivePacket);
 						// Wifi level
 						mWifiLevel = this.getInt32t(receivePacket);
 						// Accel data

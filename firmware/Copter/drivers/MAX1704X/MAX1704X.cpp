@@ -94,6 +94,7 @@ bool MAX1704X::sleep()
   uint16_t value = this->readRegister16(REGISTER_CONFIG);
   setBit(value, 7);
   this->writeRegister16(REGISTER_CONFIG, value);
+  return true;
 }
 
 bool MAX1704X::isSleeping()
@@ -110,6 +111,7 @@ bool MAX1704X::wake()
   uint16_t value = this->readRegister16(REGISTER_CONFIG);
   clearBit(value, 7);
   this->writeRegister16(REGISTER_CONFIG, value);
+  return true;
 }
 
 void MAX1704X::reset()

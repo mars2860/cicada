@@ -34,13 +34,14 @@
 #define BMP280_CHIPID (0x58) /**< Default chip ID. */
 
 //  Forward declarations of Wire and SPI for board/variant combinations that don't have a default 'Wire' or 'SPI' 
-extern TwoWire Wire;  /**< Forward declaration of Wire object */
-extern SPIClass SPI;  /**< Forward declaration of SPI object */
+extern TwoWire Wire; /**< Forward declaration of Wire object */
+extern SPIClass SPI; /**< Forward declaration of SPI object */
 
 /*!
  * Registers available on the sensor.
  */
-enum {
+enum
+{
   BMP280_REGISTER_DIG_T1 = 0x88,
   BMP280_REGISTER_DIG_T2 = 0x8A,
   BMP280_REGISTER_DIG_T3 = 0x8C,
@@ -66,29 +67,32 @@ enum {
 /*!
  *  Struct to hold calibration data.
  */
-typedef struct {
+typedef struct
+{
   uint16_t dig_T1; /**< dig_T1 cal register. */
-  int16_t dig_T2;  /**<  dig_T2 cal register. */
-  int16_t dig_T3;  /**< dig_T3 cal register. */
+  int16_t dig_T2; /**<  dig_T2 cal register. */
+  int16_t dig_T3; /**< dig_T3 cal register. */
 
   uint16_t dig_P1; /**< dig_P1 cal register. */
-  int16_t dig_P2;  /**< dig_P2 cal register. */
-  int16_t dig_P3;  /**< dig_P3 cal register. */
-  int16_t dig_P4;  /**< dig_P4 cal register. */
-  int16_t dig_P5;  /**< dig_P5 cal register. */
-  int16_t dig_P6;  /**< dig_P6 cal register. */
-  int16_t dig_P7;  /**< dig_P7 cal register. */
-  int16_t dig_P8;  /**< dig_P8 cal register. */
-  int16_t dig_P9;  /**< dig_P9 cal register. */
+  int16_t dig_P2; /**< dig_P2 cal register. */
+  int16_t dig_P3; /**< dig_P3 cal register. */
+  int16_t dig_P4; /**< dig_P4 cal register. */
+  int16_t dig_P5; /**< dig_P5 cal register. */
+  int16_t dig_P6; /**< dig_P6 cal register. */
+  int16_t dig_P7; /**< dig_P7 cal register. */
+  int16_t dig_P8; /**< dig_P8 cal register. */
+  int16_t dig_P9; /**< dig_P9 cal register. */
 } bmp280_calib_data;
 
 /**
  * Driver for the Adafruit BMP280 barometric pressure sensor.
  */
-class Adafruit_BMP280 {
+class Adafruit_BMP280
+{
 public:
   /** Oversampling rate for the sensor. */
-  enum sensor_sampling {
+  enum sensor_sampling
+  {
     /** No over-sampling. */
     SAMPLING_NONE = 0x00,
     /** 1x over-sampling. */
@@ -104,7 +108,8 @@ public:
   };
 
   /** Operating mode for the sensor. */
-  enum sensor_mode {
+  enum sensor_mode
+  {
     /** Sleep mode. */
     MODE_SLEEP = 0x00,
     /** Forced mode. */
@@ -116,7 +121,8 @@ public:
   };
 
   /** Filtering level for sensor data. */
-  enum sensor_filter {
+  enum sensor_filter
+  {
     /** No filtering. */
     FILTER_OFF = 0x00,
     /** 2x filtering. */
@@ -130,7 +136,8 @@ public:
   };
 
   /** Standby duration in ms */
-  enum standby_duration {
+  enum standby_duration
+  {
     /** 0.5 ms standby. */
     STANDBY_MS_1 = 0x00,
     /** 62.5 ms standby. */
@@ -154,54 +161,65 @@ public:
   Adafruit_BMP280(int8_t cspin, int8_t mosipin, int8_t misopin, int8_t sckpin);
 
   bool begin(uint8_t addr = BMP280_ADDRESS, uint8_t chipid = BMP280_CHIPID);
-
-  float readTemperature();
+  bool init(uint8_t addr = BMP280_ADDRESS, uint8_t chipid = BMP280_CHIPID);
 
   float seaLevelForAltitude(float altitude, float atmospheric);
 
-  float readPressure(void);
-
-  float readAltitude(float seaLevelhPa = 1013.25);
+  void update(float seaLevelhPa = 1013.25);
 
   // void takeForcedMeasurement();
 
-  void setSampling(sensor_mode mode = MODE_NORMAL,
-                   sensor_sampling tempSampling = SAMPLING_X16,
-                   sensor_sampling pressSampling = SAMPLING_X16,
-                   sensor_filter filter = FILTER_OFF,
-                   standby_duration duration = STANDBY_MS_1);
-  
+  void setSampling(
+      sensor_mode mode = MODE_NORMAL,
+      sensor_sampling tempSampling = SAMPLING_X16,
+      sensor_sampling pressSampling = SAMPLING_X16,
+      sensor_filter filter = FILTER_OFF,
+      standby_duration duration = STANDBY_MS_1);
+
+  void readCoefficients(void);
+
   TwoWire *_wire; /**< Wire object */
   SPIClass *_spi; /**< SPI object */
 
+public:
+  float temperature;
+  float pressure;
+  float altitude;
 private:
   /** Encapsulates the config register */
-  struct config {
+  struct config
+  {
     /** Inactive duration (standby time) in normal mode */
-    unsigned int t_sb : 3;
+    unsigned int t_sb :3;
     /** Filter settings */
-    unsigned int filter : 3;
+    unsigned int filter :3;
     /** Unused - don't set */
-    unsigned int none : 1;
+    unsigned int none :1;
     /** Enables 3-wire SPI */
-    unsigned int spi3w_en : 1;
+    unsigned int spi3w_en :1;
     /** Used to retrieve the assembled config register's byte value. */
-    unsigned int get() { return (t_sb << 5) | (filter << 2) | spi3w_en; }
+    unsigned int get()
+    {
+      return (t_sb << 5) | (filter << 2) | spi3w_en;
+    }
   };
 
   /** Encapsulates trhe ctrl_meas register */
-  struct ctrl_meas {
+  struct ctrl_meas
+  {
     /** Temperature oversampling. */
-    unsigned int osrs_t : 3;
+    unsigned int osrs_t :3;
     /** Pressure oversampling. */
-    unsigned int osrs_p : 3;
+    unsigned int osrs_p :3;
     /** Device mode */
-    unsigned int mode : 2;
+    unsigned int mode :2;
     /** Used to retrieve the assembled ctrl_meas register's byte value. */
-    unsigned int get() { return (osrs_t << 5) | (osrs_p << 2) | mode; }
+    unsigned int get()
+    {
+      return (osrs_t << 5) | (osrs_p << 2) | mode;
+    }
   };
 
-  void readCoefficients(void);
   uint8_t spixfer(uint8_t x);
   void write8(byte reg, byte value);
   uint8_t read8(byte reg);
@@ -213,9 +231,7 @@ private:
 
   uint8_t _i2caddr;
 
-
   int32_t _sensorID;
-  int32_t t_fine;
   int8_t _cs, _mosi, _miso, _sck;
   bmp280_calib_data _bmp280_calib;
   config _configReg;

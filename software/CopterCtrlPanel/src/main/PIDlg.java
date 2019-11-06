@@ -9,8 +9,10 @@ import java.util.Arrays;
 import java.util.Observable;
 import java.util.Observer;
 
+import javax.swing.AbstractAction;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -18,6 +20,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -207,6 +210,29 @@ public class PIDlg extends JDialog
 				int gas = slider.getValue();
 				CopterCommander.instance().addCmd(new CmdSetMotorsGas(gas,gas,gas,gas));
 			}
+		}
+	}
+	
+	private class OnAddGasKey extends AbstractAction
+	{
+		private static final long serialVersionUID = 1L;
+		
+		private long timer = System.currentTimeMillis();
+		private int addval;
+		
+		public OnAddGasKey(int val)
+		{
+			addval = val;
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent e)
+		{
+			if(System.currentTimeMillis() - timer >= 50)
+			{
+				timer = System.currentTimeMillis();
+				mSetAllGas.addGas(addval);
+			}	
 		}
 	}
 	
@@ -474,6 +500,11 @@ public class PIDlg extends JDialog
 		mAltPid = new PidPanel(Text.get("ALT_PID"),0,200);
 		
 		mSetAllGas.addChangeListener(new GasChanged());
+		mSetAllGas.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("Z"), "addGas");
+		mSetAllGas.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("X"), "subGas");
+		mSetAllGas.getActionMap().put("addGas", new OnAddGasKey(10));
+		mSetAllGas.getActionMap().put("subGas", new OnAddGasKey(-10));
+		
 		mYawPid.onSet(new OnSetYawPid());
 		mYawPid.onTarget(new YprTargetChanged());
 		mPitchPid.onSet(new OnSetPitchPid());

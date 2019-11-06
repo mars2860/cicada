@@ -136,6 +136,12 @@ public class MotorGasSlider extends javax.swing.JPanel
 		mcl = listener;
 	}
 	
+	public void addGas(int gas)
+	{
+		gas += mSlider.getValue();
+		this.setGas(gas, true);
+	}
+	
 	public int getGas()
 	{
 		return mSlider.getValue();

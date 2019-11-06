@@ -24,9 +24,10 @@
 #ifndef PWM_MAX_CHANNELS
   #define PWM_MAX_CHANNELS 4
 #endif
-#define PWM_DEBUG 0
-#define PWM_USE_NMI 0
-#define PWM_ON_GPIO16_ENABLED 1
+#define PWM_DEBUG               0
+#define PWM_USE_NMI             0
+#define PWM_ON_GPIO16_ENABLED   1
+#define PWM_ON_GPIO16_FAST      1
 
 /* no user servicable parts beyond this point */
 
@@ -36,7 +37,7 @@
 #define PWM_DUTY_TO_TICKS(x) (x * 5)
 #define PWM_MAX_DUTY (PWM_MAX_TICKS * 0.2)
 #define PWM_MAX_PERIOD (PWM_MAX_TICKS * 5)
-#elif PWM_ON_GPIO16_ENABLED
+#elif (PWM_ON_GPIO16_ENABLED == 1 && PWM_ON_GPIO16_FAST == 0)
 #define PWM_PERIOD_TO_TICKS(x) (x*80)
 #define PWM_DUTY_TO_TICKS(x) (x*80)
 #define PWM_MAX_DUTY PWM_MAX_TICKS
@@ -141,15 +142,21 @@ pwm_intr_handler(void)
 
 		gpio->out_w1ts = (pwm_state.current_set[pwm_state.current_phase].on_mask);
 		gpio->out_w1tc = (pwm_state.current_set[pwm_state.current_phase].off_mask);
-#if PWM_ON_GPIO16_ENABLED
+#if PWM_ON_GPIO16_ENABLED == 1 && PWM_ON_GPIO16_FAST == 0
 		gpio16->out = pwm_state.current_set[pwm_state.current_phase].out16;
+#endif
+#if PWM_ON_GPIO16_ENABLED == 1 && PWM_ON_GPIO16_FAST == 1
+		if(pwm_state.current_set[pwm_state.current_phase].on_mask & 0x10000)
+		  gpio16->out = 1;
+		else if(pwm_state.current_set[pwm_state.current_phase].off_mask & 0x10000)
+		  gpio16->out = 0;
 #endif
 
 		uint32_t ticks = pwm_state.current_set[pwm_state.current_phase].ticks;
 
 		pwm_state.current_phase++;
 
-#if PWM_ON_GPIO16_ENABLED
+#if PWM_ON_GPIO16_ENABLED == 1 && PWM_ON_GPIO16_FAST == 0
 		if (ticks) {
 			if (ticks >= 300) {
 				// constant interrupt overhead
@@ -185,7 +192,6 @@ pwm_intr_handler(void)
 		}
 #endif
 	} while (1);
-
 }
 
 /**
@@ -463,7 +469,7 @@ pwm_start(void)
 		pwm_state.current_phase = phases - 1;
 		ETS_FRC1_INTR_ENABLE();
 		TIMER_REG_WRITE(FRC1_LOAD_ADDRESS, 0);
-#if PWM_ON_GPIO16_ENABLED
+#if PWM_ON_GPIO16_ENABLED == 1 && PWM_ON_GPIO16_FAST == 0
 		timer->frc1_ctrl = TIMER1_ENABLE_TIMER;
 #else
 		timer->frc1_ctrl = TIMER1_DIVIDE_BY_16 | TIMER1_ENABLE_TIMER;

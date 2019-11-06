@@ -33,6 +33,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/SPI}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/RTIMU}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/AltitudeKF}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/AltitudeEstimation}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.cpp.sketch.input.95334001" name="CPP source files" superClass="io.sloeber.compiler.cpp.sketch.input"/>
 							</tool>
@@ -52,6 +53,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/SPI}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/RTIMU}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/AltitudeKF}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/AltitudeEstimation}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.c.sketch.input.764340330" name="C Source Files" superClass="io.sloeber.compiler.c.sketch.input"/>
 							</tool>
@@ -71,6 +73,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/SPI}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/RTIMU}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/AltitudeKF}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/AltitudeEstimation}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.S.sketch.input.736617084" name="Assembly source files" superClass="io.sloeber.compiler.S.sketch.input"/>
 							</tool>
@@ -102,4 +105,9 @@
 		</configuration>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings">
+		<doc-comment-owner id="org.eclipse.cdt.ui.doxygen">
+			<path value=""/>
+		</doc-comment-owner>
+	</storageModule>
 </cproject>

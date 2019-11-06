@@ -11,12 +11,14 @@ public:
   int32_t gas;
   uint8_t chl;
   uint8_t pin;
+  uint8_t modified;
 public:
   Motor()
   {
     gas = 0;
     chl = 0;
     pin = 0;
+    modified = 0;
   }
 
   void setGas(int32_t value)
@@ -28,6 +30,7 @@ public:
       value = -maxGas;
 
     gas = value;
+    modified = 1;
   }
 
   void addGas(int32_t dx)

@@ -26,8 +26,10 @@ public:
     if(value > maxGas)
       value = maxGas;
 
-    if(value < -maxGas)
-      value = -maxGas;
+    //if(value < -maxGas)
+    //  value = -maxGas;
+    if(value < 0)
+      value = 0;
 
     gas = value;
     modified = 1;

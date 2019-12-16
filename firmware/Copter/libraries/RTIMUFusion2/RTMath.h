@@ -1,8 +1,8 @@
 ////////////////////////////////////////////////////////////////////////////
 //
-//  This file is part of RTIMULib-Arduino
+//  This file is part of RTIMULib
 //
-//  Copyright (c) 2014-2015, richards-tech
+//  Copyright (c) 2014-2015, richards-tech, LLC
 //
 //  Permission is hereby granted, free of charge, to any person obtaining a copy of
 //  this software and associated documentation files (the "Software"), to deal in
@@ -24,8 +24,11 @@
 #ifndef _RTMATH_H_
 #define _RTMATH_H_
 
-#include <math.h>
+#include <string.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <sys/time.h>
+#include <math.h>
 
 //  The fundamental float type
 
@@ -37,26 +40,28 @@ typedef float RTFLOAT;
 
 //  Useful constants
 
-#define	RTMATH_PI                   3.1415926535
-#define	RTMATH_DEGREE_TO_RAD        (M_PI / 180.0)
-#define	RTMATH_RAD_TO_DEGREE        (180.0 / M_PI)
+#define	RTMATH_PI					3.1415926535
+#define	RTMATH_DEGREE_TO_RAD		(RTMATH_PI / 180.0)
+#define	RTMATH_RAD_TO_DEGREE		(180.0 / RTMATH_PI)
 
 class RTVector3;
-
-#ifndef RTARDULINK_MODE
+class RTMatrix4x4;
 class RTQuaternion;
-#endif
 
 class RTMath
 {
 public:
-#ifndef RTARDULINK_MODE
     // convenient display routines
 
-    static void display(const char *label, RTVector3& vec);
-    static void displayDegrees(const char *label, RTVector3& vec);
-    static void displayRollPitchYaw(const char *label, RTVector3& vec);
-    static void display(const char *label, RTQuaternion& quat);
+    static const char *displayRadians(const char *label, RTVector3& vec);
+    static const char *displayDegrees(const char *label, RTVector3& vec);
+    static const char *display(const char *label, RTQuaternion& quat);
+    static const char *display(const char *label, RTMatrix4x4& mat);
+
+    //  currentUSecsSinceEpoch() is the source of all timestamps and
+    //  is the number of uS since the standard epoch
+
+    static uint64_t currentUSecsSinceEpoch();
 
     //  poseFromAccelMag generates pose Euler angles from measured settings
 
@@ -66,7 +71,12 @@ public:
 
     static void convertToVector(unsigned char *rawData, RTVector3& vec, RTFLOAT scale, bool bigEndian);
 
-#endif // #ifndef RTARDULINK_MODE
+    //  Takes a pressure in hPa and returns height above sea level in meters
+
+    static RTFLOAT convertPressureToHeight(RTFLOAT pressure, RTFLOAT staticPressure = 1013.25);
+
+private:
+    static char m_string[1000];                             // for the display routines
 };
 
 
@@ -81,8 +91,17 @@ public:
 
     RTVector3& operator =(const RTVector3& vec);
 
-    RTFLOAT squareLength();
+    RTFLOAT length();
+    void normalize();
     void zero();
+    const char *display();
+    const char *displayDegrees();
+
+    static float dotProduct(const RTVector3& a, const RTVector3& b);
+    static void crossProduct(const RTVector3& a, const RTVector3& b, RTVector3& d);
+
+    void accelToEuler(RTVector3& rollPitchYaw) const;
+    void accelToQuaternion(RTQuaternion& qPose) const;
 
     inline RTFLOAT x() const { return m_data[0]; }
     inline RTFLOAT y() const { return m_data[1]; }
@@ -93,26 +112,14 @@ public:
     inline void setY(const RTFLOAT val) { m_data[1] = val; }
     inline void setZ(const RTFLOAT val) { m_data[2] = val; }
     inline void setData(const int i, RTFLOAT val) { m_data[i] = val; }
-
-    #ifndef RTARDULINK_MODE
-    RTFLOAT length();
-    void normalize();
-
-    const char *display();
-    const char *displayDegrees();
-
-    static RTFLOAT dotProduct(const RTVector3& a, const RTVector3& b);
-    static void crossProduct(const RTVector3& a, const RTVector3& b, RTVector3& d);
-
-    void accelToEuler(RTVector3& rollPitchYaw) const;
-    void accelToQuaternion(RTQuaternion& qPose) const;
-#endif // #ifndef RTARDULINK_MODE
+    inline void fromArray(RTFLOAT *val) { memcpy(m_data, val, 3 * sizeof(RTFLOAT)); }
+    inline void toArray(RTFLOAT *val) const { memcpy(val, m_data, 3 * sizeof(RTFLOAT)); }
 
 private:
     RTFLOAT m_data[3];
 };
 
-#ifndef RTARDULINK_MODE
+
 class RTQuaternion
 {
 public:
@@ -152,10 +159,41 @@ public:
     inline void setY(const RTFLOAT val) { m_data[2] = val; }
     inline void setZ(const RTFLOAT val) { m_data[3] = val; }
     inline void setData(const int i, RTFLOAT val) { m_data[i] = val; }
+    inline void fromArray(RTFLOAT *val) { memcpy(m_data, val, 4 * sizeof(RTFLOAT)); }
+    inline void toArray(RTFLOAT *val) const { memcpy(val, m_data, 4 * sizeof(RTFLOAT)); }
 
 private:
     RTFLOAT m_data[4];
 };
-#endif // #ifndef RTARDULINK_MODE
+
+class RTMatrix4x4
+{
+public:
+    RTMatrix4x4();
+
+    RTMatrix4x4& operator +=(const RTMatrix4x4& mat);
+    RTMatrix4x4& operator -=(const RTMatrix4x4& mat);
+    RTMatrix4x4& operator *=(const RTFLOAT val);
+
+    RTMatrix4x4& operator =(const RTMatrix4x4& vec);
+    const RTQuaternion operator *(const RTQuaternion& q) const;
+    const RTMatrix4x4 operator *(const RTFLOAT val) const;
+    const RTMatrix4x4 operator *(const RTMatrix4x4& mat) const;
+    const RTMatrix4x4 operator +(const RTMatrix4x4& mat) const;
+
+    inline RTFLOAT val(int row, int col) const { return m_data[row][col]; }
+    inline void setVal(int row, int col, RTFLOAT val) { m_data[row][col] = val; }
+    void fill(RTFLOAT val);
+    void setToIdentity();
+
+    RTMatrix4x4 inverted();
+    RTMatrix4x4 transposed();
+
+private:
+    RTFLOAT m_data[4][4];                                   // row, column
+
+    RTFLOAT matDet();
+    RTFLOAT matMinor(const int row, const int col);
+};
 
 #endif /* _RTMATH_H_ */

@@ -1,8 +1,8 @@
 ////////////////////////////////////////////////////////////////////////////
 //
-//  This file is part of RTIMULib-Arduino
+//  This file is part of RTIMULib
 //
-//  Copyright (c) 2014-2015, richards-tech
+//  Copyright (c) 2014-2015, richards-tech, LLC
 //
 //  Permission is hereby granted, free of charge, to any person obtaining a copy of
 //  this software and associated documentation files (the "Software"), to deal in
@@ -22,41 +22,79 @@
 //  SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "RTMath.h"
-#include <Arduino.h>
+#ifdef WIN32
+#include <qdatetime.h>
+#endif
 
-#ifndef RTARDULINK_MODE
-void RTMath::display(const char *label, RTVector3& vec)
+//  Strings are put here. So the display functions are no re-entrant!
+
+char RTMath::m_string[1000];
+
+uint64_t RTMath::currentUSecsSinceEpoch()
 {
-    Serial.print(label);
-    Serial.print(" x:"); Serial.print(vec.x());
-    Serial.print(" y:"); Serial.print(vec.y());
-    Serial.print(" z:"); Serial.print(vec.z());
+#ifdef WIN32
+#include <qdatetime.h>
+    return QDateTime::currentMSecsSinceEpoch();
+#else
+    struct timeval tv;
+
+    gettimeofday(&tv, NULL);
+    return (uint64_t)tv.tv_sec * 1000000 + (uint64_t)tv.tv_usec;
+#endif
 }
 
-void RTMath::displayDegrees(const char *label, RTVector3& vec)
+const char *RTMath::displayRadians(const char *label, RTVector3& vec)
 {
-    Serial.print(label);
-    Serial.print(" x:"); Serial.print(vec.x() * RTMATH_RAD_TO_DEGREE);
-    Serial.print(" y:"); Serial.print(vec.y() * RTMATH_RAD_TO_DEGREE);
-    Serial.print(" z:"); Serial.print(vec.z() * RTMATH_RAD_TO_DEGREE);
+    sprintf(m_string, "%s: x:%f, y:%f, z:%f\n", label, vec.x(), vec.y(), vec.z());
+    return m_string;
 }
 
-void RTMath::displayRollPitchYaw(const char *label, RTVector3& vec)
+const char *RTMath::displayDegrees(const char *label, RTVector3& vec)
 {
-    Serial.print(label);
-    Serial.print(" roll:"); Serial.print(vec.x() * RTMATH_RAD_TO_DEGREE);
-    Serial.print(" pitch:"); Serial.print(vec.y() * RTMATH_RAD_TO_DEGREE);
-    Serial.print(" yaw:"); Serial.print(vec.z() * RTMATH_RAD_TO_DEGREE);
+    sprintf(m_string, "%s: roll:%f, pitch:%f, yaw:%f", label, vec.x() * RTMATH_RAD_TO_DEGREE,
+            vec.y() * RTMATH_RAD_TO_DEGREE, vec.z() * RTMATH_RAD_TO_DEGREE);
+    return m_string;
 }
 
-void RTMath::display(const char *label, RTQuaternion& quat)
+const char *RTMath::display(const char *label, RTQuaternion& quat)
 {
-    Serial.print(label);
-    Serial.print(" scalar:"); Serial.print(quat.scalar());
-    Serial.print(" x:"); Serial.print(quat.x());
-    Serial.print(" y:"); Serial.print(quat.y());
-    Serial.print(" z:"); Serial.print(quat.z());
+    sprintf(m_string, "%s: scalar: %f, x:%f, y:%f, z:%f\n", label, quat.scalar(), quat.x(), quat.y(), quat.z());
+    return m_string;
 }
+
+const char *RTMath::display(const char *label, RTMatrix4x4& mat)
+{
+    sprintf(m_string, "%s(0): %f %f %f %f\n%s(1): %f %f %f %f\n%s(2): %f %f %f %f\n%s(3): %f %f %f %f\n",
+            label, mat.val(0,0), mat.val(0,1), mat.val(0,2), mat.val(0,3),
+            label, mat.val(1,0), mat.val(1,1), mat.val(1,2), mat.val(1,3),
+            label, mat.val(2,0), mat.val(2,1), mat.val(2,2), mat.val(2,3),
+            label, mat.val(3,0), mat.val(3,1), mat.val(3,2), mat.val(3,3));
+    return m_string;
+}
+
+//  convertPressureToHeight() - the conversion uses the formula:
+//
+//  h = (T0 / L0) * ((p / P0)**(-(R* * L0) / (g0 * M)) - 1)
+//
+//  where:
+//  h  = height above sea level
+//  T0 = standard temperature at sea level = 288.15
+//  L0 = standard temperatur elapse rate = -0.0065
+//  p  = measured pressure
+//  P0 = static pressure = 1013.25 (but can be overridden)
+//  g0 = gravitational acceleration = 9.80665
+//  M  = mloecular mass of earth's air = 0.0289644
+//  R* = universal gas constant = 8.31432
+//
+//  Given the constants, this works out to:
+//
+//  h = 44330.8 * (1 - (p / P0)**0.190263)
+
+RTFLOAT RTMath::convertPressureToHeight(RTFLOAT pressure, RTFLOAT staticPressure)
+{
+    return 44330.8 * (1 - pow(pressure / staticPressure, (RTFLOAT)0.190263));
+}
+
 
 RTVector3 RTMath::poseFromAccelMag(const RTVector3& accel, const RTVector3& mag)
 {
@@ -103,7 +141,7 @@ void RTMath::convertToVector(unsigned char *rawData, RTVector3& vec, RTFLOAT sca
      }
 }
 
-#endif // #ifndef RTARDULINK_MODE
+
 
 //----------------------------------------------------------
 //
@@ -154,7 +192,7 @@ void RTVector3::zero()
         m_data[i] = 0;
 }
 
-#ifndef RTARDULINK_MODE
+
 RTFLOAT RTVector3::dotProduct(const RTVector3& a, const RTVector3& b)
 {
     return a.x() * b.x() + a.y() * b.y() + a.z() * b.z();
@@ -198,10 +236,10 @@ void RTVector3::accelToQuaternion(RTQuaternion& qPose) const
 
 void RTVector3::normalize()
 {
-    RTFLOAT length = (RTFLOAT)sqrt(m_data[0] * m_data[0] + m_data[1] * m_data[1] +
-        m_data[2] * m_data[2]);
+    RTFLOAT length = sqrt(m_data[0] * m_data[0] + m_data[1] * m_data[1] +
+            m_data[2] * m_data[2]);
 
-    if ((length == 0) || (length == 1))
+    if (length == 0)
         return;
 
     m_data[0] /= length;
@@ -211,19 +249,10 @@ void RTVector3::normalize()
 
 RTFLOAT RTVector3::length()
 {
-    return (RTFLOAT)sqrt(m_data[0] * m_data[0] + m_data[1] * m_data[1] +
+    return sqrt(m_data[0] * m_data[0] + m_data[1] * m_data[1] +
             m_data[2] * m_data[2]);
 }
 
-#endif // #ifndef RTARDULINK_MODE
-
-RTFLOAT RTVector3::squareLength()
-{
-   return m_data[0] * m_data[0] + m_data[1] * m_data[1] +
-            m_data[2] * m_data[2];
-}
-
-#ifndef RTARDULINK_MODE
 //----------------------------------------------------------
 //
 //  The RTQuaternion class
@@ -253,6 +282,8 @@ RTQuaternion& RTQuaternion::operator =(const RTQuaternion& quat)
 
     return *this;
 }
+
+
 
 RTQuaternion& RTQuaternion::operator +=(const RTQuaternion& quat)
 {
@@ -416,4 +447,184 @@ void RTQuaternion::fromAngleVector(const RTFLOAT& angle, const RTVector3& vec)
     m_data[2] = vec.y() * sinHalfTheta;
     m_data[3] = vec.z() * sinHalfTheta;
 }
-#endif // #ifndef RTARDULINK_MODE
+
+
+
+//----------------------------------------------------------
+//
+//  The RTMatrix4x4 class
+
+RTMatrix4x4::RTMatrix4x4()
+{
+    fill(0);
+}
+
+RTMatrix4x4& RTMatrix4x4::operator =(const RTMatrix4x4& mat)
+{
+    if (this == &mat)
+        return *this;
+
+    for (int row = 0; row < 4; row++)
+        for (int col = 0; col < 4; col++)
+            m_data[row][col] = mat.m_data[row][col];
+
+    return *this;
+}
+
+
+void RTMatrix4x4::fill(RTFLOAT val)
+{
+    for (int row = 0; row < 4; row++)
+        for (int col = 0; col < 4; col++)
+            m_data[row][col] = val;
+}
+
+
+RTMatrix4x4& RTMatrix4x4::operator +=(const RTMatrix4x4& mat)
+{
+    for (int row = 0; row < 4; row++)
+        for (int col = 0; col < 4; col++)
+            m_data[row][col] += mat.m_data[row][col];
+
+    return *this;
+}
+
+RTMatrix4x4& RTMatrix4x4::operator -=(const RTMatrix4x4& mat)
+{
+    for (int row = 0; row < 4; row++)
+        for (int col = 0; col < 4; col++)
+            m_data[row][col] -= mat.m_data[row][col];
+
+    return *this;
+}
+
+RTMatrix4x4& RTMatrix4x4::operator *=(const RTFLOAT val)
+{
+    for (int row = 0; row < 4; row++)
+        for (int col = 0; col < 4; col++)
+            m_data[row][col] *= val;
+
+    return *this;
+}
+
+const RTMatrix4x4 RTMatrix4x4::operator +(const RTMatrix4x4& mat) const
+{
+    RTMatrix4x4 result = *this;
+    result += mat;
+    return result;
+}
+
+const RTMatrix4x4 RTMatrix4x4::operator *(const RTFLOAT val) const
+{
+    RTMatrix4x4 result = *this;
+    result *= val;
+    return result;
+}
+
+
+const RTMatrix4x4 RTMatrix4x4::operator *(const RTMatrix4x4& mat) const
+{
+    RTMatrix4x4 res;
+
+    for (int row = 0; row < 4; row++)
+        for (int col = 0; col < 4; col++)
+            res.m_data[row][col] =
+                    m_data[row][0] * mat.m_data[0][col] +
+                    m_data[row][1] * mat.m_data[1][col] +
+                    m_data[row][2] * mat.m_data[2][col] +
+                    m_data[row][3] * mat.m_data[3][col];
+
+    return res;
+}
+
+
+const RTQuaternion RTMatrix4x4::operator *(const RTQuaternion& q) const
+{
+    RTQuaternion res;
+
+    res.setScalar(m_data[0][0] * q.scalar() + m_data[0][1] * q.x() + m_data[0][2] * q.y() + m_data[0][3] * q.z());
+    res.setX(m_data[1][0] * q.scalar() + m_data[1][1] * q.x() + m_data[1][2] * q.y() + m_data[1][3] * q.z());
+    res.setY(m_data[2][0] * q.scalar() + m_data[2][1] * q.x() + m_data[2][2] * q.y() + m_data[2][3] * q.z());
+    res.setZ(m_data[3][0] * q.scalar() + m_data[3][1] * q.x() + m_data[3][2] * q.y() + m_data[3][3] * q.z());
+
+    return res;
+}
+
+void RTMatrix4x4::setToIdentity()
+{
+    fill(0);
+    m_data[0][0] = 1;
+    m_data[1][1] = 1;
+    m_data[2][2] = 1;
+    m_data[3][3] = 1;
+}
+
+RTMatrix4x4 RTMatrix4x4::transposed()
+{
+    RTMatrix4x4 res;
+
+    for (int row = 0; row < 4; row++)
+        for (int col = 0; col < 4; col++)
+            res.m_data[col][row] = m_data[row][col];
+    return res;
+}
+
+//  Note:
+//  The matrix inversion code here was strongly influenced by some old code I found
+//  but I have no idea where it came from. Apologies to whoever wrote it originally!
+//  If it's you, please let me know at info@richards-tech.com so I can credit it correctly.
+
+RTMatrix4x4 RTMatrix4x4::inverted()
+{
+    RTMatrix4x4 res;
+
+    RTFLOAT det = matDet();
+
+    if (det == 0) {
+        res.setToIdentity();
+        return res;
+    }
+
+    for (int row = 0; row < 4; row++) {
+        for (int col = 0; col < 4; col++) {
+            if ((row + col) & 1)
+                res.m_data[col][row] = -matMinor(row, col) / det;
+            else
+                res.m_data[col][row] = matMinor(row, col) / det;
+        }
+    }
+
+    return res;
+}
+
+RTFLOAT RTMatrix4x4::matDet()
+{
+    RTFLOAT det = 0;
+
+    det += m_data[0][0] * matMinor(0, 0);
+    det -= m_data[0][1] * matMinor(0, 1);
+    det += m_data[0][2] * matMinor(0, 2);
+    det -= m_data[0][3] * matMinor(0, 3);
+    return det;
+}
+
+RTFLOAT RTMatrix4x4::matMinor(const int row, const int col)
+{
+    static int map[] = {1, 2, 3, 0, 2, 3, 0, 1, 3, 0, 1, 2};
+
+    int *rc;
+    int *cc;
+    RTFLOAT res = 0;
+
+    rc = map + row * 3;
+    cc = map + col * 3;
+
+    res += m_data[rc[0]][cc[0]] * m_data[rc[1]][cc[1]] * m_data[rc[2]][cc[2]];
+    res -= m_data[rc[0]][cc[0]] * m_data[rc[1]][cc[2]] * m_data[rc[2]][cc[1]];
+    res -= m_data[rc[0]][cc[1]] * m_data[rc[1]][cc[0]] * m_data[rc[2]][cc[2]];
+    res += m_data[rc[0]][cc[1]] * m_data[rc[1]][cc[2]] * m_data[rc[2]][cc[0]];
+    res += m_data[rc[0]][cc[2]] * m_data[rc[1]][cc[0]] * m_data[rc[2]][cc[1]];
+    res -= m_data[rc[0]][cc[2]] * m_data[rc[1]][cc[1]] * m_data[rc[2]][cc[0]];
+    return res;
+}
+

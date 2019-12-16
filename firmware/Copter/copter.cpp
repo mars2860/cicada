@@ -10,9 +10,12 @@
 #include "MPU6050_6Axis_MotionApps20.h"
 #include "QMC5883L.h"
 #include "Adafruit_BMP280.h"
-#include "RTFusionRTQF.h"
 #include "altitude_kf.h"
 #include "altitude.h"
+
+#include "RTFusion.h"
+#include "RTFusionRTQF.h"
+#include "RTFusionKalman4.h"
 #include "motor.h"
 #include "pid.h"
 
@@ -52,7 +55,7 @@
 
 #define MPU_1G 8192.f
 
-#define USE_MPU6050_DMP
+//#define USE_MPU6050_DMP
 #define ESCAPER_TEENYPRO
 
 //----------------------------------------------------------------
@@ -139,7 +142,7 @@ QMC5883L mag;
 Adafruit_BMP280 baro;
 MPU6050 mpu;
 #ifndef USE_MPU6050_DMP
-RTFusionRTQF rtFusion;      // Another one 9DOF IMU processor
+RTFusion* imuFusion;
 // micros
 #define MPU6050_READ_PERIOD 5000
 #else
@@ -168,8 +171,9 @@ float pressure;
 float seaLevelhPa = DEFAULT_SEA_LEVEL;
 float altitude;
 float vz = 0;
+//float fusedYaw;
 
-Altitude_KF alt_estimator(0.1f, 0.1f);
+//Altitude_KF alt_estimator(0.1f, 0.1f);
 AltitudeEstimator altest(0.0005,  // sigma Accel
                          0.0005,  // sigma Gyro
                          0.018,   // sigma Baro
@@ -193,6 +197,17 @@ void readMpuOffsets();
 uint8_t readMagnet(int16_t *mx, int16_t *my, int16_t *mz);
 /// Calcs heading to magnetic north
 float calcHeading(int16_t mx, int16_t my, int16_t mz, double pitch, double roll);
+/**
+ *
+ * @param a     coef a
+ * @param b     coef b
+ * @param dt    delta time in seconds
+ * @param sx    x speed
+ * @param prevX previous x
+ * @param y     y
+ * @return
+ */
+float complementaryFilter(float a, float b, float dt, float sx, float prevX, float y);
 
 //void processEspLed();
 void processCommand();
@@ -282,13 +297,56 @@ void setupMotors()
               motor[2].pin,
               motor[3].pin,
               1000);
+/*
+  dshotEnable(0);
+
+  dshotSet(9,9,9,9);
+
+  dshotWrite300();
+  delayMicroseconds(100);
+  dshotWrite300();
+  delayMicroseconds(100);
+  dshotWrite300();
+  delayMicroseconds(100);
+  dshotWrite300();
+  delayMicroseconds(100);
+  dshotWrite300();
+  delayMicroseconds(100);
+  dshotWrite300();
+  delayMicroseconds(100);
+  dshotWrite300();
+  delayMicroseconds(100);
+
+  dshotSet(12,12,12,12);
+
+  dshotWrite300();
+  delayMicroseconds(100);
+  dshotWrite300();
+  delayMicroseconds(100);
+  dshotWrite300();
+  delayMicroseconds(100);
+  dshotWrite300();
+  delayMicroseconds(100);
+  dshotWrite300();
+  delayMicroseconds(100);
+  dshotWrite300();
+  delayMicroseconds(100);
+  dshotWrite300();
+  delayMicroseconds(100);
+
+  dshotSet(48,48,48,48);
+
+  delay(50);
+
+  dshotEnable(1);
+ */
 #endif
 }
 
 void setupSensors()
 {
   Wire.begin();
-  Wire.setClock(100000UL);    // there are bad SCL fronts if set greater
+  Wire.setClock(200000UL);  // line capacity is too high, can't run at higher frequency
   // Setup IMU
   mpu.initialize();
 
@@ -299,17 +357,19 @@ void setupSensors()
   mpu.setRate(4);   // 200 Hz
   mpu.setDLPFMode(MPU6050_DLPF_BW_42);
   mpu.setFullScaleGyroRange(MPU6050_GYRO_FS_2000);
-  mpu.setFullScaleAccelRange(MPU6050_ACCEL_FS_2);
+  mpu.setFullScaleAccelRange(MPU6050_ACCEL_FS_4);
 
+  //imuFusion = new RTFusionRTQF();
+  imuFusion = new RTFusionKalman4();
   // Slerp power controls the fusion and can be between 0 and 1
   // 0 means that only gyros are used, 1 means that only accels/compass are used
   // In-between gives the fusion mix.
-  rtFusion.setSlerpPower(0.02);
+  imuFusion->setSlerpPower(0.02f);
   // use of sensors in the fusion algorithm can be controlled here
   // change any of these to false to disable that sensor
-  rtFusion.setGyroEnable(true);
-  rtFusion.setAccelEnable(true);
-  rtFusion.setCompassEnable(true);
+  imuFusion->setGyroEnable(true);
+  imuFusion->setAccelEnable(true);
+  imuFusion->setCompassEnable(false);
 #endif
 
   // Setup Magnetometer
@@ -401,6 +461,11 @@ void loop()
     }
     if(escUp)
       dshotSet(motor[0].gas + 48, motor[1].gas + 48, motor[2].gas + 48, motor[3].gas + 48);
+
+    // reset saved 3d mode
+    //dshotSet(12,12,12,12);
+    //else
+    //  dshotSet(9,9,9,9);
   }
 #endif
 
@@ -704,7 +769,8 @@ void processTelemetry()
   pos = writeTelemetryPacket(pos, udpPacket, &rollPid.output, sizeof(rollPid.output));
   pos = writeTelemetryPacket(pos, udpPacket, &altPid.output, sizeof(altPid.output));
   // Loop Time
-  pos = writeTelemetryPacket(pos, udpPacket, &loopTime, sizeof(loopTime));
+  //pos = writeTelemetryPacket(pos, udpPacket, &loopTime, sizeof(loopTime));
+  pos = writeTelemetryPacket(pos, udpPacket, &mpuTime, sizeof(mpuTime));
   // Baro
   pos = writeTelemetryPacket(pos, udpPacket, &temperature, sizeof(temperature));
   pos = writeTelemetryPacket(pos, udpPacket, &pressure, sizeof(pressure));
@@ -797,7 +863,10 @@ void processPids()
   {
     dg = pitchPid.run(ypr[1],true);
 
-    if(dg > 0)
+    //mg[1] += dg;
+    //mg[2] += dg;
+
+    /*if(dg > 0)
     {
       mg[1] += dg;
       mg[2] += dg;
@@ -806,12 +875,14 @@ void processPids()
     {
       mg[0] -= dg;
       mg[3] -= dg;
-    }
-    /*mg[1] += dg;
+    }*/
+
+    mg[1] += dg;
     mg[2] += dg;
     mg[0] -= dg;
     mg[3] -= dg;
 
+    /*
     for(i = 0; i < 4; i++)
     {
       if(mg[i] < 0)
@@ -845,7 +916,10 @@ void processPids()
   {
     dg = rollPid.run(ypr[2],true);
 
-    if(dg > 0)
+    //mg[2] += dg;
+    //mg[3] += dg;
+
+    /*if(dg > 0)
     {
       mg[2] += dg;
       mg[3] += dg;
@@ -854,14 +928,14 @@ void processPids()
     {
       mg[0] -= dg;
       mg[1] -= dg;
-    }
+    }*/
 
-    /*
     mg[0] -= dg;
     mg[1] -= dg;
     mg[2] += dg;
     mg[3] += dg;
 
+    /*
     for(i = 0; i < 4; i++)
     {
       if(mg[i] < 0)
@@ -915,52 +989,66 @@ void processPids()
     motor[i].setGas(mg[i]);
 }
 
+float complementaryFilter(float a, float b, float dt, float sx, float prevX, float y)
+{
+  float result = a*(prevX + sx*dt) + b*y;
+  return result;
+}
+
 uint8_t processSensors()
 {
   uint8_t result = 0;
-  uint8_t updateHeading = 0;
-
-  // to prevent I2C signals to be broken by DSHOT interrupt
-  dshotEnable(0);
 
 #ifdef USE_MPU6050_DMP
+  uint8_t updateHeading;
+  // this approach takes 10-12 ms to read sensors and update pids state
+  // it is slow because we have slow I2C. Reading 42 bytes of fifo takes to much time
   //uint8_t mpuIntStatus = mpu.getIntStatus();        // holds actual interrupt status byte from MPU
   uint8_t fifoBuffer[64];                           // FIFO storage buffer
   uint16_t packetSize = mpu.dmpGetFIFOPacketSize();
 
+#ifdef ESCAPER_TEENYPRO
+  dshotEnable(0);
+#endif
   //if((mpuIntStatus & MPU6050_INTERRUPT_DMP_INT_BIT) && mpu.dmpPacketAvailable())
   if(mpu.dmpPacketAvailable())
   {
     //uint32_t profDt = micros();
-    dshotEnable(0);
     result = 1;
     mpu.getFIFOBytes(fifoBuffer, packetSize);
-    dshotEnable(1);
 
     // reset fifo to get fresh data in next cycle
-    dshotEnable(0);
     mpu.resetFIFO();
+
+#ifdef ESCAPER_TEENYPRO
     dshotEnable(1);
+#endif
 
     // calc ypr (< 1 millis to execute)
     mpu.dmpGetQuaternion(&q, fifoBuffer);
     mpu.dmpGetAccel(accel, fifoBuffer);
     mpu.dmpGetGyro(gyro, fifoBuffer);
-    mpu.dmpGetAccel(&aa, fifoBuffer);
     mpu.dmpGetGravity(&gravity, &q);
     mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
 
     //profDt = micros() - profDt;
     //Serial.print("DMP processing = ");
     //Serial.println(profDt); // 2852 - 3210 is time to get YPR from DMP
-
-    mpu.dmpGetLinearAccel(&aaReal, &aa, &gravity);
-    mpu.dmpGetLinearAccelInWorld(&aaWorld, &aaReal, &q);
+    //mpu.dmpGetAccel(&aa, fifoBuffer);
+    //mpu.dmpGetLinearAccel(&aaReal, &aa, &gravity);
+    //mpu.dmpGetLinearAccelInWorld(&aaWorld, &aaReal, &q);
     mpuTime = micros() - mpuTimer;
     mpuTimer = micros();
+    //float dt = float(mpuTime) / 1000000.f; // convert micros to seconds
 
-    float dt = float(mpuTime) / 1000000.f; // convert micros to seconds
-    float az = (float(aaWorld.z) / MPU_1G)*9.80665f;
+    //fusedYaw = complementaryFilter(0.98f, 0.02f, dt, float(-gyro[2])/16.4f, fusedYaw, heading);
+    //if(fusedYaw > 360.f)
+    //  fusedYaw -= 360.f;
+    //if(fusedYaw < 0)
+    //  fusedYaw += 360.f;
+    //ypr[0] = fusedYaw;
+
+    //float az = (float(aaWorld.z) / MPU_1G)*9.80665f;
 
     // Derive altitude and get velocity in cm/s
     /*static float last_alt;
@@ -994,7 +1082,7 @@ uint8_t processSensors()
     altest.estimate(ac,gy,baro.altitude,micros());
     altitude = altest.getAltitude();
     */
-    alt_estimator.propagate(az, dt);
+    //alt_estimator.propagate(az, dt);
   }
 
   /*if((mpuIntStatus & MPU6050_INTERRUPT_FIFO_OFLOW_BIT) || mpu.getFIFOCount() == 1024)
@@ -1004,10 +1092,21 @@ uint8_t processSensors()
     Serial.println(F("MPU FIFO overflow!"));
   }*/
 
-  // read magnetometer (1 millis to execute)
+#ifdef ESCAPER_TEENYPRO
   dshotEnable(0);
+#endif
+
+  // read magnetometer (1 millis to execute)
   updateHeading = readMagnet(&magnet[0],&magnet[1],&magnet[2]);
+
+#ifdef ESCAPER_TEENYPRO
   dshotEnable(1);
+#endif
+
+  // heading
+  if(updateHeading)
+    heading = calcHeading(magnet[0], magnet[1], magnet[2], ypr[1], ypr[2]);
+
 #else
 
   mpuTime = micros() - mpuTimer;
@@ -1015,14 +1114,23 @@ uint8_t processSensors()
   {
     // disadvantage of this method is no temperature compensation for gyro and accel
     // and result is not so clean as in DMP, there are more fluctuations
+    // values are invalid when motors run high speed. it is very sensetive to vibrations
+    // advantage of this method is fast execute. it takes 5ms to execute
+
     result = 1;
 
     mpuTimer = micros();
 
-    updateHeading = readMagnet(&magnet[0],&magnet[1],&magnet[2]);
-
+#ifdef ESCAPER_TEENYPRO
+    dshotEnable(0);
+#endif
+    readMagnet(&magnet[0],&magnet[1],&magnet[2]);
     //uint32_t profDt = micros();
     mpu.getMotion6(&accel[0],&accel[1],&accel[2],&gyro[0],&gyro[1],&gyro[2]);
+#ifdef ESCAPER_TEENYPRO
+    dshotEnable(1);
+#endif
+
     unsigned long timestamp = micros();
     float gx = float(gyro[0])/16.4f;
     float gy = float(gyro[1])/16.4f;
@@ -1033,11 +1141,11 @@ uint8_t processSensors()
     //ypr[0] = imu.getYawRadians();
     //ypr[1] = -imu.getPitchRadians();
     //ypr[2] = imu.getRollRadians();
-    // convert LSB to m/s^2
+    // convert LSB to m/s^2 (no need convert because accel vector is normalized in computaion)
     float ax = float(accel[0]);///16384.f;
     float ay = float(accel[1]);///16384.f;
     float az = float(accel[2]);///16384.f;
-    // convert LSB to mgauss/10
+    // convert LSB to mgauss/10 (no need convert because magnet vector is normalized in computaion)
     float mx = float(magnet[0]);///120.f;
     float my = float(magnet[1]);///120.f;
     float mz = float(magnet[2]);///120.f;
@@ -1046,14 +1154,36 @@ uint8_t processSensors()
     gy *= RTMATH_DEGREE_TO_RAD;
     gz *= RTMATH_DEGREE_TO_RAD;
     // sort out axes as in RTIMUMPU9250
-    RTVector3 rtGyro(gx,-gy,-gz);
-    RTVector3 rtAccel(-ax,ay,az);
-    RTVector3 rtMagnet(mx,my,mz);
-    rtFusion.newIMUData(rtGyro, rtAccel, rtMagnet, timestamp);
-    const RTVector3 &pose = rtFusion.getFusionPose();
-    ypr[0] = pose.z();
+    RTIMU_DATA fusionData;
+    fusionData.fusionPoseValid = false;
+    fusionData.fusionQPoseValid = false;
+    fusionData.timestamp = timestamp;
+    fusionData.gyroValid = true;
+    fusionData.gyro = RTVector3(gx,-gy,-gz);
+    fusionData.accelValid = true;
+    fusionData.accel = RTVector3(-ax,ay,az);
+    fusionData.compassValid = true;
+    fusionData.compass = RTVector3(mx,my,-mz);
+    fusionData.pressureValid = false;
+    fusionData.temperatureValid = false;
+    fusionData.humidityValid = false;
+    imuFusion->newIMUData(fusionData, 0);
+    const RTVector3 &pose = fusionData.fusionPose;
+    heading = ypr[0] = pose.z() + M_PI;
     ypr[1] = pose.y();
     ypr[2] = pose.x();
+
+    /*float aa[3];
+    float gg[3];
+
+    for(uint8_t i = 0; i < 3; i++)
+    {
+      aa[i] = ((float)accel[i])/16384.f;
+      gg[i] = ((float)gyro[i])*M_PI/2952.f;//(16.4f*180.f);
+    }
+    altest.estimate(aa,gg,baro.altitude,micros());
+    altitude = altest.getAltitude();*/
+
     //readMpuOffsets();
     //profDt = micros() - profDt;
     //Serial.print("Magwick processing = ");
@@ -1062,29 +1192,29 @@ uint8_t processSensors()
   }
 #endif
 
-  // heading
-  if(updateHeading)
-    heading = calcHeading(magnet[0], magnet[1], magnet[2], ypr[1], ypr[2]);
-
   // baro sensor
   if(millis() - baroTimer >= BARO_READ_PERIOD)
   {
     baroTimer = millis();
 
-    dshotEnable(0);
-    baro.update(seaLevelhPa);
-    dshotEnable(1);
+#ifdef ESCAPER_TEENYPRO
+  dshotEnable(0);
+#endif
 
+  baro.update(seaLevelhPa);
+
+#ifdef ESCAPER_TEENYPRO
+  dshotEnable(1);
+#endif
     //temperature = (float)(mpu.getTemperature()) / 340.f;  // require temperature offset
     pressure = baro.pressure;
-    //altitude = baro.altitude;
+    altitude = baro.altitude;
+    temperature = baro.temperature;
     //altitude = altest.getAltitude();
-    alt_estimator.update(baro.altitude);
-    altitude = alt_estimator.h;
-    temperature = alt_estimator.v;//vz;//altest.getVerticalVelocity();//baro.temperature;
+    //alt_estimator.update(baro.altitude);
+    //altitude = alt_estimator.h;
+    //temperature = altest.getVerticalVelocity();//alt_estimator.v;//vz;////baro.temperature;
   }
-
-  dshotEnable(1);
 
   return result;
 }

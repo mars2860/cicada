@@ -1,8 +1,8 @@
 ////////////////////////////////////////////////////////////////////////////
 //
-//  This file is part of RTIMULib-Arduino
+//  This file is part of RTIMULib
 //
-//  Copyright (c) 2014-2015, richards-tech
+//  Copyright (c) 2014-2015, richards-tech, LLC
 //
 //  Permission is hereby granted, free of charge, to any person obtaining a copy of
 //  this software and associated documentation files (the "Software"), to deal in
@@ -21,31 +21,40 @@
 //  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 //  SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef _RTFUSIONRTQF_H
-#define	_RTFUSIONRTQF_H
+#ifndef _RTFUSION_H
+#define	_RTFUSION_H
 
-#ifndef RTARDULINK_MODE
+#include "RTIMULibDefs.h"
 
-#include "RTMath.h"
+class RTIMUSettings;
 
-//  Define this symbol to use more scientific prediction correction
-
-#define USE_SLERP
-
-class RTFusionRTQF
+class RTFusion
 {
 public:
-    RTFusionRTQF();
-    ~RTFusionRTQF();
 
-    //  reset() resets the state but keeps any setting changes (such as enables)
+    RTFusion();
+    virtual ~RTFusion();
 
-    void reset();
+    //  fusionType returns the type code of the fusion algorithm
+
+    virtual int fusionType() { return RTFUSION_TYPE_NULL; }
+
+    //  the following function can be called to set the SLERP power
+
+    void setSlerpPower(RTFLOAT power) { m_slerpPower = power; }
+
+    //  reset() resets the fusion state but keeps any setting changes (such as enables)
+
+    virtual void reset() {}
 
     //  newIMUData() should be called for subsequent updates
-    //  deltaTime is in units of seconds
+    //  the fusion fields are updated with the results
 
-    void newIMUData(const RTVector3& gyro, const RTVector3& accel, const RTVector3& compass, unsigned long timestamp);
+    virtual void newIMUData(RTIMU_DATA& /* data */, const RTIMUSettings * /* settings */) {}
+
+    //  This static function returns performs the type to name mapping
+
+    static const char *fusionName(int fusionType) { return m_fusionNameMap[fusionType]; }
 
     //  the following three functions control the influence of the gyro, accel and compass sensors
 
@@ -53,49 +62,44 @@ public:
     void setAccelEnable(bool enable) { m_enableAccel = enable; }
     void setCompassEnable(bool enable) { m_enableCompass = enable;}
 
-#ifdef USE_SLERP
-    //  the following function can be called to set the SLERP power
-    void setSlerpPower(RTFLOAT power) { m_slerpPower = power; }
-#else
-    //  the following two functions can be called to customize the noise covariance
-
-    void setQ(RTFLOAT Q) {  m_Q = Q; reset();}
-    void setR(RTFLOAT R) { if (R > 0) m_R = R; reset();}
-#endif
     inline const RTVector3& getMeasuredPose() {return m_measuredPose;}
     inline const RTQuaternion& getMeasuredQPose() {return m_measuredQPose;}
-    inline const RTVector3& getFusionPose() {return m_fusionPose;}
-    inline const RTQuaternion& getFusionQPose() {return m_fusionQPose;}
 
-private:
-    void calculatePose(const RTVector3& accel, const RTVector3& mag); // generates pose from accels and heading
+    //  getAccelResiduals() gets the residual after subtracting gravity
 
-    RTFLOAT m_timeDelta;                                    // time between predictions
+    RTVector3 getAccelResiduals();
 
-    RTQuaternion m_stateQError;                             // difference between stateQ and measuredQ
+    void setDebugEnable(bool enable) { m_debug = enable; }
 
-#ifdef USE_SLERP
-    RTFLOAT m_slerpPower;                                   // a value 0 to 1 that controls measured state influence
-    RTQuaternion m_rotationDelta;                           // amount by which measured state differs from predicted
-    RTQuaternion m_rotationPower;                           // delta raised to the appopriate power
-    RTVector3 m_rotationUnitVector;                         // the vector part of the rotation delta
-#else
-    RTFLOAT m_Q;                                            // process noise covariance
-    RTFLOAT m_R;                                            // the measurement noise covariance
-#endif
+protected:
+    void calculatePose(const RTVector3& accel, const RTVector3& mag, float magDeclination); // generates pose from accels and mag
+
+    RTVector3 m_gyro;                                       // current gyro sample
+    RTVector3 m_accel;                                      // current accel sample
+    RTVector3 m_compass;                                    // current compass sample
+
     RTQuaternion m_measuredQPose;       					// quaternion form of pose from measurement
     RTVector3 m_measuredPose;								// vector form of pose from measurement
     RTQuaternion m_fusionQPose;                             // quaternion form of pose from fusion
     RTVector3 m_fusionPose;                                 // vector form of pose from fusion
 
+    RTQuaternion m_gravity;                                 // the gravity vector as a quaternion
+
+    RTFLOAT m_slerpPower;                                   // a value 0 to 1 that controls measured state influence
+    RTQuaternion m_rotationDelta;                           // amount by which measured state differs from predicted
+    RTQuaternion m_rotationPower;                           // delta raised to the appopriate power
+    RTVector3 m_rotationUnitVector;                         // the vector part of the rotation delta
+
+    bool m_debug;
     bool m_enableGyro;                                      // enables gyro as input
     bool m_enableAccel;                                     // enables accel as input
     bool m_enableCompass;                                   // enables compass a input
+    bool m_compassValid;                                    // true if compass data valid
 
     bool m_firstTime;                                       // if first time after reset
-    unsigned long m_lastFusionTime;                         // for delta time calculation
+    uint64_t m_lastFusionTime;                              // for delta time calculation
+
+    static const char *m_fusionNameMap[];                   // the fusion name array
 };
 
-#endif // #ifndef RTARDULINK_MODE
-
-#endif // _RTFUSIONRTQF_H
+#endif // _RTFUSION_H

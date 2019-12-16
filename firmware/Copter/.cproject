@@ -31,9 +31,9 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/drivers/QMC5883L}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/drivers/MPU6050}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/SPI}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/RTIMU}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/AltitudeKF}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/AltitudeEstimation}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/RTIMUFusion2}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.cpp.sketch.input.95334001" name="CPP source files" superClass="io.sloeber.compiler.cpp.sketch.input"/>
 							</tool>
@@ -51,9 +51,9 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/drivers/QMC5883L}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/drivers/MPU6050}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/SPI}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/RTIMU}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/AltitudeKF}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/AltitudeEstimation}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/RTIMUFusion2}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.c.sketch.input.764340330" name="C Source Files" superClass="io.sloeber.compiler.c.sketch.input"/>
 							</tool>
@@ -71,9 +71,9 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/drivers/QMC5883L}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/drivers/MPU6050}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/SPI}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/RTIMU}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/AltitudeKF}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/AltitudeEstimation}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/RTIMUFusion2}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.S.sketch.input.736617084" name="Assembly source files" superClass="io.sloeber.compiler.S.sketch.input"/>
 							</tool>
@@ -84,7 +84,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="MAX1704X|drivers|Copter.ino|libraries/?*/**/?xamples/**|libraries/?*/**/?xtras/**|libraries/?*/**/test*/**|libraries/?*/**/third-party/**|libraries/**/._*|libraries/?*/utility/*/*" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="libraries/?*/**/test*/**|libraries/?*/**/third-party/**|MAX1704X|drivers|libraries/?*/utility/*/*|libraries/?*/**/?xamples/**|libraries/?*/**/?xtras/**|Copter.ino|libraries/**/._*" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="drivers"/>
 					</sourceEntries>
 				</configuration>

@@ -53,8 +53,12 @@ void dshotSetup(uint8_t pin1, uint8_t pin2, uint8_t pin3, uint8_t pin4, uint32_t
  */
 void dshotSet(uint16_t value1, uint16_t value2, uint16_t value3, uint16_t value4);
 
-/** Writes 4 new values to escaper using DSHOT300 protocol. Takes 54 us to send all data */
+/** Writes 4 new values to escaper using DSHOT300 protocol. Takes 108 us to send all data */
+void ICACHE_RAM_ATTR dshotWrite150();
+/** Takes 54 us to send all data */
 void ICACHE_RAM_ATTR dshotWrite300();
+/** Takes 27 us to send all data */
+//void ICACHE_RAM_ATTR dshotWrite600();
 
 void dshotEnable(uint8_t enable);
 

@@ -1,6 +1,6 @@
 #include "dshot.h"
 
-#define NOP __asm__ __volatile__ ("nop")
+#define NOP asm volatile("nop")
 
 struct gpio_regs
 {
@@ -44,12 +44,20 @@ void ICACHE_RAM_ATTR onTimerISR()
 void dshotEnable(uint8_t enable)
 {
   enabled = enable;
+
+  if(enabled && timeGapTicks > 0)
+  {
+    timer1_enable(TIM_DIV16, TIM_EDGE, TIM_SINGLE); // ticks every 0.2 us
+    timer1_write(300);
+  }
+  else if(!enabled)
+  {
+    timer1_disable();
+  }
 }
 
 void dshotSetup(uint8_t pin1, uint8_t pin2, uint8_t pin3, uint8_t pin4, uint32_t timeGap)
 {
-  dshotEnable(1);
-
   pins[0] = pin1;
   pins[1] = pin2;
   pins[2] = pin3;
@@ -68,13 +76,15 @@ void dshotSetup(uint8_t pin1, uint8_t pin2, uint8_t pin3, uint8_t pin4, uint32_t
   {
     timeGapTicks = (timeGap*10)/2;
     timer1_attachInterrupt(onTimerISR);
-    timer1_enable(TIM_DIV16, TIM_EDGE, TIM_SINGLE); // ticks every 0.2 us
-    timer1_write(timeGapTicks);
+    //timer1_enable(TIM_DIV16, TIM_EDGE, TIM_SINGLE); // ticks every 0.2 us
+    //timer1_write(timeGapTicks);
   }
   else
   {
     timeGapTicks = 0;
   }
+
+  dshotEnable(1);
 }
 
 uint16_t createDshotPacket(uint16_t throttle)
@@ -143,13 +153,10 @@ void dshotSet(uint16_t value1, uint16_t value2, uint16_t value3, uint16_t value4
   dshotEnable(oldEnabled);
 }
 
-void ICACHE_RAM_ATTR dshotWrite300()
+void ICACHE_RAM_ATTR dshotWrite150()
 {
   volatile uint8_t i;
   volatile uint8_t j;
-
-  if(!enabled)
-    return;
 
   for(i = 16; i > 0; i--)
   {
@@ -161,7 +168,7 @@ void ICACHE_RAM_ATTR dshotWrite300()
     //  gpio16->out = 1;
     gpio16->out = gpio16Set;
 
-    // delay 1250 ns to reset pins to send 0 bit
+    // delay 2500 ns to reset pins to send 0 bit
     j = 11;
     do
     {
@@ -177,7 +184,7 @@ void ICACHE_RAM_ATTR dshotWrite300()
     //  gpio16->out = 0;
     gpio16->out = gpio16State0[i - 1];
 
-    // delay 1250 ns to reset pins to send 1 bit
+    // delay 2500 ns to reset pins to send 1 bit
     j = 11;
     do
     {
@@ -204,3 +211,104 @@ void ICACHE_RAM_ATTR dshotWrite300()
     while(j > 0);
   }
 }
+
+void ICACHE_RAM_ATTR dshotWrite300()
+{
+  volatile uint8_t i;
+  volatile uint8_t j;
+
+  for(i = 16; i > 0; i--)
+  {
+    // force write to GPIO registers on each loop
+    asm volatile ("" : : : "memory");
+
+    gpio->out_w1ts |= gpioSetMask;
+    //if(gpioSetMask & 0x10000)
+    //  gpio16->out = 1;
+    gpio16->out = gpio16Set;
+
+    // delay 1250 ns to reset pins to send 0 bit
+    j = 4;
+    do
+    {
+      j -= 1;
+      // stop compiler from optimizing delay loop to noop
+      NOP;
+    }
+    while(j > 0);
+
+    NOP;
+    NOP;
+    NOP;
+    NOP;
+    NOP;
+
+    // end 0f T0H
+    gpio->out_w1tc |= gpioClearMask0[i - 1];
+    gpio16->out = gpio16State0[i - 1];
+
+    // delay 1250 ns to reset pins to send 1 bit
+    j = 4;
+    do
+    {
+      j -= 1;
+      // stop compiler from optimizing delay loop to noop
+      NOP;
+    }
+    while(j > 0);
+
+    // end of T1H
+    gpio->out_w1tc |= gpioClearMask1[i - 1];
+    gpio16->out = gpio16State1[i - 1];
+
+    // delay to make a period 3333 ns
+    j = 2;
+    do
+    {
+      j -= 1;
+      // stop compiler from optimizing delay loop to noop
+      NOP;
+    }
+    while(j > 0);
+  }
+}
+
+/* can't implement because can't make T0H length on GPIO16 less than 666 ns. it needs 625 ns and low
+void ICACHE_RAM_ATTR dshotWrite600()
+{
+  volatile uint8_t i;
+
+  if(!enabled)
+    return;
+
+  for(i = 16; i > 0; i--)
+  {
+    // force write to GPIO registers on each loop
+    asm volatile ("" : : : "memory");
+
+    gpio16->out = gpio16Set;
+    gpio->out_w1ts |= gpioSetMask;
+
+    // end 0f T0H
+    gpio16->out = gpio16State0[i - 1];
+    gpio->out_w1tc |= gpioClearMask0[i - 1];
+
+    // delay 625 ns to reset pins to send 1 bit
+    NOP;
+    NOP;
+    NOP;
+    NOP;
+    NOP;
+    NOP;
+    NOP;
+    NOP;
+    NOP;
+
+    // end of T1H
+    gpio->out_w1tc |= gpioClearMask1[i - 1];
+    //if(gpioClearMask1[i - 1] & 0x10000)
+    //  gpio16->out = 0;
+    gpio16->out = gpio16State1[i - 1];
+  }
+}
+*/

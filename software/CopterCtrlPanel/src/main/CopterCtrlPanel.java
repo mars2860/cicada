@@ -63,8 +63,8 @@ public class CopterCtrlPanel implements WindowListener
 		@Override
 		public void actionPerformed(ActionEvent e)
 		{
-			SensorsDlg dlg = new SensorsDlg(mMainFrame);
-			dlg.setVisible(true);
+			SensorsGui gui = new SensorsGui(mMainFrame);
+			gui.setVisible(true);
 		}
 	}
 	

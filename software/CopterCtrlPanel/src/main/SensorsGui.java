@@ -13,7 +13,6 @@ import java.util.Observer;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -33,7 +32,7 @@ import copter.commands.CmdSelfCalibrateGyro;
 import helper.ArrayHelper;
 import net.miginfocom.swing.MigLayout;
 
-public class SensorsDlg extends JDialog
+public class SensorsGui extends JFrame
 {
 	private static final long serialVersionUID = -4310119839211305793L;
 
@@ -155,7 +154,7 @@ public class SensorsDlg extends JDialog
 			}
 			else
 			{
-				SensorsDlg.this.drawData();
+				SensorsGui.this.drawData();
 			}	
 		}
 	}
@@ -166,78 +165,10 @@ public class SensorsDlg extends JDialog
 		public void itemStateChanged(ItemEvent e)
 		{
 			if(e.getStateChange() == ItemEvent.SELECTED)
-				SensorsDlg.this.drawData();	
+				SensorsGui.this.drawData();	
 		}
 	}
-	
-	private class OnBtnCalibrateAccel implements ActionListener
-	{
-		@Override
-		public void actionPerformed(ActionEvent e)
-		{
-			if(mDataCount == 0)
-			{
-				JOptionPane.showMessageDialog(	SensorsDlg.this,
-												Text.get("CALIBRATE_INSTRUCTION_1"),
-												Text.get("ERROR"),
-												JOptionPane.ERROR_MESSAGE);
-				return;
-			}
-			
-			double mDx = 0;
-			double mDy = 0;
-			double mDz = 0;
 		
-			for(int i = 0; i < mDataCount; i++)
-			{
-				mDx += mAccelX[i];
-				mDy += mAccelY[i];
-				mDz += mAccelZ[i] - 16384;
-			}
-			
-			mDx /= (double)(mDataCount);
-			mDy /= (double)(mDataCount);
-			mDz /= (double)(mDataCount);
-			
-			CopterCommander.instance().addCmd(
-					new CmdCalibrateAccel((int)(-mDx + 0.5),(int)(-mDy + 0.5),(int)(-mDz + 0.5)));
-		}
-	}
-	
-	private class OnBtnCalibrateGyro implements ActionListener
-	{
-		@Override
-		public void actionPerformed(ActionEvent e)
-		{
-			if(mDataCount == 0)
-			{
-				JOptionPane.showMessageDialog(	SensorsDlg.this,
-												Text.get("CALIBRATE_INSTRUCTION_1"),
-												Text.get("ERROR"),
-												JOptionPane.ERROR_MESSAGE);
-				return;
-			}
-			
-			double mDx = 0;
-			double mDy = 0;
-			double mDz = 0;
-		
-			for(int i = 0; i < mDataCount; i++)
-			{
-				mDx += mGyroX[i];
-				mDy += mGyroY[i];
-				mDz += mGyroZ[i];
-			}
-			
-			mDx /= (double)(mDataCount);
-			mDy /= (double)(mDataCount);
-			mDz /= (double)(mDataCount);
-			
-			CopterCommander.instance().addCmd(
-					new CmdCalibrateGyro((int)(-mDx + 0.5),(int)(-mDy + 0.5),(int)(-mDz + 0.5)));
-		}
-	}
-	
 	private class OnBtnCalibrateMagnet implements ActionListener
 	{
 
@@ -315,6 +246,9 @@ public class SensorsDlg extends JDialog
 			List<Double> liMagnetY = ArrayHelper.asList(mMagnetY, mDataCount);
 			List<Double> liMagnetZ = ArrayHelper.asList(mMagnetZ, mDataCount);
 			
+			if(liMagnetX.size() < 2 || liMagnetY.size() < 2 || liMagnetZ.size() < 2)
+				return;
+			
 			double maxMx = Collections.max(liMagnetX);
 			double minMx = Collections.min(liMagnetX);
 			double maxMy = Collections.max(liMagnetY);
@@ -353,6 +287,7 @@ public class SensorsDlg extends JDialog
 											(float)sy,
 											(float)sz ));
 			
+			mModified = true;
 		}
 	}
 	
@@ -364,26 +299,43 @@ public class SensorsDlg extends JDialog
 			CopterCommander.instance().addCmd(new CmdCalibrateAccel(0,0,0));
 			CopterCommander.instance().addCmd(new CmdCalibrateGyro(0,0,0));
 			CopterCommander.instance().addCmd(new CmdCalibrateMagnet(0,0,0,1.f,1.f,1.f));
+			
+			mModified = true;
 		}
 	}
 	
-	private class OnBtnSelfCalibrateAccel implements ActionListener
+	private class OnBtnResetMagnetCalibration implements ActionListener
+	{
+		@Override
+		public void actionPerformed(ActionEvent e)
+		{
+			CopterCommander.instance().addCmd(new CmdCalibrateMagnet(0,0,0,1.f,1.f,1.f));
+			
+			mModified = true;
+		}
+	}
+	
+	private class OnBtnCalibrateAccel implements ActionListener
 	{
 		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			CopterCommander.instance().addCmd(new CmdSelfCalibrateAccel());
-			JOptionPane.showMessageDialog(SensorsDlg.this, Text.get("WAIT_CALIBRATION"),"",JOptionPane.INFORMATION_MESSAGE);
+			//JOptionPane.showMessageDialog(SensorsGui.this, Text.get("WAIT_CALIBRATION"),"",JOptionPane.INFORMATION_MESSAGE);
+			
+			mModified = true;
 		}
 	}
 	
-	private class OnBtnSelfCalibrateGyro implements ActionListener
+	private class OnBtnCalibrateGyro implements ActionListener
 	{
 		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			CopterCommander.instance().addCmd(new CmdSelfCalibrateGyro());
-			JOptionPane.showMessageDialog(SensorsDlg.this, Text.get("WAIT_CALIBRATION"),"",JOptionPane.INFORMATION_MESSAGE);
+			//JOptionPane.showMessageDialog(SensorsGui.this, Text.get("WAIT_CALIBRATION"),"",JOptionPane.INFORMATION_MESSAGE);
+			
+			mModified = true;
 		}
 	}
 	
@@ -417,10 +369,16 @@ public class SensorsDlg extends JDialog
 	private double mMagnetY[];
 	private double mMagnetZ[];
 	
-	public SensorsDlg(JFrame owner)
+	private boolean mModified = false;
+	
+	public SensorsGui(JFrame owner)
 	{
-		super(owner,true);
-		
+		super(Text.get("SENSORS"));
+		createUI();
+	}
+	
+	private void createUI()
+	{
 		mObserver = new OnTelemetryUpdate();
 		mAccelX = new double[MAX_DATA_COUNT];
 		mAccelY = new double[MAX_DATA_COUNT];
@@ -466,8 +424,7 @@ public class SensorsDlg extends JDialog
 		JButton btnCalibrateGyro = new JButton(Text.get("CALIBRATE_GYRO"));
 		JButton btnCalibrateMagnet = new JButton(Text.get("CALIBRATE_MAGNET"));
 		JButton btnResetCalibration = new JButton(Text.get("RESET_CALIBRATION"));
-		JButton btnSelfCalibrateAccel = new JButton(Text.get("SELF_CALIBRATE_ACCEL"));
-		JButton btnSelfCalibrateGyro = new JButton(Text.get("SELF_CALIBRATE_GYRO"));
+		JButton btnResetMagnetCalibration = new JButton(Text.get("RESET_MAGNET_CALIBRATION"));
 		
 		ButtonGroup group = new ButtonGroup();
 		group.add(mrbAccel);
@@ -481,9 +438,8 @@ public class SensorsDlg extends JDialog
 		btnCalibrateGyro.addActionListener(new OnBtnCalibrateGyro());
 		btnCalibrateMagnet.addActionListener(new OnBtnCalibrateMagnet());
 		btnResetCalibration.addActionListener(new OnBtnResetCalibration());
-		btnSelfCalibrateAccel.addActionListener(new OnBtnSelfCalibrateAccel());
-		btnSelfCalibrateGyro.addActionListener(new OnBtnSelfCalibrateGyro());
-		
+		btnResetMagnetCalibration.addActionListener(new OnBtnResetMagnetCalibration());
+				
 		this.add(new JLabel("AccelX/Off"));
 		this.add(mlbAx);
 		
@@ -526,13 +482,12 @@ public class SensorsDlg extends JDialog
 		this.add(new JPanel(),"h 10!,wrap");
 		
 		this.add(btnCalibrateAccel,"spanx 2,grow,wrap");
-		this.add(btnSelfCalibrateAccel,"spanx 2,grow,wrap");
 		this.add(btnCalibrateGyro,"spanx 2,grow,wrap");
-		this.add(btnSelfCalibrateGyro,"spanx 2,grow,wrap");
 		this.add(btnCalibrateMagnet,"spanx 2,grow,wrap");
+		this.add(btnResetMagnetCalibration,"spanx 2,grow,wrap");
 		this.add(btnResetCalibration,"spanx 2,grow,wrap");
 		
-		this.drawData();
+		this.drawData();	
 	}
 	
 	@Override
@@ -544,38 +499,41 @@ public class SensorsDlg extends JDialog
 		}
 		else
 		{
-			int result = JOptionPane.showConfirmDialog(	this,
-														Text.get("CONFIRM_SAVE_SETTINGS"),
-														"",
-														JOptionPane.YES_NO_OPTION,
-														JOptionPane.QUESTION_MESSAGE);
-
-			if(result == JOptionPane.YES_OPTION)
-			{
-				Settings.instance().setAccelXOffset(CopterTelemetry.instance().getAccelXOffset());
-				Settings.instance().setAccelYOffset(CopterTelemetry.instance().getAccelYOffset());
-				Settings.instance().setAccelZOffset(CopterTelemetry.instance().getAccelZOffset());
-				
-				Settings.instance().setGyroXOffset(CopterTelemetry.instance().getGyroXOffset());
-				Settings.instance().setGyroYOffset(CopterTelemetry.instance().getGyroYOffset());
-				Settings.instance().setGyroZOffset(CopterTelemetry.instance().getGyroZOffset());
-				
-				Settings.instance().setMagnetXOffset(CopterTelemetry.instance().getMagnetXOffset());
-				Settings.instance().setMagnetYOffset(CopterTelemetry.instance().getMagnetYOffset());
-				Settings.instance().setMagnetZOffset(CopterTelemetry.instance().getMagnetZOffset());
-				
-				Settings.instance().setMagnetXOffset(CopterTelemetry.instance().getMagnetXOffset());
-				Settings.instance().setMagnetYOffset(CopterTelemetry.instance().getMagnetYOffset());
-				Settings.instance().setMagnetZOffset(CopterTelemetry.instance().getMagnetZOffset());
-				
-				Settings.instance().setMagnetXScale(CopterTelemetry.instance().getMagnetXScale());
-				Settings.instance().setMagnetYScale(CopterTelemetry.instance().getMagnetYScale());
-				Settings.instance().setMagnetZScale(CopterTelemetry.instance().getMagnetZScale());
-				
-				Settings.instance().save();
-			}
-
 			CopterTelemetry.instance().deleteObserver(mObserver);
+			
+			if(mModified)
+			{
+				int result = JOptionPane.showConfirmDialog(	this,
+															Text.get("CONFIRM_SAVE_SETTINGS"),
+															"",
+															JOptionPane.YES_NO_OPTION,
+															JOptionPane.QUESTION_MESSAGE);
+
+				if(result == JOptionPane.YES_OPTION)
+				{
+					Settings.instance().setAccelXOffset(CopterTelemetry.instance().getAccelXOffset());
+					Settings.instance().setAccelYOffset(CopterTelemetry.instance().getAccelYOffset());
+					Settings.instance().setAccelZOffset(CopterTelemetry.instance().getAccelZOffset());
+				
+					Settings.instance().setGyroXOffset(CopterTelemetry.instance().getGyroXOffset());
+					Settings.instance().setGyroYOffset(CopterTelemetry.instance().getGyroYOffset());
+					Settings.instance().setGyroZOffset(CopterTelemetry.instance().getGyroZOffset());
+				
+					Settings.instance().setMagnetXOffset(CopterTelemetry.instance().getMagnetXOffset());
+					Settings.instance().setMagnetYOffset(CopterTelemetry.instance().getMagnetYOffset());
+					Settings.instance().setMagnetZOffset(CopterTelemetry.instance().getMagnetZOffset());
+				
+					Settings.instance().setMagnetXOffset(CopterTelemetry.instance().getMagnetXOffset());
+					Settings.instance().setMagnetYOffset(CopterTelemetry.instance().getMagnetYOffset());
+					Settings.instance().setMagnetZOffset(CopterTelemetry.instance().getMagnetZOffset());
+				
+					Settings.instance().setMagnetXScale(CopterTelemetry.instance().getMagnetXScale());
+					Settings.instance().setMagnetYScale(CopterTelemetry.instance().getMagnetYScale());
+					Settings.instance().setMagnetZScale(CopterTelemetry.instance().getMagnetZScale());
+				
+					Settings.instance().save();
+				}
+			}
 		}
 		
 		super.setVisible(b);

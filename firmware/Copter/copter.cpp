@@ -56,7 +56,8 @@
 #define MPU_1G 8192.f
 
 //#define USE_MPU6050_DMP
-#define ESCAPER_TEENYPRO
+//#define ESCAPER_TEENYPRO
+#define ESCAPER_PWM
 
 //----------------------------------------------------------------
 // HARDWARE
@@ -70,7 +71,7 @@
   #define M4              2
 
   #include "dshot.h"
-#elif ESCAPER_PWM
+#elif defined ESCAPER_PWM
   #define M1              15
   #define M2              2
   #define M3              0
@@ -359,8 +360,8 @@ void setupSensors()
   mpu.setFullScaleGyroRange(MPU6050_GYRO_FS_2000);
   mpu.setFullScaleAccelRange(MPU6050_ACCEL_FS_4);
 
-  //imuFusion = new RTFusionRTQF();
-  imuFusion = new RTFusionKalman4();
+  imuFusion = new RTFusionRTQF();
+  //imuFusion = new RTFusionKalman4();
   // Slerp power controls the fusion and can be between 0 and 1
   // 0 means that only gyros are used, 1 means that only accels/compass are used
   // In-between gives the fusion mix.
@@ -808,8 +809,8 @@ void processPids()
 
     mg[1] += dg;
     mg[3] += dg;
-    mg[0] -= dg;
-    mg[2] -= dg;
+    //mg[0] -= dg;
+    //mg[2] -= dg;
 
     /*
     if(dg > 0)
@@ -879,8 +880,8 @@ void processPids()
 
     mg[1] += dg;
     mg[2] += dg;
-    mg[0] -= dg;
-    mg[3] -= dg;
+    //mg[0] -= dg;
+    //mg[3] -= dg;
 
     /*
     for(i = 0; i < 4; i++)
@@ -930,8 +931,8 @@ void processPids()
       mg[1] -= dg;
     }*/
 
-    mg[0] -= dg;
-    mg[1] -= dg;
+    //mg[0] -= dg;
+    //mg[1] -= dg;
     mg[2] += dg;
     mg[3] += dg;
 

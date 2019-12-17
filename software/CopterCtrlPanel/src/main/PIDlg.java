@@ -36,6 +36,7 @@ import copter.commands.CmdSetPitchPid;
 import copter.commands.CmdSetRollPid;
 import copter.commands.CmdSetYPR;
 import copter.commands.CmdSetYawPid;
+import copter.commands.TakeOff;
 import helper.NumericDocument;
 import net.miginfocom.swing.MigLayout;
 
@@ -233,6 +234,136 @@ public class PIDlg extends JDialog
 				timer = System.currentTimeMillis();
 				mSetAllGas.addGas(addval);
 			}	
+		}
+	}
+	
+	private class OnTakeOffKey extends AbstractAction
+	{
+		private static final long serialVersionUID = 1L;
+
+		@Override
+		public void actionPerformed(ActionEvent e)
+		{
+			TakeOff cmd = new copter.commands.TakeOff();
+			cmd.run();
+			mSetAllGas.setGas(cmd.getEndGas(), false);
+		}
+	}
+	
+	private class OnTurnKey extends AbstractAction
+	{
+		private static final long serialVersionUID = 1L;
+		private float da;
+		
+		public OnTurnKey(float angle)
+		{
+			da = angle;
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent e)
+		{
+			float yaw = CopterTelemetry.instance().getYawPidTarget();
+			float pitch = CopterTelemetry.instance().getPitchPidTarget();
+			float roll = CopterTelemetry.instance().getRollPidTarget();
+			
+			yaw += da;
+			
+			yaw = (float)Math.toRadians(yaw);
+			pitch = (float)Math.toRadians(pitch);
+			roll = (float)Math.toRadians(roll);
+			
+			CmdSetYPR cmd = new CmdSetYPR(yaw,pitch,roll);
+			CopterCommander.instance().addCmd(cmd);
+		}
+	}
+	
+	private class OnPitchKey extends AbstractAction
+	{
+		private static final long serialVersionUID = 1L;
+		private float da;
+		
+		public OnPitchKey(float angle)
+		{
+			da = angle;
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent e)
+		{
+			float yaw = CopterTelemetry.instance().getYawPidTarget();
+			float pitch = CopterTelemetry.instance().getPitchPidTarget();
+			float roll = CopterTelemetry.instance().getRollPidTarget();
+			
+			if( Math.abs(pitch - da) > 0.1f)
+			{
+				pitch = da;
+			
+				yaw = (float)Math.toRadians(yaw);
+				pitch = (float)Math.toRadians(pitch);
+				roll = (float)Math.toRadians(roll);
+			
+				CmdSetYPR cmd = new CmdSetYPR(yaw,pitch,roll);
+				CopterCommander.instance().addCmd(cmd);
+			}
+		}
+	}
+	
+	private class OnRollKey extends AbstractAction
+	{
+		private static final long serialVersionUID = 1L;
+		private float da;
+		
+		public OnRollKey(float angle)
+		{
+			da = angle;
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent e)
+		{
+			float yaw = CopterTelemetry.instance().getYawPidTarget();
+			float pitch = CopterTelemetry.instance().getPitchPidTarget();
+			float roll = CopterTelemetry.instance().getRollPidTarget();
+			
+			if( Math.abs(roll - da) > 0.1f)
+			{
+				roll = da;
+			
+				yaw = (float)Math.toRadians(yaw);
+				pitch = (float)Math.toRadians(pitch);
+				roll = (float)Math.toRadians(roll);
+			
+				CmdSetYPR cmd = new CmdSetYPR(yaw,pitch,roll);
+				CopterCommander.instance().addCmd(cmd);
+			}
+		}
+	}
+	
+	private class OnStopKey extends AbstractAction
+	{
+		private static final long serialVersionUID = 1L;
+		
+		public OnStopKey() {}
+
+		@Override
+		public void actionPerformed(ActionEvent e)
+		{
+			float yaw = CopterTelemetry.instance().getYawPidTarget();
+			float pitch = CopterTelemetry.instance().getPitchPidTarget();
+			float roll = CopterTelemetry.instance().getRollPidTarget();
+			
+			pitch = 0;
+			roll = 0;
+			
+			yaw = (float)Math.toRadians(yaw);
+			pitch = (float)Math.toRadians(pitch);
+			roll = (float)Math.toRadians(roll);
+			
+			CmdSetYPR cmd = new CmdSetYPR(yaw,pitch,roll);
+			CopterCommander.instance().addCmd(cmd);
+			CopterCommander.instance().addCmd(cmd);
+			CopterCommander.instance().addCmd(cmd);
 		}
 	}
 	
@@ -500,10 +631,28 @@ public class PIDlg extends JDialog
 		mAltPid = new PidPanel(Text.get("ALT_PID"),0,200);
 		
 		mSetAllGas.addChangeListener(new GasChanged());
-		mSetAllGas.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("Z"), "addGas");
-		mSetAllGas.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("X"), "subGas");
-		mSetAllGas.getActionMap().put("addGas", new OnAddGasKey(10));
-		mSetAllGas.getActionMap().put("subGas", new OnAddGasKey(-10));
+		mcbMotorsEnabled.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("Z"),"addGas");
+		mcbMotorsEnabled.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("X"),"subGas");
+		mcbMotorsEnabled.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("typed c"),"takeOff");
+		mcbMotorsEnabled.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("LEFT"),"turnLeft");
+		mcbMotorsEnabled.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("released LEFT"),"stopLeft");
+		mcbMotorsEnabled.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("RIGHT"),"turnRight");
+		mcbMotorsEnabled.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("released RIGHT"),"stopRight");
+		mcbMotorsEnabled.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("UP"),"fwd");
+		mcbMotorsEnabled.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("released UP"),"stopFwd");
+		mcbMotorsEnabled.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("DOWN"),"back");
+		mcbMotorsEnabled.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("released DOWN"),"stopBack");
+		mcbMotorsEnabled.getActionMap().put("addGas", new OnAddGasKey(30));
+		mcbMotorsEnabled.getActionMap().put("subGas", new OnAddGasKey(-30));
+		mcbMotorsEnabled.getActionMap().put("takeOff", new OnTakeOffKey());
+		mcbMotorsEnabled.getActionMap().put("turnLeft", new OnRollKey(-8));
+		mcbMotorsEnabled.getActionMap().put("turnRight", new OnRollKey(8));
+		mcbMotorsEnabled.getActionMap().put("fwd", new OnPitchKey(8));
+		mcbMotorsEnabled.getActionMap().put("back", new OnPitchKey(-8));
+		mcbMotorsEnabled.getActionMap().put("stopFwd", new OnStopKey());
+		mcbMotorsEnabled.getActionMap().put("stopBack", new OnStopKey());
+		mcbMotorsEnabled.getActionMap().put("stopLeft", new OnStopKey());
+		mcbMotorsEnabled.getActionMap().put("stopRight", new OnStopKey());
 		
 		mYawPid.onSet(new OnSetYawPid());
 		mYawPid.onTarget(new YprTargetChanged());
@@ -724,7 +873,8 @@ public class PIDlg extends JDialog
        			c.addLineLayer(Arrays.copyOf(mM3, mDataCount), -1, "M3").setXData(mTimeData);
        		}
 
-           	c.xAxis().setAutoScale();//(0,0);
+           	//c.xAxis().setAutoScale();//(0,0);
+       		c.xAxis().setLinearScale(0, mTimeData[mDataCount - 1], 500);
            	c.yAxis().setAutoScale();//(0,0);
        	}
 

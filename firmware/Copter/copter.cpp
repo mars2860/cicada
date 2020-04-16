@@ -372,13 +372,11 @@ void setupSensors()
   imuFusion->setAccelEnable(true);
   imuFusion->setCompassEnable(false);
 #endif
-
+  readMpuOffsets();
   // Setup Magnetometer
   mag.init();
   mag.setSamplingRate(200);
   mag.setOversampling(512);
-
-  readMpuOffsets();
   // Setup barometer
   /* Default settings from datasheet. */
   baro.init(BMP280_ADDRESS_ALT);
@@ -388,7 +386,7 @@ void setupSensors()
                    Adafruit_BMP280::FILTER_X16,      /* Filtering. */
                    Adafruit_BMP280::STANDBY_MS_1);   /* Standby time. */
   baro.readCoefficients();
-
+  // Setup fuel gauge
   FuelGauge.quickstart();
 }
 
@@ -1114,7 +1112,7 @@ uint8_t processSensors()
   if(mpuTime >= MPU6050_READ_PERIOD) // 200 Hz
   {
     // disadvantage of this method is no temperature compensation for gyro and accel
-    // and result is not so clean as in DMP, there are more fluctuations
+    // and result is not so clean as in DMP, there are more fluctuations.
     // values are invalid when motors run high speed. it is very sensetive to vibrations
     // advantage of this method is fast execute. it takes 5ms to execute
 
@@ -1170,9 +1168,14 @@ uint8_t processSensors()
     fusionData.humidityValid = false;
     imuFusion->newIMUData(fusionData, 0);
     const RTVector3 &pose = fusionData.fusionPose;
-    heading = ypr[0] = pose.z() + M_PI;
+    ypr[0] = pose.z();
     ypr[1] = pose.y();
     ypr[2] = pose.x();
+
+    if(imuFusion->getCompassEnable())
+      heading = pose.z() + M_PI;
+    else
+      heading = calcHeading(magnet[0], magnet[1], magnet[2], ypr[1], ypr[2]);
 
     /*float aa[3];
     float gg[3];
@@ -1220,6 +1223,7 @@ uint8_t processSensors()
   return result;
 }
 
+// TODO tilt compensation is not working!
 float calcHeading(int16_t mx, int16_t my, int16_t mz, double pitch, double roll)
 {
   double fx = mx;
@@ -1240,7 +1244,7 @@ float calcHeading(int16_t mx, int16_t my, int16_t mz, double pitch, double roll)
   if(result >= 2.0*M_PI)
     result -= 2.0*M_PI;
   if(result < 0)
-    result += 2.f*M_PI;
+    result += 2.0*M_PI;
 
   return (float)result;
 }

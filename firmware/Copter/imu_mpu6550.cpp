@@ -22,6 +22,9 @@ Filter gxFilter(20.0, 0.005, IIR::ORDER::OD3);
 Filter gyFilter(20.0, 0.005, IIR::ORDER::OD3);
 Filter gzFilter(20.0, 0.005, IIR::ORDER::OD3);*/
 
+void imuReadAccelOffset(pdlDroneState *ds);
+void imuReadGyroOffset(pdlDroneState *ds);
+
 void pdlSetupAccel(pdlDroneState *ds)
 {
   mpu.initialize();
@@ -35,10 +38,7 @@ void pdlSetupAccel(pdlDroneState *ds)
   mpu.setYAccelOffset(ds->accel.offset[PDL_Y]);
   mpu.setZAccelOffset(ds->accel.offset[PDL_Z]);
 
-  // check writing
-  ds->accel.offset[PDL_X] = mpu.getXAccelOffset();
-  ds->accel.offset[PDL_Y] = mpu.getYAccelOffset();
-  ds->accel.offset[PDL_Z] = mpu.getZAccelOffset();
+  imuReadAccelOffset(ds);
 
   imuFusion = new RTFusionRTQF();
   //imuFusion = new RTFusionKalman4();
@@ -59,10 +59,35 @@ void pdlSetupGyro(pdlDroneState *ds)
   mpu.setYGyroOffset(ds->gyro.offset[PDL_Y]);
   mpu.setZGyroOffset(ds->gyro.offset[PDL_Z]);
 
-  // check writing
+  imuReadGyroOffset(ds);
+}
+
+void imuReadAccelOffset(pdlDroneState *ds)
+{
+  ds->accel.offset[PDL_X] = mpu.getXAccelOffset();
+  ds->accel.offset[PDL_Y] = mpu.getYAccelOffset();
+  ds->accel.offset[PDL_Z] = mpu.getZAccelOffset();
+}
+
+void imuReadGyroOffset(pdlDroneState *ds)
+{
   ds->gyro.offset[PDL_X] = mpu.getXGyroOffset();
   ds->gyro.offset[PDL_Y] = mpu.getYGyroOffset();
   ds->gyro.offset[PDL_Z] = mpu.getZGyroOffset();
+}
+
+void imuCalibrateAccel(pdlDroneState *ds)
+{
+  mpu.CalibrateAccel(25);
+
+  imuReadAccelOffset(ds);
+}
+
+void imuCalibrateGyro(pdlDroneState *ds)
+{
+  mpu.CalibrateGyro(25);
+
+  imuReadGyroOffset(ds);
 }
 
 void pdlReadAccel(pdlDroneState *ds)
@@ -71,8 +96,6 @@ void pdlReadAccel(pdlDroneState *ds)
   // and result is not so clean as in DMP, there are more fluctuations.
   // values are invalid when motors run high speed. it is very sensetive to vibrations
   // advantage of this method is fast execute. it takes 5ms to execute
-
-  ds->timestamp = pdlMicros();
 
   mpu.getMotion6( &ds->accel.raw[PDL_X],
                   &ds->accel.raw[PDL_Y],
@@ -115,10 +138,7 @@ void pdlReadAccel(pdlDroneState *ds)
   }
 }
 
-void pdlReadGyro(pdlDroneState *ds)
-{
-
-}
+void pdlReadGyro(pdlDroneState*) {}
 
 void pdlTripleAxisSensorFusion(pdlDroneState *ds)
 {

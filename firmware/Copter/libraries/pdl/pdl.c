@@ -15,6 +15,8 @@ uint32_t pdlGetDeltaTime(uint32_t cur, uint32_t last);
 void pdlCrossFrameApplyPids(pdlDroneState*);
 void pdlXFrameApplyPids(pdlDroneState*);
 
+//-----------------------------------------------------------------------------
+
 uint32_t pdlGetDeltaTime(uint32_t cur, uint32_t last)
 {
   if(cur >= last)
@@ -71,7 +73,7 @@ void pdlUpdate(pdlDroneState *ds)
 
   ds->timestamp = pdlMicros();
 
-  if(pdlGetDeltaTime(ds->timestamp,baroLastReadTime) >= pdlBaroReadPeriod)
+  if(pdlGetDeltaTime(ds->timestamp, baroLastReadTime) >= pdlBaroReadPeriod)
   {
     baroLastReadTime = ds->timestamp;
     pdlReadBaro(ds);
@@ -81,9 +83,9 @@ void pdlUpdate(pdlDroneState *ds)
 
   if(pdlGetDeltaTime(ds->timestamp,imuLastReadTime) >= pdlImuReadPeriod)
   {
-    float dt = (float)pdlGetDeltaTime()/1000000.f;
-
+    float dt = (float)pdlGetDeltaTime(ds->timestamp, imuLastReadTime)/1000000.f;
     imuLastReadTime = ds->timestamp;
+
     pdlReadAccel(ds);
     pdlReadGyro(ds);
     pdlReadMagneto(ds);
@@ -91,9 +93,9 @@ void pdlUpdate(pdlDroneState *ds)
 
     if(ds->stabilizationEnabled && ds->motorsEnabled)
     {
-      pdlPidUpdate(&ds->yawRatePid, ds->gyro.pure[PDL_Z], dt);
-      pdlPidUpdate(&ds->pitchPid, ds->pitch, dt);
-      pdlPidUpdate(&ds->rollPid, ds->roll, dt);
+      pdlUpdatePid(&ds->yawRatePid, ds->gyro.pure[PDL_Z], dt);
+      pdlUpdatePid(&ds->pitchPid, ds->pitch, dt);
+      pdlUpdatePid(&ds->rollPid, ds->roll, dt);
 
       switch(PDL_DRONE_FRAME)
       {
@@ -110,13 +112,12 @@ void pdlUpdate(pdlDroneState *ds)
       pdlResetPid(&ds->yawRatePid);
       pdlResetPid(&ds->pitchPid);
       pdlResetPid(&ds->rollPid);
-
     }
   }
 
   if(!ds->motorsEnabled)
   {
-    pdlStopMotors();
+    pdlStopMotors(ds);
   }
 
   ds->timestamp = pdlMicros();
@@ -155,7 +156,7 @@ void pdlCrossFrameApplyPids(pdlDroneState *ds)
 #endif
 
   for(uint8_t i = 0; i < PDL_MOTOR_COUNT; i++)
-    pdlSetMotorGas(ds, i, dg);
+    pdlSetMotorGas(ds, i, dg[i]);
 }
 
 void pdlXFrameApplyPids(pdlDroneState *ds)
@@ -179,7 +180,7 @@ void pdlXFrameApplyPids(pdlDroneState *ds)
 #endif
 
   for(uint8_t i = 0; i < PDL_MOTOR_COUNT; i++)
-    pdlSetMotorGas(ds, i, dg);
+    pdlSetMotorGas(ds, i, dg[i]);
 }
 
 void pdlSetMotorGasLimits(int32_t min, int32_t nul, int32_t max)
@@ -294,5 +295,7 @@ float pdlComplementaryFilter(float alpha, float rate, float value, float newValu
 
 void pdlComplFilterTripleAxisFusion(pdlDroneState *ds, float alpha, float dt)
 {
-
+  (void)ds;
+  (void)alpha;
+  (void)dt;
 }

@@ -15,7 +15,7 @@
 #define DEFAULT_TELEMETRY_PORT          4211
 
 #define DEFAULT_TELEMETRY_PERIOD        100
-#define TELEMETRY_MAX_PACKET_SIZE       255
+#define TELEMETRY_MAX_PACKET_SIZE       288
 
 IPAddress ip;
 IPAddress gateway;
@@ -31,6 +31,8 @@ uint8_t udpPacket[TELEMETRY_MAX_PACKET_SIZE];
 uint32_t cmdPort;
 uint32_t telemetryPort;
 
+uint32_t telemetryPeriod;
+
 //---------------------------------------------------------------
 // COMMANDS
 
@@ -38,7 +40,7 @@ uint32_t telemetryPort;
 #define CMD_SET_MOTORS_GAS        101
 #define CMD_SET_ACCEL_OFFSET      102
 #define CMD_SET_GYRO_OFFSET       103
-#define CMD_SET_MAGNET_CALIB      104
+#define CMD_SET_MAGNET_OFFSET     104
 #define CMD_SELF_CALIB_ACCEL      105
 #define CMD_SELF_CALIB_GYRO       106
 #define CMD_SET_YAW_PID           107
@@ -51,16 +53,21 @@ uint32_t telemetryPort;
 #define CMD_RESET_ALTITUDE        114
 #define CMD_SET_SEA_LEVEL         115
 #define CMD_SET_ALTITUDE          116
+#define CMD_SET_BASE_GAS          117
 
 /// Writes data to telemetry packet at given position. Returns new position to write
 uint16_t writeTelemetryPacket(uint16_t pos, byte *packet, void *value, size_t valueSize);
 void processCommand(pdlDroneState*);
 void processTelemetry(pdlDroneState*);
 
+extern void imuCalibrateAccel(pdlDroneState *ds);
+extern void imuCalibrateGyro(pdlDroneState *ds);
+
 void pdlSetupRc(pdlDroneState*)
 {
   telemetryPort = DEFAULT_TELEMETRY_PORT;
   cmdPort = DEFAULT_CMD_PORT;
+  telemetryPeriod = DEFAULT_TELEMETRY_PERIOD;
 
   ip.fromString(DEFAULT_IP_ADDRESS);
   gateway.fromString(DEFAULT_GATEWAY_ADDRESS);
@@ -124,120 +131,123 @@ void processCommand(pdlDroneState *ds)
     switch(cmd)
     {
       case CMD_SWITCH_MOTORS:
-        copterState.motorsEnabled = udpPacket[1];
-        if(copterState.motorsEnabled)
+        pdlStopMotors(ds);
+        ds->motorsEnabled = udpPacket[1];
+        if(ds->motorsEnabled)
         {
-          yawRatePid.setTarget(0);
-          pitchPid.setTarget(0);
-          rollPid.setTarget(0);
+          ds->yawRatePid.target = 0;
+          ds->pitchPid.target = 0;
+          ds->rollPid.target = 0;
         }
-        copterState.baseGas = 0;
-        motor[0].setGas(0);
-        motor[1].setGas(0);
-        motor[2].setGas(0);
-        motor[3].setGas(0);
+        break;
+      case CMD_SET_BASE_GAS:
+        memcpy(&t0, &udpPacket[1], sizeof(int32_t));
+        ds->baseGas = t0;
         break;
       case CMD_SET_MOTORS_GAS:
         memcpy(&t0, &udpPacket[1], sizeof(int32_t));
         memcpy(&t1, &udpPacket[5], sizeof(int32_t));
         memcpy(&t2, &udpPacket[9], sizeof(int32_t));
         memcpy(&t3, &udpPacket[13], sizeof(int32_t));
-        copterState.baseGas = (t0 + t1 + t2 + t3)/4;
-        if(!copterState.enStabilization)
-        {
-          motor[0].setGas(t0);
-          motor[1].setGas(t1);
-          motor[2].setGas(t2);
-          motor[3].setGas(t3);
-        }
-        /*else
-        {
-          int32_t dx = (motor[0].gas + motor[1].gas + motor[2].gas + motor[3].gas)/4;
-          motor[0].addGas(baseGas - dx);
-          motor[1].addGas(baseGas - dx);
-          motor[2].addGas(baseGas - dx);
-          motor[3].addGas(baseGas - dx);
-        }*/
+
+        pdlSetMotorGas(ds,0,t0);
+        pdlSetMotorGas(ds,0,t1);
+        pdlSetMotorGas(ds,0,t2);
+        pdlSetMotorGas(ds,0,t3);
+
         break;
       case CMD_SET_ACCEL_OFFSET:
         memcpy(&dx, &udpPacket[1], sizeof(int16_t));
         memcpy(&dy, &udpPacket[3], sizeof(int16_t));
         memcpy(&dz, &udpPacket[5], sizeof(int16_t));
-        //mpu.setDMPEnabled(false);
-        mpu.setXAccelOffset(dx);
-        mpu.setYAccelOffset(dy);
-        mpu.setZAccelOffset(dz);
-        //mpu.setDMPEnabled(true);
-        readMpuOffsets();
+
+        ds->accel.offset[PDL_X] = dx;
+        ds->accel.offset[PDL_Y] = dy;
+        ds->accel.offset[PDL_Z] = dz;
+
+        pdlSetupAccel(ds);
         break;
       case CMD_SET_GYRO_OFFSET:
         memcpy(&dx, &udpPacket[1], sizeof(int16_t));
         memcpy(&dy, &udpPacket[3], sizeof(int16_t));
         memcpy(&dz, &udpPacket[5], sizeof(int16_t));
-        //mpu.setDMPEnabled(false);
-        mpu.setXGyroOffset(dx);
-        mpu.setYGyroOffset(dy);
-        mpu.setZGyroOffset(dz);
-        //mpu.setDMPEnabled(true);
-        readMpuOffsets();
+
+        ds->gyro.offset[PDL_X] = dx;
+        ds->gyro.offset[PDL_Y] = dy;
+        ds->gyro.offset[PDL_Z] = dz;
+
+        pdlSetupGyro(ds);
         break;
-      case CMD_SET_MAGNET_CALIB:
-        memcpy(&copterState.magnet.offset[0], &udpPacket[1], 6);
-        //memcpy(&magnetScale[0], &udpPacket[7], 12);
+      case CMD_SET_MAGNET_OFFSET:
+        memcpy(&dx, &udpPacket[1], sizeof(int16_t));
+        memcpy(&dy, &udpPacket[3], sizeof(int16_t));
+        memcpy(&dz, &udpPacket[5], sizeof(int16_t));
+
+        ds->magneto.offset[PDL_X] = dx;
+        ds->magneto.offset[PDL_Y] = dy;
+        ds->magneto.offset[PDL_Z] = dz;
+
+        pdlSetupMagneto(ds);
         break;
       case CMD_SELF_CALIB_ACCEL:
-        mpu.CalibrateAccel(10);
-        readMpuOffsets();
+        imuCalibrateAccel(ds);
         break;
       case CMD_SELF_CALIB_GYRO:
-        mpu.CalibrateGyro(10);
-        readMpuOffsets();
+        imuCalibrateGyro(ds);
         break;
       case CMD_SET_YAW_PID:
         enabled = udpPacket[1];
         memcpy(&kp, &udpPacket[2], sizeof(kp));
         memcpy(&ki, &udpPacket[2 + sizeof(kp)], sizeof(ki));
         memcpy(&kd, &udpPacket[2 + sizeof(kp) + sizeof(ki)], sizeof(kd));
-        yawRatePid.enabled = enabled;
-        yawRatePid.setGains(kp,ki,kd);
+        ds->yawRatePid.enabled = enabled;
+        ds->yawRatePid.kp = kp;
+        ds->yawRatePid.ki = ki;
+        ds->yawRatePid.kd = kd;
         break;
       case CMD_SET_PITCH_PID:
         enabled = udpPacket[1];
         memcpy(&kp, &udpPacket[2], sizeof(kp));
         memcpy(&ki, &udpPacket[2 + sizeof(kp)], sizeof(ki));
         memcpy(&kd, &udpPacket[2 + sizeof(kp) + sizeof(ki)], sizeof(kd));
-        pitchPid.enabled = enabled;
-        pitchPid.setGains(kp,ki,kd);
+        ds->pitchPid.enabled = enabled;
+        ds->pitchPid.kp = kp;
+        ds->pitchPid.ki = ki;
+        ds->pitchPid.kd = kd;
         break;
       case CMD_SET_ROLL_PID:
         enabled = udpPacket[1];
         memcpy(&kp, &udpPacket[2], sizeof(kp));
         memcpy(&ki, &udpPacket[2 + sizeof(kp)], sizeof(ki));
         memcpy(&kd, &udpPacket[2 + sizeof(kp) + sizeof(ki)], sizeof(kd));
-        rollPid.enabled = enabled;
-        rollPid.setGains(kp,ki,kd);
+        ds->rollPid.enabled = enabled;
+        ds->rollPid.kp = kp;
+        ds->rollPid.ki = ki;
+        ds->rollPid.kd = kd;
         break;
       case CMD_SET_ALT_PID:
         enabled = udpPacket[1];
         memcpy(&kp, &udpPacket[2], sizeof(kp));
         memcpy(&ki, &udpPacket[2 + sizeof(kp)], sizeof(ki));
         memcpy(&kd, &udpPacket[2 + sizeof(kp) + sizeof(ki)], sizeof(kd));
-        altPid.enabled = enabled;
-        altPid.setGains(kp,ki,kd);
+        ds->altPid.enabled = enabled;
+        ds->altPid.kp = kp;
+        ds->altPid.ki = ki;
+        ds->altPid.kd = kd;
         break;
       case CMD_SET_YPR:
         memcpy(&kp, &udpPacket[1], sizeof(kp));
         memcpy(&ki, &udpPacket[1 + sizeof(kp)], sizeof(ki));
         memcpy(&kd, &udpPacket[1 + sizeof(kp) + sizeof(ki)], sizeof(kd));
-        yawRatePid.setTarget(kp);
-        pitchPid.setTarget(ki);
-        rollPid.setTarget(kd);
+        ds->yawRatePid.target = kp;
+        ds->pitchPid.target = ki;
+        ds->rollPid.target = kd;
         break;
       case CMD_SET_PERIODS:
-        memcpy(&copterState.telemetryPeriod, &udpPacket[1], sizeof(copterState.telemetryPeriod));
+        memcpy(&telemetryPeriod, &udpPacket[1], sizeof(telemetryPeriod));
         //memcpy(&pidPeriod, &udpPacket[1 + sizeof(telemetryPeriod)], sizeof(pidPeriod));
-        if(copterState.telemetryPeriod < 1)
-          copterState.telemetryPeriod = 1;
+        if(telemetryPeriod < 1)
+          telemetryPeriod = 1;
         //if(pidPeriod < 1)
         //  pidPeriod = 1;
         //yawRatePid.setTimeStep(pidPeriod);
@@ -246,17 +256,17 @@ void processCommand(pdlDroneState *ds)
         //altPid.setTimeStep(pidPeriod);
         break;
       case CMD_ENABLE_STABILIZATION:
-        copterState.enStabilization = udpPacket[1];
+        ds->stabilizationEnabled = udpPacket[1];
         break;
       case CMD_RESET_ALTITUDE:
         //vz = 0;
-        copterState.seaLevelhPa = baro.pressure;
+        ds->seaLevelhPa = ds->pressure;
         break;
       case CMD_SET_SEA_LEVEL:
-        memcpy(&copterState.seaLevelhPa, &udpPacket[1], sizeof(copterState.seaLevelhPa));
+        memcpy(&ds->seaLevelhPa, &udpPacket[1], sizeof(ds->seaLevelhPa));
         break;
       case CMD_SET_ALTITUDE:
-        memcpy(&altPid.target, &udpPacket[1], sizeof(altPid.target));
+        memcpy(&ds->altPid.target, &udpPacket[1], sizeof(ds->altPid.target));
         break;
     }
   }
@@ -264,16 +274,16 @@ void processCommand(pdlDroneState *ds)
 
 void processTelemetry(pdlDroneState *ds)
 {
-  size_t packetSize = sizeof(copterState);
+  uint8_t pos = 0;
 
-  if(packetSize > TELEMETRY_MAX_PACKET_SIZE)
-    packetSize = TELEMETRY_MAX_PACKET_SIZE;
+  ds->rc.rssi = WiFi.RSSI();
 
-  copterState.rssi = WiFi.RSSI();
-
-  memcpy(&udpPacket[0], &copterState, packetSize);
+  // DroneState
+  pos = writeTelemetryPacket(pos, udpPacket, ds, sizeof(pdlDroneState));
+  // Telemetry Period
+  pos = writeTelemetryPacket(pos, udpPacket, &telemetryPeriod, sizeof(telemetryPeriod));
 
   udp.beginPacket(host, telemetryPort);
-  udp.write(udpPacket, packetSize);
+  udp.write(udpPacket, pos);
   udp.endPacket();
 }

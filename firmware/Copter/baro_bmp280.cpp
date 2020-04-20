@@ -11,7 +11,7 @@ Adafruit_BMP280 baro;
                          0.5,   // ca
                          0.1);  // accelThreshold*/
 
-void pdlSetupBaro(pdlDroneState *ds)
+void pdlSetupBaro(pdlDroneState*)
 {
   /* Default settings from datasheet. */
   baro.init(BMP280_ADDRESS_ALT);

@@ -4,7 +4,7 @@
 
 QMC5883L mag;
 
-void pdlSetupMagneto(pdlDroneState *ds)
+void pdlSetupMagneto(pdlDroneState*)
 {
   mag.init();
   mag.setSamplingRate(200);
@@ -21,11 +21,10 @@ void pdlReadMagneto(pdlDroneState *ds)
   {
     for(uint8_t i = 0; i < 3; i++)
     {
-      ds->magneto.raw[i] -= ds->magneto.offset[i];
       //x *= magnetScale[0];
       //y *= magnetScale[1];
       //z *= magnetScale[2];
-      ds->magneto.filtered[i] = ds->magneto.raw[i];
+      ds->magneto.filtered[i] = ds->magneto.raw[i] - ds->magneto.offset[i];;
       ds->magneto.pure[i] = ((float)ds->magneto.filtered[i]) / 12.f;
     }
   }

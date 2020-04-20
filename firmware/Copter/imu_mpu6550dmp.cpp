@@ -14,6 +14,9 @@ VectorFloat gravity;        // [x, y, z] gravity vector
 //VectorInt16 aaReal;         // [x, y, z] gravity-free accel sensor measurements
 //VectorInt16 aaWorld;        // [x, y, z] world-frame accel sensor measurements
 
+void imuReadAccelOffset(pdlDroneState *ds);
+void imuReadGyroOffset(pdlDroneState *ds);
+
 void pdlSetupAccel(pdlDroneState *ds)
 {
   mpu.initialize();
@@ -25,10 +28,7 @@ void pdlSetupAccel(pdlDroneState *ds)
   mpu.setYAccelOffset(ds->accel.offset[PDL_Y]);
   mpu.setZAccelOffset(ds->accel.offset[PDL_Z]);
 
-  // check writing
-  ds->accel.offset[PDL_X] = mpu.getXAccelOffset();
-  ds->accel.offset[PDL_Y] = mpu.getYAccelOffset();
-  ds->accel.offset[PDL_Z] = mpu.getZAccelOffset();
+  imuReadAccelOffset(ds);
 }
 
 void pdlSetupGyro(pdlDroneState *ds)
@@ -37,10 +37,35 @@ void pdlSetupGyro(pdlDroneState *ds)
   mpu.setYGyroOffset(ds->gyro.offset[PDL_Y]);
   mpu.setZGyroOffset(ds->gyro.offset[PDL_Z]);
 
-  // check writing
+  imuReadGyroOffset(ds);
+}
+
+void imuReadAccelOffset(pdlDroneState *ds)
+{
+  ds->accel.offset[PDL_X] = mpu.getXAccelOffset();
+  ds->accel.offset[PDL_Y] = mpu.getYAccelOffset();
+  ds->accel.offset[PDL_Z] = mpu.getZAccelOffset();
+}
+
+void imuReadGyroOffset(pdlDroneState *ds)
+{
   ds->gyro.offset[PDL_X] = mpu.getXGyroOffset();
   ds->gyro.offset[PDL_Y] = mpu.getYGyroOffset();
   ds->gyro.offset[PDL_Z] = mpu.getZGyroOffset();
+}
+
+void imuCalibrateAccel(pdlDroneState *ds)
+{
+  mpu.CalibrateAccel(25);
+
+  imuReadAccelOffset(ds);
+}
+
+void imuCalibrateGyro(pdlDroneState *ds)
+{
+  mpu.CalibrateGyro(25);
+
+  imuReadGyroOffset(ds);
 }
 
 void pdlReadAccel(pdlDroneState *ds)

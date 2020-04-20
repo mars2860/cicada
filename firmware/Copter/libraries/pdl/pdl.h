@@ -118,8 +118,6 @@ typedef struct
   uint8_t motorsEnabled;
   int32_t baseGas;
   int32_t motorGas[PDL_MOTOR_COUNT];
-  // Periods
-  uint32_t telemetryPeriod;
   // Stabilization
   uint8_t stabilizationEnabled;
   // Time of executing one loop in microseconds

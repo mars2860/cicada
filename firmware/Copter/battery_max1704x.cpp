@@ -4,7 +4,7 @@
 
 MAX1704X max17043(0.00125f);
 
-void pdlSetupBattery(pdlDroneState *ds)
+void pdlSetupBattery(pdlDroneState*)
 {
   max17043.quickstart();
   pdlSetBatteryReadPeriod(100000);

@@ -10,7 +10,7 @@
  * @param pin3
  * @param pin4
  * @param timeGap time gap between frames in microseconds. This function automatically setups timer1 if this value greater 0.
- * If you use timer1 somewhere else you need to set timeGap as 0 in this function and call qWriteDshot300 in your
+ * If you use timer1 somewhere else you need to set timeGap as 0 in this function and call dshotWrite in your
  * timer1 interrupt routine with needed timeGap
  */
 void dshotSetup(uint8_t pin1, uint8_t pin2, uint8_t pin3, uint8_t pin4, uint32_t timeGap);
@@ -53,13 +53,13 @@ void dshotSetup(uint8_t pin1, uint8_t pin2, uint8_t pin3, uint8_t pin4, uint32_t
  */
 void dshotSet(uint16_t value1, uint16_t value2, uint16_t value3, uint16_t value4);
 
-/** Writes 4 new values to escaper using DSHOT300 protocol. Takes 108 us to send all data */
+/** Takes 108 us to send all data */
 void ICACHE_RAM_ATTR dshotWrite150();
 /** Takes 54 us to send all data */
 void ICACHE_RAM_ATTR dshotWrite300();
 /** Takes 27 us to send all data */
 //void ICACHE_RAM_ATTR dshotWrite600();
-
+/** Enables dshot packets auto sending by timer */
 void dshotEnable(uint8_t enable);
 
 #endif

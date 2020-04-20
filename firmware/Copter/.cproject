@@ -34,6 +34,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/AltitudeKF}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/AltitudeEstimation}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/RTIMUFusion2}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/pdl}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.cpp.sketch.input.95334001" name="CPP source files" superClass="io.sloeber.compiler.cpp.sketch.input"/>
 							</tool>
@@ -54,6 +55,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/AltitudeKF}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/AltitudeEstimation}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/RTIMUFusion2}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/pdl}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.c.sketch.input.764340330" name="C Source Files" superClass="io.sloeber.compiler.c.sketch.input"/>
 							</tool>
@@ -74,6 +76,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/AltitudeKF}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/AltitudeEstimation}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/RTIMUFusion2}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/pdl}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.S.sketch.input.736617084" name="Assembly source files" superClass="io.sloeber.compiler.S.sketch.input"/>
 							</tool>
@@ -83,8 +86,11 @@
 							<tool id="io.sloeber.tool.size.683985670" name="Arduino tool Print Size" superClass="io.sloeber.tool.size"/>
 						</toolChain>
 					</folderInfo>
+					<fileInfo id="io.sloeber.core.toolChain.release.303228233.492795255" name="imu_mpu6550dmp.cpp" rcbsApplicability="disable" resourcePath="imu_mpu6550dmp.cpp" toolsToInvoke="io.sloeber.tool.sketch.compiler.cpp.848463985.1816105892">
+						<tool id="io.sloeber.tool.sketch.compiler.cpp.848463985.1816105892" name="Arduino C++ Compiler" superClass="io.sloeber.tool.sketch.compiler.cpp.848463985"/>
+					</fileInfo>
 					<sourceEntries>
-						<entry excluding="libraries/?*/**/test*/**|libraries/?*/**/third-party/**|MAX1704X|drivers|libraries/?*/utility/*/*|libraries/?*/**/?xamples/**|libraries/?*/**/?xtras/**|Copter.ino|libraries/**/._*" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="imu_mpu6550dmp.cpp|dshot_escaper.cpp|imu_mpu6550dmp_qmc5883.cpp|libraries/?*/**/test*/**|libraries/?*/**/third-party/**|MAX1704X|drivers|libraries/?*/utility/*/*|libraries/?*/**/?xamples/**|libraries/?*/**/?xtras/**|Copter.ino|libraries/**/._*" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="drivers"/>
 					</sourceEntries>
 				</configuration>

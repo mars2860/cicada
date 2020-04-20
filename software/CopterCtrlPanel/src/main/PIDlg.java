@@ -444,6 +444,9 @@ public class PIDlg extends JDialog
 					mGyroX[mDataCount] = CopterTelemetry.instance().getGyroX();
 					mGyroY[mDataCount] = CopterTelemetry.instance().getGyroY();
 					mGyroZ[mDataCount] = CopterTelemetry.instance().getGyroZ();
+					mAccelX[mDataCount] = CopterTelemetry.instance().getAccelX();
+					mAccelY[mDataCount] = CopterTelemetry.instance().getAccelY();
+					mAccelZ[mDataCount] = CopterTelemetry.instance().getAccelZ();
 					mM0[mDataCount] = CopterTelemetry.instance().getMotorGas0();
 					mM1[mDataCount] = CopterTelemetry.instance().getMotorGas1();
 					mM2[mDataCount] = CopterTelemetry.instance().getMotorGas2();
@@ -559,6 +562,9 @@ public class PIDlg extends JDialog
 	private JCheckBox mcbDrawGyroX;
 	private JCheckBox mcbDrawGyroY;
 	private JCheckBox mcbDrawGyroZ;
+	private JCheckBox mcbDrawAccelX;
+	private JCheckBox mcbDrawAccelY;
+	private JCheckBox mcbDrawAccelZ;
 	private JCheckBox mcbDrawM0;
 	private JCheckBox mcbDrawM1;
 	private JCheckBox mcbDrawM2;
@@ -583,6 +589,9 @@ public class PIDlg extends JDialog
 	private double mGyroX[];
 	private double mGyroY[];
 	private double mGyroZ[];
+	private double mAccelX[];
+	private double mAccelY[];
+	private double mAccelZ[];
 	private double mM0[];
 	private double mM1[];
 	private double mM2[];
@@ -605,6 +614,9 @@ public class PIDlg extends JDialog
 		mGyroX = new double[MAX_DATA_COUNT];
 		mGyroY = new double[MAX_DATA_COUNT];
 		mGyroZ = new double[MAX_DATA_COUNT];
+		mAccelX = new double[MAX_DATA_COUNT];
+		mAccelY = new double[MAX_DATA_COUNT];
+		mAccelZ = new double[MAX_DATA_COUNT];
 		mM0 = new double[MAX_DATA_COUNT];
 		mM1 = new double[MAX_DATA_COUNT];
 		mM2 = new double[MAX_DATA_COUNT];
@@ -679,6 +691,9 @@ public class PIDlg extends JDialog
 		mcbDrawGyroX = new JCheckBox("GyroX");
 		mcbDrawGyroY = new JCheckBox("GyroY");
 		mcbDrawGyroZ = new JCheckBox("GyroZ");
+		mcbDrawAccelX = new JCheckBox("AccelX");
+		mcbDrawAccelY = new JCheckBox("AccelY");
+		mcbDrawAccelZ = new JCheckBox("AccelZ");
 		mcbDrawM0 = new JCheckBox("M1");
 		mcbDrawM1 = new JCheckBox("M2");
 		mcbDrawM2 = new JCheckBox("M3");
@@ -696,6 +711,9 @@ public class PIDlg extends JDialog
 		mcbDrawGyroX.addActionListener(new OnDrawData());
 		mcbDrawGyroY.addActionListener(new OnDrawData());
 		mcbDrawGyroZ.addActionListener(new OnDrawData());
+		mcbDrawAccelX.addActionListener(new OnDrawData());
+		mcbDrawAccelY.addActionListener(new OnDrawData());
+		mcbDrawAccelZ.addActionListener(new OnDrawData());
 		mcbDrawM0.addActionListener(new OnDrawData());
 		mcbDrawM1.addActionListener(new OnDrawData());
 		mcbDrawM2.addActionListener(new OnDrawData());
@@ -720,7 +738,10 @@ public class PIDlg extends JDialog
 		pnlDraw.add(mcbDrawM0);
 		pnlDraw.add(mcbDrawM1);
 		pnlDraw.add(mcbDrawM2);
-		pnlDraw.add(mcbDrawM3);
+		pnlDraw.add(mcbDrawM3,"wrap");
+		pnlDraw.add(mcbDrawAccelX);
+		pnlDraw.add(mcbDrawAccelY);
+		pnlDraw.add(mcbDrawAccelZ);
 		
 		this.add(mcbMotorsEnabled);
 		this.add(mSetAllGas,"spanx 3,growx");
@@ -851,6 +872,21 @@ public class PIDlg extends JDialog
        		if(mcbDrawGyroZ.isSelected())
        		{
        			c.addLineLayer(Arrays.copyOf(mGyroZ, mDataCount), -1, "GyroZ").setXData(mTimeData);
+       		}
+       		
+       		if(mcbDrawAccelX.isSelected())
+       		{
+       			c.addLineLayer(Arrays.copyOf(mAccelX, mDataCount), -1, "AccelX").setXData(mTimeData);
+       		}
+       		
+       		if(mcbDrawAccelY.isSelected())
+       		{
+       			c.addLineLayer(Arrays.copyOf(mAccelY, mDataCount), -1, "AccelY").setXData(mTimeData);
+       		}
+       		
+       		if(mcbDrawAccelZ.isSelected())
+       		{
+       			c.addLineLayer(Arrays.copyOf(mAccelZ, mDataCount), -1, "AccelZ").setXData(mTimeData);
        		}
        		
        		if(mcbDrawM0.isSelected())

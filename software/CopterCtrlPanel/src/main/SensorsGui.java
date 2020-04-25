@@ -45,33 +45,35 @@ public class SensorsGui extends JFrame
 			DecimalFormat fmt = new DecimalFormat();
 			fmt.setMaximumFractionDigits(2);
 			
-			text = ": " + Integer.toString(CopterTelemetry.instance().getAccelX()) + "/" +
-							Integer.toString(CopterTelemetry.instance().getAccelXOffset());
+			CopterTelemetry.DroneState droneState = CopterTelemetry.instance().getDroneState();
+			
+			text = ": " + Integer.toString(droneState.accel.filtered[0]) + "/" +
+							Integer.toString(droneState.accel.offset[0]);
 			mlbAx.setText(text);
 			mlbAx.setToolTipText(text);
 			
-			text = ": " + Integer.toString(CopterTelemetry.instance().getAccelY()) + "/" +
-					Integer.toString(CopterTelemetry.instance().getAccelYOffset());
+			text = ": " + Integer.toString(droneState.accel.filtered[1]) + "/" +
+					Integer.toString(droneState.accel.offset[1]);
 			mlbAy.setText(text);
 			mlbAy.setToolTipText(text);
 	
-			text = ": " + Integer.toString(CopterTelemetry.instance().getAccelZ()) + "/" +
-					Integer.toString(CopterTelemetry.instance().getAccelZOffset());
+			text = ": " + Integer.toString(droneState.accel.filtered[2]) + "/" +
+					Integer.toString(droneState.accel.offset[2]);
 			mlbAz.setText(text);
 			mlbAz.setToolTipText(text);
 			
-			text = ": " + Integer.toString(CopterTelemetry.instance().getGyroX()) + "/" +
-					Integer.toString(CopterTelemetry.instance().getGyroXOffset());
+			text = ": " + Integer.toString(droneState.gyro.filtered[0]) + "/" +
+					Integer.toString(droneState.gyro.offset[0]);
 			mlbGx.setText(text);
 			mlbGx.setToolTipText(text);
 			
-			text = ": " + Integer.toString(CopterTelemetry.instance().getGyroY()) + "/" +
-					Integer.toString(CopterTelemetry.instance().getGyroYOffset());
+			text = ": " + Integer.toString(droneState.gyro.filtered[1]) + "/" +
+					Integer.toString(droneState.gyro.offset[1]);
 			mlbGy.setText(text);
 			mlbGy.setToolTipText(text);
 			
-			text = ": " + Integer.toString(CopterTelemetry.instance().getGyroZ()) + "/" +
-					Integer.toString(CopterTelemetry.instance().getGyroZOffset());
+			text = ": " + Integer.toString(droneState.gyro.filtered[2]) + "/" +
+					Integer.toString(droneState.gyro.offset[2]);
 			mlbGz.setText(text);
 			mlbGz.setToolTipText(text);
 			
@@ -98,21 +100,18 @@ public class SensorsGui extends JFrame
 			mlbDataCount.setText(fmt1.format(heading));
 			*/
 			
-			text = ": " + Integer.toString(CopterTelemetry.instance().getMagnetX()) + "/" +
-					Integer.toString(CopterTelemetry.instance().getMagnetXOffset()) + "/" +
-					fmt.format(CopterTelemetry.instance().getMagnetXScale());
+			text = ": " + Integer.toString(droneState.magneto.filtered[0]) + "/" +
+					Integer.toString(droneState.magneto.offset[0]);
 			mlbMx.setText(text);
 			mlbMx.setToolTipText(text);
 			
-			text = ": " + Integer.toString(CopterTelemetry.instance().getMagnetY()) + "/" +
-					Integer.toString(CopterTelemetry.instance().getMagnetYOffset()) + "/" +
-					fmt.format(CopterTelemetry.instance().getMagnetYScale());
+			text = ": " + Integer.toString(droneState.magneto.filtered[1]) + "/" +
+					Integer.toString(droneState.magneto.offset[1]);
 			mlbMy.setText(text);
 			mlbMy.setToolTipText(text);
 			
-			text = ": " + Integer.toString(CopterTelemetry.instance().getMagnetZ()) + "/" +
-					Integer.toString(CopterTelemetry.instance().getMagnetZOffset()) + "/" +
-					fmt.format(CopterTelemetry.instance().getMagnetZScale());
+			text = ": " + Integer.toString(droneState.magneto.filtered[2]) + "/" +
+					Integer.toString(droneState.magneto.offset[2]);
 			mlbMz.setText(text);
 			mlbMz.setToolTipText(text);
 			
@@ -120,17 +119,17 @@ public class SensorsGui extends JFrame
 			{
 				if(mDataCount < MAX_DATA_COUNT)
 				{
-					mAccelX[mDataCount] = (double)CopterTelemetry.instance().getAccelX();
-					mAccelY[mDataCount] = (double)CopterTelemetry.instance().getAccelY();
-					mAccelZ[mDataCount] = (double)CopterTelemetry.instance().getAccelZ();
+					mAccelX[mDataCount] = droneState.accel.filtered[0];
+					mAccelY[mDataCount] = droneState.accel.filtered[1];
+					mAccelZ[mDataCount] = droneState.accel.filtered[2];
 					
-					mGyroX[mDataCount] = (double)CopterTelemetry.instance().getGyroX();
-					mGyroY[mDataCount] = (double)CopterTelemetry.instance().getGyroY();
-					mGyroZ[mDataCount] = (double)CopterTelemetry.instance().getGyroZ();
+					mGyroX[mDataCount] = droneState.gyro.filtered[0];
+					mGyroY[mDataCount] = droneState.gyro.filtered[1];
+					mGyroZ[mDataCount] = droneState.gyro.filtered[2];
 				
-					mMagnetX[mDataCount] = (double)CopterTelemetry.instance().getMagnetX();
-					mMagnetY[mDataCount] = (double)CopterTelemetry.instance().getMagnetY();
-					mMagnetZ[mDataCount] = (double)CopterTelemetry.instance().getMagnetZ();
+					mMagnetX[mDataCount] = droneState.magneto.filtered[0];
+					mMagnetY[mDataCount] = droneState.magneto.filtered[1];
+					mMagnetZ[mDataCount] = droneState.magneto.filtered[2];
 				}
 				
 				mDataCount++;
@@ -511,25 +510,23 @@ public class SensorsGui extends JFrame
 
 				if(result == JOptionPane.YES_OPTION)
 				{
-					Settings.instance().setAccelXOffset(CopterTelemetry.instance().getAccelXOffset());
-					Settings.instance().setAccelYOffset(CopterTelemetry.instance().getAccelYOffset());
-					Settings.instance().setAccelZOffset(CopterTelemetry.instance().getAccelZOffset());
+					CopterTelemetry.DroneState droneState = CopterTelemetry.instance().getDroneState();
+					
+					Settings.instance().setAccelXOffset(droneState.accel.offset[0]);
+					Settings.instance().setAccelYOffset(droneState.accel.offset[1]);
+					Settings.instance().setAccelZOffset(droneState.accel.offset[2]);
 				
-					Settings.instance().setGyroXOffset(CopterTelemetry.instance().getGyroXOffset());
-					Settings.instance().setGyroYOffset(CopterTelemetry.instance().getGyroYOffset());
-					Settings.instance().setGyroZOffset(CopterTelemetry.instance().getGyroZOffset());
+					Settings.instance().setGyroXOffset(droneState.gyro.offset[0]);
+					Settings.instance().setGyroYOffset(droneState.gyro.offset[1]);
+					Settings.instance().setGyroZOffset(droneState.gyro.offset[2]);
 				
-					Settings.instance().setMagnetXOffset(CopterTelemetry.instance().getMagnetXOffset());
-					Settings.instance().setMagnetYOffset(CopterTelemetry.instance().getMagnetYOffset());
-					Settings.instance().setMagnetZOffset(CopterTelemetry.instance().getMagnetZOffset());
+					Settings.instance().setMagnetXOffset(droneState.magneto.offset[0]);
+					Settings.instance().setMagnetYOffset(droneState.magneto.offset[1]);
+					Settings.instance().setMagnetZOffset(droneState.magneto.offset[2]);
 				
-					Settings.instance().setMagnetXOffset(CopterTelemetry.instance().getMagnetXOffset());
-					Settings.instance().setMagnetYOffset(CopterTelemetry.instance().getMagnetYOffset());
-					Settings.instance().setMagnetZOffset(CopterTelemetry.instance().getMagnetZOffset());
-				
-					Settings.instance().setMagnetXScale(CopterTelemetry.instance().getMagnetXScale());
-					Settings.instance().setMagnetYScale(CopterTelemetry.instance().getMagnetYScale());
-					Settings.instance().setMagnetZScale(CopterTelemetry.instance().getMagnetZScale());
+					Settings.instance().setMagnetXScale(1);
+					Settings.instance().setMagnetYScale(1);
+					Settings.instance().setMagnetZScale(1);
 				
 					Settings.instance().save();
 				}

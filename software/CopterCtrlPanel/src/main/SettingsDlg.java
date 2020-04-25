@@ -186,7 +186,7 @@ public class SettingsDlg extends JDialog
 		pnlPeriods.add(new JLabel("Cur: " + CopterTelemetry.instance().getTelemetryPeriod()),"wrap");
 		pnlPeriods.add(new JLabel(Text.get("PID")));
 		pnlPeriods.add(mtfPidPeriod,"grow");
-		pnlPeriods.add(new JLabel("Cur: " + CopterTelemetry.instance().getPidPeriod()));
+		pnlPeriods.add(new JLabel("Cur: " + "5"));// CopterTelemetry.instance().getPidPeriod()));
 
 		JPanel pnlOkCancel = new JPanel(new MigLayout("insets 0 0 0 0","[80!][80!]"));
 		JButton btnOk = new JButton(Text.get("OK"));

@@ -37,6 +37,7 @@ import copter.commands.CmdCalibrateMagnet;
 import copter.commands.CmdEnableStabilization;
 import copter.commands.CmdResetAltitude;
 import copter.commands.CmdSetAltPid;
+import copter.commands.CmdSetBaseGas;
 import copter.commands.CmdSetMotorsGas;
 import copter.commands.CmdSetPeriods;
 import copter.commands.CmdSetPitchPid;
@@ -73,7 +74,7 @@ public class CopterCtrlPanel implements WindowListener
 		@Override
 		public void actionPerformed(ActionEvent e)
 		{
-			boolean state = !CopterTelemetry.instance().getMotorsEnabled();
+			boolean state = !CopterTelemetry.instance().getDroneState().motorsEnabled;
 			CopterCommander.instance().addCmd(new CmdSwitchMotors(state));		
 		}
 	}
@@ -83,7 +84,7 @@ public class CopterCtrlPanel implements WindowListener
 		@Override
 		public void actionPerformed(ActionEvent e)
 		{
-			boolean state = !CopterTelemetry.instance().getStabilizationEnabled();
+			boolean state = !CopterTelemetry.instance().getDroneState().stabilizationEnabled;
 			CopterCommander.instance().addCmd(new CmdEnableStabilization(state));
 		}
 	}
@@ -122,16 +123,7 @@ public class CopterCtrlPanel implements WindowListener
 			if(!slider.getValueIsAdjusting())
 			{
 				int value = slider.getValue();
-				
-				for(int i = 0; i < 4; i++)
-					mCmdSetGas.setGas(i, value);
-				
-				CopterCommander.instance().addCmd(mCmdSetGas);
-				
-				mgas0.setGas(value,true);
-				mgas1.setGas(value,true);
-				mgas2.setGas(value,true);
-				mgas3.setGas(value,true);
+				CopterCommander.instance().addCmd(new CmdSetBaseGas(value));
 	        }
 		}	
 	}
@@ -170,41 +162,44 @@ public class CopterCtrlPanel implements WindowListener
 			fmt2.setMaximumFractionDigits(0);
 			fmt2.setGroupingUsed(false);
 			
-			String batState = fmt1.format(CopterTelemetry.instance().getBatteryVoltage()) + "V/" + 
-								fmt1.format(CopterTelemetry.instance().getBatteryPercent()) + "%";
+			CopterTelemetry.DroneState droneState = CopterTelemetry.instance().getDroneState();
+			
+			String batState = fmt1.format(droneState.battery.voltage) + "V/" + 
+								fmt1.format(droneState.battery.percent) + "%";
 			
 			mlbBattery.setText(batState);
-			mlbWifiLevel.setText(Integer.toString(CopterTelemetry.instance().getWifiLevel()));
+			mlbWifiLevel.setText(Integer.toString(droneState.wifiLevel));
 			
-			float yaw = CopterTelemetry.instance().getYaw();
-			float yawTarget = CopterTelemetry.instance().getYawPidTarget();
-			float pitch = CopterTelemetry.instance().getPitch();
-			float pitchTarget = CopterTelemetry.instance().getPitchPidTarget();
-			float roll = CopterTelemetry.instance().getRoll();
-			float rollTarget = CopterTelemetry.instance().getRollPidTarget();
+			float yaw = (float)Math.toDegrees(droneState.yaw);
+			float yawTarget = (float)Math.toDegrees(droneState.yawRatePid.target);
+			float pitch = (float)Math.toDegrees(droneState.pitch);
+			float pitchTarget = (float)Math.toDegrees(droneState.pitchPid.target);
+			float roll = (float)Math.toDegrees(droneState.roll);
+			float rollTarget = (float)Math.toDegrees(droneState.rollPid.target);
 			
 			mlbYawValue.setText(fmt1.format(yaw) + "/" + fmt1.format(yawTarget));
 			mlbPitchValue.setText(fmt1.format(pitch) + "/" + fmt1.format(pitchTarget));
 			mlbRollValue.setText(fmt1.format(roll) + "/" + fmt1.format(rollTarget));
-			mlbHeading.setText(fmt2.format(CopterTelemetry.instance().getHeading()));
-			mlbLoopTime.setText(fmt2.format(CopterTelemetry.instance().getLoopTime()));
-			mlbTemperature.setText(fmt1.format(CopterTelemetry.instance().getTemperature()));
-			mlbPressure.setText(fmt1.format(CopterTelemetry.instance().getPressure()) + "/" +
-								fmt1.format(CopterTelemetry.instance().getSeaLevelPressure()));
-			mlbAltitude.setText(fmt1.format(CopterTelemetry.instance().getAltitude()) + "/" +
-								fmt1.format(CopterTelemetry.instance().getAltPidTarget()));
+			mlbHeading.setText(fmt2.format(droneState.heading));
+			mlbLoopTime.setText(fmt2.format(droneState.mainLoopTime));
+			mlbTemperature.setText(fmt1.format(droneState.temperature));
+			mlbPressure.setText(fmt1.format(droneState.pressure) + "/" +
+								fmt1.format(droneState.seaLevel));
+			mlbAltitude.setText(fmt1.format(droneState.altitude) + "/" +
+								fmt1.format(droneState.altPid.target));
 			
 			mlbYaw.setIcon(rotateImageIcon(mIconYaw, yaw));
 			mlbPitch.setIcon(rotateImageIcon(mIconPitch, pitch));
 			mlbRoll.setIcon(rotateImageIcon(mIconRoll, roll));
 
-			mgas0.setGas(CopterTelemetry.instance().getMotorGas0(),false);
-			mgas1.setGas(CopterTelemetry.instance().getMotorGas1(),false);
-			mgas2.setGas(CopterTelemetry.instance().getMotorGas2(),false);
-			mgas3.setGas(CopterTelemetry.instance().getMotorGas3(),false);
+			mgas0.setGas(droneState.motorGas[0],false);
+			mgas1.setGas(droneState.motorGas[1],false);
+			mgas2.setGas(droneState.motorGas[2],false);
+			mgas3.setGas(droneState.motorGas[3],false);
+			mgasBase.setGas(droneState.baseGas, false);
 			
-			mcbMotorsEnabled.setSelected(CopterTelemetry.instance().getMotorsEnabled());
-			mcbStabilizationEnabled.setSelected(CopterTelemetry.instance().getStabilizationEnabled());
+			mcbMotorsEnabled.setSelected(droneState.motorsEnabled);
+			mcbStabilizationEnabled.setSelected(droneState.stabilizationEnabled);
 		}
 	}
 	
@@ -336,6 +331,7 @@ public class CopterCtrlPanel implements WindowListener
 	private MotorGasSlider mgas1;
 	private MotorGasSlider mgas2;
 	private MotorGasSlider mgas3;
+	private MotorGasSlider mgasBase;
 	private CmdSetMotorsGas mCmdSetGas = new CmdSetMotorsGas();
 	
 	private ImageIcon mIconOk;
@@ -428,13 +424,13 @@ public class CopterCtrlPanel implements WindowListener
 		mgas1 = new MotorGasSlider("M2");
 		mgas2 = new MotorGasSlider("M3");
 		mgas3 = new MotorGasSlider("M4");
-		MotorGasSlider mgasCom = new MotorGasSlider("COM");
+		mgasBase = new MotorGasSlider("BASE");
 				
 		mgas0.addChangeListener(new MotorGasChanged(0));
 		mgas1.addChangeListener(new MotorGasChanged(1));
 		mgas2.addChangeListener(new MotorGasChanged(2));
 		mgas3.addChangeListener(new MotorGasChanged(3));
-		mgasCom.addChangeListener(new SetAllMotorGas());
+		mgasBase.addChangeListener(new SetAllMotorGas());
 		
 		MotorGasSlider yawSlider = new MotorGasSlider("Yaw");
 		yawSlider.setGas((MotorGasSlider.MIN_GAS + MotorGasSlider.MAX_GAS)/2,false);
@@ -465,7 +461,7 @@ public class CopterCtrlPanel implements WindowListener
 		pnlMotorsGas.add(mgas1,"grow");
 		pnlMotorsGas.add(mgas2,"grow");
 		pnlMotorsGas.add(mgas3,"grow");
-		pnlMotorsGas.add(mgasCom,"grow");
+		pnlMotorsGas.add(mgasBase,"grow");
 		pnlMotorsGas.add(yawSlider,"grow");
 		
 		return pnlMotorsGas;

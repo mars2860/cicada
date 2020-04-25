@@ -36,8 +36,6 @@ void pdlSetup(pdlDroneState *ds)
   pdlEscaperUpdatePeriod = PDL_DEFAULT_ESCAPER_UPDATE_PERIOD;
   pdlRcUpdatePeriod = PDL_DEFAULT_RC_UPDATE_PERIOD;
 
-  ds->version = PDL_DRONE_STATE_VERSION;
-
   pdlStopMotors(ds);
   pdlSetupEscaper(ds);
   pdlSetupAccel(ds);
@@ -246,18 +244,19 @@ void pdlUpdatePid(pdlPidState *pid, float input, float dt)
   }
 
   float err = pid->target - input;
+  float prevErr = pid->target - pid->prevInput;
 
   //output = Un1 + (kp + kd/dt)*En + (-kp - 2.f*kd/dt)*En1 + kd/dt*En2;
   //output = Un1 + kp*(En - En1) + ki_d*En + kd_d*(En - 2.f*En1 + En2);
-  pid->errSum += dt*(err + pid->prevErr)/2.f;
-  pid->out = pid->kp*err + pid->ki*pid->errSum + pid->kd*(err - pid->prevErr)/dt;
-  pid->prevErr = err;
+  pid->errSum += dt*(err + prevErr)/2.f;
+  pid->out = pid->kp*err + pid->ki*pid->errSum + pid->kd*(err - prevErr)/dt;
+  pid->prevInput = input;
 }
 
 void pdlResetPid(pdlPidState *pid)
 {
   pid->errSum = 0;
-  pid->prevErr = 0;
+  pid->prevInput = 0;
   pid->out = 0;
 }
 

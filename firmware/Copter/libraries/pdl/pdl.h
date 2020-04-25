@@ -49,46 +49,45 @@ typedef enum
   PDL_DRONE_FRAME_X     //!< PDL_DRONE_FRAME_X
 } pdlDroneFrame;
 
-typedef struct
+typedef struct s_pdlBatteryState
 {
   float voltage;
   float percent;
 } pdlBatteryState;
 
-typedef struct
+typedef struct s_pdlPidState
 {
-  uint8_t enabled;
   float kp;
   float ki;
   float kd;
   float target;
   float out;
   float errSum;
-  float prevErr;
-} pdlPidState;
+  float prevInput;
+  uint32_t enabled; // not use uint8_t because it needs to align divisible by 4 bytes
+} pdlPidState;  // 32 bytes
 
-typedef struct
+typedef struct s_pdlRcState
 {
   int32_t rssi;
 } pdlRcState;
 
-typedef struct
+typedef struct s_pdlDroneState
 {
+  /// values after digital filters and converted to metric units
+  float pure[3];
   /// raw values
   int16_t raw[3];
   /// values after digital filters
   int16_t filtered[3];
-  /// values after digital filters and converted to metric units
-  float pure[3];
   /// calibration offsets
   int16_t offset[3];
-} pdlTripleAxisSensorState;
-
-#define PDL_DRONE_STATE_VERSION 1
+  /// explicit struct align to divisible by 4
+  int16_t gap;
+} pdlTripleAxisSensorState; // 32 bytes
 
 typedef struct
 {
-  uint8_t version;
   uint32_t timestamp;
   pdlBatteryState battery;
   pdlRcState rc;
@@ -106,20 +105,6 @@ typedef struct
   float roll;
   // radians
   float heading;
-  // Yaw Rate PID
-  pdlPidState yawRatePid;
-  // Pitch PID
-  pdlPidState pitchPid;
-  // Roll PID
-  pdlPidState rollPid;
-  // Alt PID
-  pdlPidState altPid;
-  // Motors
-  uint8_t motorsEnabled;
-  int32_t baseGas;
-  int32_t motorGas[PDL_MOTOR_COUNT];
-  // Stabilization
-  uint8_t stabilizationEnabled;
   // Time of executing one loop in microseconds
   uint32_t mainLoopTime;
   // degree
@@ -129,7 +114,23 @@ typedef struct
   // meters
   float altitude;
   // hPa
-  float seaLevelhPa;
+  float seaLevel;
+  // Yaw Rate PID
+  pdlPidState yawRatePid;
+  // Pitch PID
+  pdlPidState pitchPid;
+  // Roll PID
+  pdlPidState rollPid;
+  // Alt PID
+  pdlPidState altPid;
+  // Motors
+  int32_t baseGas;
+  int32_t motorGas[PDL_MOTOR_COUNT];
+  uint8_t motorsEnabled;
+  // Stabilization
+  uint8_t stabilizationEnabled;
+  /// explicit struct align to divisible by 4
+  int16_t gap;
 } pdlDroneState;
 
 void pdlSetup(pdlDroneState*);

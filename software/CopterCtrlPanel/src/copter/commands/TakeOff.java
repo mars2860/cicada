@@ -19,7 +19,7 @@ public class TakeOff
 			@Override
 			public void run()
 			{
-				CopterCommander.instance().addCmd(new CmdSetMotorsGas(mStartGas,mStartGas,mStartGas,mStartGas));
+				CopterCommander.instance().addCmd(new CmdSetBaseGas(mStartGas));
 				
 				try
 				{
@@ -30,7 +30,7 @@ public class TakeOff
 					e.printStackTrace();
 				}
 				
-				CopterCommander.instance().addCmd(new CmdSetMotorsGas(mEndGas,mEndGas,mEndGas,mEndGas));
+				CopterCommander.instance().addCmd(new CmdSetBaseGas(mEndGas));
 			}
 		});
 		

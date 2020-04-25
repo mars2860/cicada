@@ -95,5 +95,4 @@ public class CmdSetMotorsGas extends AbstractCopterCmd
 			break;
 		}
 	}
-
 }

@@ -3,7 +3,7 @@
 #include <Math.h>
 
 #include "I2Cdev.h"
-#include "MPU6050_6Axis_MotionApps20.h"
+#include "MPU6050.h"
 
 
 #include "RTFusion.h"
@@ -27,10 +27,14 @@ void imuReadGyroOffset(pdlDroneState *ds);
 
 void pdlSetupAccel(pdlDroneState *ds)
 {
-  mpu.initialize();
-
+  mpu.setClockSource(MPU6050_CLOCK_PLL_XGYRO);
+  mpu.setSleepEnabled(false);
+  mpu.setDLPFMode(MPU6050_DLPF_BW_42);
   mpu.setRate(4); pdlSetImuReadPeriod(5000);  // 200 Hz
-  mpu.setDLPFMode(MPU6050_DLPF_BW_256);       // no additional filters, we implements own
+  // I2CDev has a bug. If you update it take a look at
+  // if ((ReadAddress == 0x3B)&&(i == 2)) Reading -= Gravity; //remove Gravity
+  // MPU6050::PID
+  // It causes wrong calibration of accel
   mpu.setFullScaleGyroRange(MPU6050_GYRO_FS_2000);
   mpu.setFullScaleAccelRange(MPU6050_ACCEL_FS_4);
 
@@ -40,8 +44,8 @@ void pdlSetupAccel(pdlDroneState *ds)
 
   imuReadAccelOffset(ds);
 
-  imuFusion = new RTFusionRTQF();
-  //imuFusion = new RTFusionKalman4();
+  //imuFusion = new RTFusionRTQF();
+  imuFusion = new RTFusionKalman4();
   // Slerp power controls the fusion and can be between 0 and 1
   // 0 means that only gyros are used, 1 means that only accels/compass are used
   // In-between gives the fusion mix.

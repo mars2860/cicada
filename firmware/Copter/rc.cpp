@@ -14,8 +14,8 @@
 #define DEFAULT_CMD_PORT                4210
 #define DEFAULT_TELEMETRY_PORT          4211
 
-#define DEFAULT_TELEMETRY_PERIOD        100
-#define TELEMETRY_MAX_PACKET_SIZE       288
+#define DEFAULT_TELEMETRY_PERIOD        50000
+#define TELEMETRY_MAX_PACKET_SIZE       320
 
 IPAddress ip;
 IPAddress gateway;
@@ -143,6 +143,13 @@ void processCommand(pdlDroneState *ds)
       case CMD_SET_BASE_GAS:
         memcpy(&t0, &udpPacket[1], sizeof(int32_t));
         ds->baseGas = t0;
+        if(!ds->stabilizationEnabled)
+        {
+          pdlSetMotorGas(ds,0,ds->baseGas);
+          pdlSetMotorGas(ds,1,ds->baseGas);
+          pdlSetMotorGas(ds,2,ds->baseGas);
+          pdlSetMotorGas(ds,3,ds->baseGas);
+        }
         break;
       case CMD_SET_MOTORS_GAS:
         memcpy(&t0, &udpPacket[1], sizeof(int32_t));
@@ -151,9 +158,9 @@ void processCommand(pdlDroneState *ds)
         memcpy(&t3, &udpPacket[13], sizeof(int32_t));
 
         pdlSetMotorGas(ds,0,t0);
-        pdlSetMotorGas(ds,0,t1);
-        pdlSetMotorGas(ds,0,t2);
-        pdlSetMotorGas(ds,0,t3);
+        pdlSetMotorGas(ds,1,t1);
+        pdlSetMotorGas(ds,2,t2);
+        pdlSetMotorGas(ds,3,t3);
 
         break;
       case CMD_SET_ACCEL_OFFSET:
@@ -260,10 +267,10 @@ void processCommand(pdlDroneState *ds)
         break;
       case CMD_RESET_ALTITUDE:
         //vz = 0;
-        ds->seaLevelhPa = ds->pressure;
+        ds->seaLevel = ds->pressure;
         break;
       case CMD_SET_SEA_LEVEL:
-        memcpy(&ds->seaLevelhPa, &udpPacket[1], sizeof(ds->seaLevelhPa));
+        memcpy(&ds->seaLevel, &udpPacket[1], sizeof(ds->seaLevel));
         break;
       case CMD_SET_ALTITUDE:
         memcpy(&ds->altPid.target, &udpPacket[1], sizeof(ds->altPid.target));
@@ -274,12 +281,19 @@ void processCommand(pdlDroneState *ds)
 
 void processTelemetry(pdlDroneState *ds)
 {
-  uint8_t pos = 0;
+  if(!host.isSet())
+    return;
 
+  uint16_t pos = 0;
+  size_t sz = sizeof(pdlDroneState);
+
+  ds->timestamp = pdlMicros();
   ds->rc.rssi = WiFi.RSSI();
 
+  // DroneState size
+  pos = writeTelemetryPacket(pos, udpPacket, &sz, sizeof(sz));
   // DroneState
-  pos = writeTelemetryPacket(pos, udpPacket, ds, sizeof(pdlDroneState));
+  pos = writeTelemetryPacket(pos, udpPacket, ds, sz);
   // Telemetry Period
   pos = writeTelemetryPacket(pos, udpPacket, &telemetryPeriod, sizeof(telemetryPeriod));
 

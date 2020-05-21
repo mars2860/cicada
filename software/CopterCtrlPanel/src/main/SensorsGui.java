@@ -2,6 +2,7 @@ package main;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.text.DecimalFormat;
@@ -38,42 +39,49 @@ public class SensorsGui extends JFrame
 
 	private class OnTelemetryUpdate implements Observer
 	{
+		private long timestamp;
+		
 		@Override
 		public void update(Observable o, Object arg)
 		{
+			// update data in this gui no faster 50 ms
+			if(System.currentTimeMillis() - timestamp < 50)
+				return;
+			timestamp = System.currentTimeMillis();
+			
 			String text;
 			DecimalFormat fmt = new DecimalFormat();
 			fmt.setMaximumFractionDigits(2);
 			
 			CopterTelemetry.DroneState droneState = CopterTelemetry.instance().getDroneState();
 			
-			text = ": " + Integer.toString(droneState.accel.filtered[0]) + "/" +
-							Integer.toString(droneState.accel.offset[0]);
+			text = ": " + Integer.toString((int)droneState.accel.filteredX) + "/" +
+							Integer.toString((int)droneState.accel.offsetX);
 			mlbAx.setText(text);
 			mlbAx.setToolTipText(text);
 			
-			text = ": " + Integer.toString(droneState.accel.filtered[1]) + "/" +
-					Integer.toString(droneState.accel.offset[1]);
+			text = ": " + Integer.toString((int)droneState.accel.filteredY) + "/" +
+					Integer.toString((int)droneState.accel.offsetY);
 			mlbAy.setText(text);
 			mlbAy.setToolTipText(text);
 	
-			text = ": " + Integer.toString(droneState.accel.filtered[2]) + "/" +
-					Integer.toString(droneState.accel.offset[2]);
+			text = ": " + Integer.toString((int)droneState.accel.filteredZ) + "/" +
+					Integer.toString((int)droneState.accel.offsetZ);
 			mlbAz.setText(text);
 			mlbAz.setToolTipText(text);
 			
-			text = ": " + Integer.toString(droneState.gyro.filtered[0]) + "/" +
-					Integer.toString(droneState.gyro.offset[0]);
+			text = ": " + Integer.toString((int)droneState.gyroRad.filteredX) + "/" +
+					Integer.toString((int)droneState.gyroRad.offsetX);
 			mlbGx.setText(text);
 			mlbGx.setToolTipText(text);
 			
-			text = ": " + Integer.toString(droneState.gyro.filtered[1]) + "/" +
-					Integer.toString(droneState.gyro.offset[1]);
+			text = ": " + Integer.toString((int)droneState.gyroRad.filteredY) + "/" +
+					Integer.toString((int)droneState.gyroRad.offsetY);
 			mlbGy.setText(text);
 			mlbGy.setToolTipText(text);
 			
-			text = ": " + Integer.toString(droneState.gyro.filtered[2]) + "/" +
-					Integer.toString(droneState.gyro.offset[2]);
+			text = ": " + Integer.toString((int)droneState.gyroRad.filteredZ) + "/" +
+					Integer.toString((int)droneState.gyroRad.offsetZ);
 			mlbGz.setText(text);
 			mlbGz.setToolTipText(text);
 			
@@ -100,18 +108,18 @@ public class SensorsGui extends JFrame
 			mlbDataCount.setText(fmt1.format(heading));
 			*/
 			
-			text = ": " + Integer.toString(droneState.magneto.filtered[0]) + "/" +
-					Integer.toString(droneState.magneto.offset[0]);
+			text = ": " + Integer.toString((int)droneState.magneto.filteredX) + "/" +
+					Integer.toString((int)droneState.magneto.offsetX);
 			mlbMx.setText(text);
 			mlbMx.setToolTipText(text);
 			
-			text = ": " + Integer.toString(droneState.magneto.filtered[1]) + "/" +
-					Integer.toString(droneState.magneto.offset[1]);
+			text = ": " + Integer.toString((int)droneState.magneto.filteredY) + "/" +
+					Integer.toString((int)droneState.magneto.offsetY);
 			mlbMy.setText(text);
 			mlbMy.setToolTipText(text);
 			
-			text = ": " + Integer.toString(droneState.magneto.filtered[2]) + "/" +
-					Integer.toString(droneState.magneto.offset[2]);
+			text = ": " + Integer.toString((int)droneState.magneto.filteredZ) + "/" +
+					Integer.toString((int)droneState.magneto.offsetZ);
 			mlbMz.setText(text);
 			mlbMz.setToolTipText(text);
 			
@@ -119,17 +127,17 @@ public class SensorsGui extends JFrame
 			{
 				if(mDataCount < MAX_DATA_COUNT)
 				{
-					mAccelX[mDataCount] = droneState.accel.filtered[0];
-					mAccelY[mDataCount] = droneState.accel.filtered[1];
-					mAccelZ[mDataCount] = droneState.accel.filtered[2];
+					mAccelX[mDataCount] = droneState.accel.filteredX;
+					mAccelY[mDataCount] = droneState.accel.filteredY;
+					mAccelZ[mDataCount] = droneState.accel.filteredZ;
 					
-					mGyroX[mDataCount] = droneState.gyro.filtered[0];
-					mGyroY[mDataCount] = droneState.gyro.filtered[1];
-					mGyroZ[mDataCount] = droneState.gyro.filtered[2];
+					mGyroX[mDataCount] = droneState.gyroRad.filteredX;
+					mGyroY[mDataCount] = droneState.gyroRad.filteredY;
+					mGyroZ[mDataCount] = droneState.gyroRad.filteredZ;
 				
-					mMagnetX[mDataCount] = droneState.magneto.filtered[0];
-					mMagnetY[mDataCount] = droneState.magneto.filtered[1];
-					mMagnetZ[mDataCount] = droneState.magneto.filtered[2];
+					mMagnetX[mDataCount] = droneState.magneto.filteredX;
+					mMagnetY[mDataCount] = droneState.magneto.filteredY;
+					mMagnetZ[mDataCount] = droneState.magneto.filteredZ;
 				}
 				
 				mDataCount++;
@@ -140,6 +148,14 @@ public class SensorsGui extends JFrame
 			text = ": " + Integer.toString(mDataCount);
 			mlbDataCount.setText(text);
 		}
+	}
+	
+	private class OnChartResize extends ComponentAdapter
+	{
+		public void componentResized(java.awt.event.ComponentEvent e)
+		{
+			SensorsGui.this.drawData();
+		};
 	}
 	
 	private class OnCollectData implements ItemListener
@@ -373,11 +389,7 @@ public class SensorsGui extends JFrame
 	public SensorsGui(JFrame owner)
 	{
 		super(Text.get("SENSORS"));
-		createUI();
-	}
-	
-	private void createUI()
-	{
+		
 		mObserver = new OnTelemetryUpdate();
 		mAccelX = new double[MAX_DATA_COUNT];
 		mAccelY = new double[MAX_DATA_COUNT];
@@ -389,11 +401,16 @@ public class SensorsGui extends JFrame
 		mMagnetY = new double[MAX_DATA_COUNT];
 		mMagnetZ = new double[MAX_DATA_COUNT];
 		
+		createUI();
+	}
+	
+	private void createUI()
+	{
 		this.setTitle(Text.get("SENSORS"));
 		this.setSize(680, 568);
 		this.setLocationRelativeTo(null);
 		this.setResizable(true);
-		this.setLayout(new MigLayout("","[][80!][center]"));
+		this.setLayout(new MigLayout("","[][80!][center,grow]"));
 		
 		mlbAx = new JLabel();
 		mlbAx.setHorizontalAlignment(JLabel.LEFT);
@@ -430,6 +447,8 @@ public class SensorsGui extends JFrame
 		group.add(mrbMagnet);
 		
 		mrbAccel.setSelected(true);
+		
+		this.addComponentListener(new OnChartResize());
 		mcbCollectData.addItemListener(new OnCollectData());
 		mrbAccel.addItemListener(new OnChangeShowedData());
 		mrbMagnet.addItemListener(new OnChangeShowedData());
@@ -512,17 +531,17 @@ public class SensorsGui extends JFrame
 				{
 					CopterTelemetry.DroneState droneState = CopterTelemetry.instance().getDroneState();
 					
-					Settings.instance().setAccelXOffset(droneState.accel.offset[0]);
-					Settings.instance().setAccelYOffset(droneState.accel.offset[1]);
-					Settings.instance().setAccelZOffset(droneState.accel.offset[2]);
+					Settings.instance().setAccelXOffset((int)droneState.accel.offsetX);
+					Settings.instance().setAccelYOffset((int)droneState.accel.offsetY);
+					Settings.instance().setAccelZOffset((int)droneState.accel.offsetZ);
 				
-					Settings.instance().setGyroXOffset(droneState.gyro.offset[0]);
-					Settings.instance().setGyroYOffset(droneState.gyro.offset[1]);
-					Settings.instance().setGyroZOffset(droneState.gyro.offset[2]);
+					Settings.instance().setGyroXOffset((int)droneState.gyroRad.offsetX);
+					Settings.instance().setGyroYOffset((int)droneState.gyroRad.offsetY);
+					Settings.instance().setGyroZOffset((int)droneState.gyroRad.offsetZ);
 				
-					Settings.instance().setMagnetXOffset(droneState.magneto.offset[0]);
-					Settings.instance().setMagnetYOffset(droneState.magneto.offset[1]);
-					Settings.instance().setMagnetZOffset(droneState.magneto.offset[2]);
+					Settings.instance().setMagnetXOffset((int)droneState.magneto.offsetX);
+					Settings.instance().setMagnetYOffset((int)droneState.magneto.offsetY);
+					Settings.instance().setMagnetZOffset((int)droneState.magneto.offsetZ);
 				
 					Settings.instance().setMagnetXScale(1);
 					Settings.instance().setMagnetYScale(1);
@@ -538,10 +557,13 @@ public class SensorsGui extends JFrame
 	
 	private void drawData()
 	{
-        // Create a XYChart object of size 250 x 250 pixels
-        XYChart c = new XYChart(500, 500);
-        // Set the plotarea at (30, 20) and of size 200 x 200 pixels
-        c.setPlotArea(60, 45, 410, 410, -1, -1, 0xc0c0c0, 0xc0c0c0, -1);
+		int w = Math.min(this.getWidth() - 180, this.getHeight() - 50);
+		
+		if(w < 500)
+			w = 500;
+		
+        XYChart c = new XYChart(w, w);
+        c.setPlotArea(60, 45, w - 90, w - 90, -1, -1, 0xc0c0c0, 0xc0c0c0, -1);
         c.addLegend(60, 5, false);
         // Set scale for axis
         c.xAxis().setTitle("X/Y");

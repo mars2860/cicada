@@ -1,12 +1,19 @@
 package copter;
 
 import java.io.IOException;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.util.Deque;
+import java.util.Iterator;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class CopterTelemetry extends java.util.Observable implements Runnable
 {
@@ -32,12 +39,17 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 	
 	private int mParsePos;
 	
+	@Retention(RetentionPolicy.RUNTIME)
+	@Target(ElementType.FIELD)
+	public @interface NoChart {}
+	
+	/** @note all types are double for fast processing charts */
 	public class DroneState implements Cloneable
-	{
+	{	
 		public class Battery implements Cloneable
 		{
-			public float voltage;
-			public float percent;
+			public double voltage;
+			public double percent;
 			
 			private void parse(DatagramPacket packet)
 			{
@@ -54,26 +66,41 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 		
 		public class TripleAxisSensor implements Cloneable
 		{
-			public int raw[] = new int[3];
-			public int filtered[] = new int[3];
-			public float pure[] = new float[3];
-			public int offset[] = new int[3];
+			public double rawX;
+			public double rawY;
+			public double rawZ;
+			public double filteredX;
+			public double filteredY;
+			public double filteredZ;
+			public double pureX;
+			public double pureY;
+			public double pureZ;
+			@NoChart
+			public double offsetX;
+			@NoChart
+			public double offsetY;
+			@NoChart
+			public double offsetZ;
 			// no sense variable, this is 2 bytes gap in C structure
 			protected int gap;
 			
 			private void parse(DatagramPacket packet)
 			{
-				for(int i = 0; i < 3; i++)
-					pure[i] = CopterTelemetry.this.getFloat(packet);
+				pureX = CopterTelemetry.this.getFloat(packet);
+				pureY = CopterTelemetry.this.getFloat(packet);
+				pureZ = CopterTelemetry.this.getFloat(packet);
 				
-				for(int i = 0; i < 3; i++)
-					raw[i] = CopterTelemetry.this.getInt16t(packet);
+				rawX = CopterTelemetry.this.getInt16t(packet);
+				rawY = CopterTelemetry.this.getInt16t(packet);
+				rawZ = CopterTelemetry.this.getInt16t(packet);
 				
-				for(int i = 0; i < 3; i++)
-					filtered[i] = CopterTelemetry.this.getInt16t(packet);
+				filteredX = CopterTelemetry.this.getInt16t(packet);
+				filteredY = CopterTelemetry.this.getInt16t(packet);
+				filteredZ = CopterTelemetry.this.getInt16t(packet);
 
-				for(int i = 0; i < 3; i++)
-					offset[i] = CopterTelemetry.this.getInt16t(packet);
+				offsetX = CopterTelemetry.this.getInt16t(packet);
+				offsetY = CopterTelemetry.this.getInt16t(packet);
+				offsetZ = CopterTelemetry.this.getInt16t(packet);
 				
 				// read gap
 				gap = CopterTelemetry.this.getInt16t(packet);
@@ -88,14 +115,22 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 		
 		public class Pid implements Cloneable
 		{
+			@NoChart
 			public boolean enabled;
-			public float kp;
-			public float ki;
-			public float kd;
-			public float target;
-			public float out;
-			public float errSum;
-			public float prevErr;
+			@NoChart
+			public double kp;
+			@NoChart
+			public double ki;
+			@NoChart
+			public double kd;
+			@NoChart
+			public double target;
+			@NoChart
+			public double errSum;
+			@NoChart
+			public double prevErr;
+			
+			public double out;
 			
 			private void parse(DatagramPacket packet)
 			{
@@ -116,29 +151,44 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 			}
 		}
 		
-		public long timestamp;
+		@NoChart
+		public double timestamp;
 		public Battery battery = new Battery();
-		public int wifiLevel;
+		public double wifiLevel;
 		public TripleAxisSensor accel = new TripleAxisSensor();
-		public TripleAxisSensor gyro = new TripleAxisSensor();
+		public TripleAxisSensor gyroRad = new TripleAxisSensor();
+		public TripleAxisSensor gyroDeg = new TripleAxisSensor();
 		public TripleAxisSensor magneto = new TripleAxisSensor();
-		public float yaw;
-		public float pitch;
-		public float roll;
-		public float heading;
-		public Pid yawRatePid = new Pid();
-		public Pid pitchPid = new Pid();
-		public Pid rollPid = new Pid();
+		public double yawRad;
+		public double yawDeg;
+		public double pitchRad;
+		public double pitchDeg;
+		public double rollRad;
+		public double rollDeg;
+		public double headingRad;
+		public double headingDeg;
+		public Pid yawRadRatePid = new Pid();
+		public Pid yawDegRatePid = new Pid();
+		public Pid pitchRadPid = new Pid();
+		public Pid pitchDegPid = new Pid();
+		public Pid rollRadPid = new Pid();
+		public Pid rollDegPid = new Pid();
 		public Pid altPid = new Pid();
+		@NoChart
 		public boolean motorsEnabled;
-		public int baseGas;
-		public int motorGas[] = new int[4];
+		public double baseGas;
+		public double motorGas0;
+		public double motorGas1;
+		public double motorGas2;
+		public double motorGas3;
+		@NoChart
 		public boolean stabilizationEnabled;
-		public int mainLoopTime;
-		public float temperature;
-		public float pressure;
-		public float altitude;
-		public float seaLevel;
+		public double mainLoopTime;
+		public double temperature;
+		public double pressure;
+		public double altitude;
+		@NoChart
+		public double seaLevel;
 		// no sense variable, this is 2 bytes gap in C structure
 		protected int gap;
 		
@@ -148,11 +198,11 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 			DroneState state = (DroneState)super.clone();
 			state.battery = (Battery)battery.clone();
 			state.accel = (TripleAxisSensor)accel.clone();
-			state.gyro = (TripleAxisSensor)gyro.clone();
+			state.gyroRad = (TripleAxisSensor)gyroRad.clone();
 			state.magneto = (TripleAxisSensor)magneto.clone();
-			state.yawRatePid = (Pid)yawRatePid.clone();
-			state.pitchPid = (Pid)pitchPid.clone();
-			state.rollPid = (Pid)rollPid.clone();
+			state.yawRadRatePid = (Pid)yawRadRatePid.clone();
+			state.pitchRadPid = (Pid)pitchRadPid.clone();
+			state.rollRadPid = (Pid)rollRadPid.clone();
 			state.altPid = (Pid)altPid.clone();
 			return state;
 		}
@@ -163,39 +213,70 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 			battery.parse(packet);
 			wifiLevel = CopterTelemetry.this.getInt32t(packet);
 			accel.parse(packet);
-			gyro.parse(packet);
+			gyroRad.parse(packet);
 			magneto.parse(packet);
-			yaw = CopterTelemetry.this.getFloat(packet);
-			pitch = CopterTelemetry.this.getFloat(packet);
-			roll = CopterTelemetry.this.getFloat(packet);
-			heading = CopterTelemetry.this.getFloat(packet);
+			yawRad = CopterTelemetry.this.getFloat(packet);
+			yawDeg = Math.toDegrees(yawRad);
+			pitchRad = CopterTelemetry.this.getFloat(packet);
+			pitchDeg = Math.toDegrees(pitchRad);
+			rollRad = CopterTelemetry.this.getFloat(packet);
+			rollDeg = Math.toDegrees(rollRad);
+			headingRad = CopterTelemetry.this.getFloat(packet);
+			headingDeg = Math.toDegrees(headingRad);
 			mainLoopTime = CopterTelemetry.this.getInt32t(packet);
 			temperature = CopterTelemetry.this.getFloat(packet);
 			pressure = CopterTelemetry.this.getFloat(packet);
 			altitude = CopterTelemetry.this.getFloat(packet);
 			seaLevel = CopterTelemetry.this.getFloat(packet);
-			yawRatePid.parse(packet);
-			pitchPid.parse(packet);
-			rollPid.parse(packet);
+			yawRadRatePid.parse(packet);
+			pitchRadPid.parse(packet);
+			rollRadPid.parse(packet);
 			altPid.parse(packet);
 			baseGas = CopterTelemetry.this.getInt32t(packet);
-			motorGas[0] = CopterTelemetry.this.getInt32t(packet);
-			motorGas[1] = CopterTelemetry.this.getInt32t(packet);
-			motorGas[2] = CopterTelemetry.this.getInt32t(packet);
-			motorGas[3] = CopterTelemetry.this.getInt32t(packet);
+			motorGas0 = CopterTelemetry.this.getInt32t(packet);
+			motorGas1 = CopterTelemetry.this.getInt32t(packet);
+			motorGas2 = CopterTelemetry.this.getInt32t(packet);
+			motorGas3 = CopterTelemetry.this.getInt32t(packet);
 			motorsEnabled = CopterTelemetry.this.getBool(packet);
 			stabilizationEnabled = CopterTelemetry.this.getBool(packet);
 			gap = CopterTelemetry.this.getInt16t(packet);
+			
+			try
+			{
+				gyroDeg = (TripleAxisSensor)gyroRad.clone();
+				gyroDeg.pureX = Math.toDegrees(gyroRad.pureX);
+				gyroDeg.pureY = Math.toDegrees(gyroRad.pureY);
+				gyroDeg.pureZ = Math.toDegrees(gyroRad.pureZ);
+				
+				yawDegRatePid = (Pid)yawRadRatePid.clone();
+				yawDegRatePid.target = Math.toDegrees(yawRadRatePid.target);
+				
+				pitchDegPid = (Pid)pitchRadPid.clone();
+				pitchDegPid.target = Math.toDegrees(pitchRadPid.target);
+				
+				rollDegPid = (Pid)rollRadPid.clone();
+				rollDegPid.target = Math.toDegrees(rollRadPid.target);
+			}
+			catch(CloneNotSupportedException e)
+			{
+				e.printStackTrace();
+			}
 		}
 	}
 	
-	private DroneState droneState;
+	private DroneState mDroneState;
 	private int mTelemetryPeriod;
+	private int mBlackBoxSize;
+	private Deque<DroneState> mBlackBox;
+	private static final int MAX_BLACK_BOX_SIZE = 64000;	// about 18 Mb
+	
 	
 	private CopterTelemetry()
 	{
 		objTelemetrySync = new Object();
 		objDataSync = new Object();
+		mBlackBox = new ConcurrentLinkedDeque<DroneState>();
+		mBlackBoxSize = 0;
 	}
 	
 	public void start(String ip, int port) throws UnknownHostException, SocketException
@@ -254,7 +335,7 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 		{
 			try
 			{
-				state = (DroneState)droneState.clone();
+				state = (DroneState)mDroneState.clone();
 			}
 			catch (CloneNotSupportedException e)
 			{
@@ -301,9 +382,16 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 					{
 						mParsePos = 0;
 						droneStateSize = this.getUint32t(receivedPacket);
-						droneState = new DroneState();
-						droneState.parse(receivedPacket);
+						mDroneState = new DroneState();
+						mDroneState.parse(receivedPacket);
 						mTelemetryPeriod = (int)this.getUint32t(receivedPacket);
+						mBlackBox.offer(mDroneState);
+						mBlackBoxSize++;
+						if(mBlackBoxSize >= MAX_BLACK_BOX_SIZE)
+						{
+							mBlackBox.poll();
+							mBlackBoxSize--;
+						}
 					}
 
 					this.setChanged();
@@ -327,6 +415,35 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 			//System.out.println("Notify telemetry thread is stopped");
 			objTelemetrySync.notify();
 		}
+	}
+	
+	/**
+	 * @param range microseconds from now to (now minus range). if 0 then return all
+	 * */
+	public DroneState[] getBlackBox(int range)
+	{
+		DroneState[] result = new DroneState[0];
+		
+		if(range > 0 && mTelemetryPeriod > 0)
+		{
+			int count = Math.min(range/mTelemetryPeriod, mBlackBoxSize);
+
+			result = new DroneState[count];
+			Iterator<DroneState> iter = mBlackBox.descendingIterator();
+			
+			
+			while(iter.hasNext() && count > 0)
+			{
+				result[count - 1] = iter.next();
+				count--;
+			}
+		}
+		else
+		{
+			result = mBlackBox.toArray(new DroneState[0]); 
+		}
+		
+		return result; 
 	}
 	
 	private boolean getBool(DatagramPacket packet)

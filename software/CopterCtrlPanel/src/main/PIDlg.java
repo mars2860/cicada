@@ -149,7 +149,7 @@ public class PIDlg extends JDialog
 			return mcbEnabled.isSelected();
 		}
 		
-		public void setLbKp(float kp)
+		public void setLbKp(double kp)
 		{
 			mlbKp.setText(mKoefFmt.format(kp));
 		}
@@ -159,7 +159,7 @@ public class PIDlg extends JDialog
 			return Float.parseFloat(mtfKp.getText());
 		}
 		
-		public void setLbKi(float ki)
+		public void setLbKi(double ki)
 		{
 			mlbKi.setText(mKoefFmt.format(ki));
 		}
@@ -169,7 +169,7 @@ public class PIDlg extends JDialog
 			return Float.parseFloat(mtfKi.getText());
 		}
 		
-		public void setLbKd(float kd)
+		public void setLbKd(double kd)
 		{
 			mlbKd.setText(mKoefFmt.format(kd));
 		}
@@ -265,17 +265,17 @@ public class PIDlg extends JDialog
 		public void actionPerformed(ActionEvent e)
 		{
 			CopterTelemetry.DroneState droneState = CopterTelemetry.instance().getDroneState();
-			float yaw = droneState.yawRatePid.target;
-			float pitch = droneState.pitchPid.target;
-			float roll = droneState.rollPid.target;
+			double yaw = droneState.yawRadRatePid.target;
+			double pitch = droneState.pitchRadPid.target;
+			double roll = droneState.rollRadPid.target;
 			
 			yaw += da;
 			
-			yaw = (float)Math.toRadians(yaw);
-			pitch = (float)Math.toRadians(pitch);
-			roll = (float)Math.toRadians(roll);
+			yaw = Math.toRadians(yaw);
+			pitch = Math.toRadians(pitch);
+			roll = Math.toRadians(roll);
 			
-			CmdSetYPR cmd = new CmdSetYPR(yaw,pitch,roll);
+			CmdSetYPR cmd = new CmdSetYPR((float)yaw,(float)pitch,(float)roll);
 			CopterCommander.instance().addCmd(cmd);
 		}
 	}
@@ -294,9 +294,9 @@ public class PIDlg extends JDialog
 		public void actionPerformed(ActionEvent e)
 		{
 			CopterTelemetry.DroneState droneState = CopterTelemetry.instance().getDroneState();
-			float yaw = droneState.yawRatePid.target;
-			float pitch = droneState.pitchPid.target;
-			float roll = droneState.rollPid.target;
+			double yaw = droneState.yawRadRatePid.target;
+			double pitch = droneState.pitchRadPid.target;
+			double roll = droneState.rollRadPid.target;
 			
 			if( Math.abs(pitch - da) > 0.1f)
 			{
@@ -306,7 +306,7 @@ public class PIDlg extends JDialog
 				pitch = (float)Math.toRadians(pitch);
 				roll = (float)Math.toRadians(roll);
 			
-				CmdSetYPR cmd = new CmdSetYPR(yaw,pitch,roll);
+				CmdSetYPR cmd = new CmdSetYPR((float)yaw,(float)pitch,(float)roll);
 				CopterCommander.instance().addCmd(cmd);
 			}
 		}
@@ -326,19 +326,19 @@ public class PIDlg extends JDialog
 		public void actionPerformed(ActionEvent e)
 		{
 			CopterTelemetry.DroneState droneState = CopterTelemetry.instance().getDroneState();
-			float yaw = droneState.yawRatePid.target;
-			float pitch = droneState.pitchPid.target;
-			float roll = droneState.rollPid.target;
+			double yaw = droneState.yawRadRatePid.target;
+			double pitch = droneState.pitchRadPid.target;
+			double roll = droneState.rollRadPid.target;
 			
 			if( Math.abs(roll - da) > 0.1f)
 			{
 				roll = da;
 			
-				yaw = (float)Math.toRadians(yaw);
-				pitch = (float)Math.toRadians(pitch);
-				roll = (float)Math.toRadians(roll);
+				yaw = Math.toRadians(yaw);
+				pitch = Math.toRadians(pitch);
+				roll = Math.toRadians(roll);
 			
-				CmdSetYPR cmd = new CmdSetYPR(yaw,pitch,roll);
+				CmdSetYPR cmd = new CmdSetYPR((float)yaw,(float)pitch,(float)roll);
 				CopterCommander.instance().addCmd(cmd);
 			}
 		}
@@ -354,18 +354,18 @@ public class PIDlg extends JDialog
 		public void actionPerformed(ActionEvent e)
 		{
 			CopterTelemetry.DroneState droneState = CopterTelemetry.instance().getDroneState();
-			float yaw = droneState.yawRatePid.target;
-			float pitch = droneState.pitchPid.target;
-			float roll = droneState.rollPid.target;
+			double yaw = droneState.yawRadRatePid.target;
+			double pitch = droneState.pitchRadPid.target;
+			double roll = droneState.rollRadPid.target;
 			
 			pitch = 0;
 			roll = 0;
 			
-			yaw = (float)Math.toRadians(yaw);
-			pitch = (float)Math.toRadians(pitch);
-			roll = (float)Math.toRadians(roll);
+			yaw = Math.toRadians(yaw);
+			pitch = Math.toRadians(pitch);
+			roll = Math.toRadians(roll);
 			
-			CmdSetYPR cmd = new CmdSetYPR(yaw,pitch,roll);
+			CmdSetYPR cmd = new CmdSetYPR((float)yaw,(float)pitch,(float)roll);
 			CopterCommander.instance().addCmd(cmd);
 			CopterCommander.instance().addCmd(cmd);
 			CopterCommander.instance().addCmd(cmd);
@@ -421,9 +421,9 @@ public class PIDlg extends JDialog
 		{
 			CopterTelemetry.DroneState droneState = CopterTelemetry.instance().getDroneState();
 			
-			updatePidPanel(mYawPid, droneState.yawRatePid);
-			updatePidPanel(mPitchPid, droneState.pitchPid);
-			updatePidPanel(mRollPid, droneState.rollPid);
+			updatePidPanel(mYawPid, droneState.yawRadRatePid);
+			updatePidPanel(mPitchPid, droneState.pitchRadPid);
+			updatePidPanel(mRollPid, droneState.rollRadPid);
 			updatePidPanel(mAltPid, droneState.altPid);
 			
 			if(mcbCollectData.isSelected())
@@ -431,25 +431,25 @@ public class PIDlg extends JDialog
 				if(mDataCount < MAX_DATA_COUNT)
 				{
 					mTimeData[mDataCount] = System.currentTimeMillis() - mCollectDataStartTime; 
-					mYaw[mDataCount] = (float)Math.toDegrees(droneState.yaw);
-					mPitch[mDataCount] = (float)Math.toDegrees(droneState.pitch);
-					mRoll[mDataCount] = (float)Math.toDegrees(droneState.roll);
+					mYaw[mDataCount] = (float)Math.toDegrees(droneState.yawRad);
+					mPitch[mDataCount] = (float)Math.toDegrees(droneState.pitchRad);
+					mRoll[mDataCount] = (float)Math.toDegrees(droneState.rollRad);
 					mAltitude[mDataCount] = (float)Math.toDegrees(droneState.altitude);
-					mHeading[mDataCount] = (float)Math.toDegrees(droneState.heading);
-					mYawOutput[mDataCount] = (float)Math.toDegrees(droneState.yawRatePid.out);
-					mPitchOutput[mDataCount] = (float)Math.toDegrees(droneState.pitchPid.out);
-					mRollOutput[mDataCount] = (float)Math.toDegrees(droneState.rollPid.out);
+					mHeading[mDataCount] = (float)Math.toDegrees(droneState.headingRad);
+					mYawOutput[mDataCount] = (float)Math.toDegrees(droneState.yawRadRatePid.out);
+					mPitchOutput[mDataCount] = (float)Math.toDegrees(droneState.pitchRadPid.out);
+					mRollOutput[mDataCount] = (float)Math.toDegrees(droneState.rollRadPid.out);
 					mAltitudeOutput[mDataCount] = (float)Math.toDegrees(droneState.altPid.out);
-					mGyroX[mDataCount] = droneState.gyro.filtered[0];
-					mGyroY[mDataCount] = droneState.gyro.filtered[1];
-					mGyroZ[mDataCount] = droneState.gyro.filtered[2];
-					mAccelX[mDataCount] = droneState.accel.filtered[0];
-					mAccelY[mDataCount] = droneState.accel.filtered[1];
-					mAccelZ[mDataCount] = droneState.accel.filtered[2];
-					mM0[mDataCount] = droneState.motorGas[0];
-					mM1[mDataCount] = droneState.motorGas[1];
-					mM2[mDataCount] = droneState.motorGas[2];
-					mM3[mDataCount] = droneState.motorGas[3];
+					mGyroX[mDataCount] = droneState.gyroRad.filteredX;
+					mGyroY[mDataCount] = droneState.gyroRad.filteredY;
+					mGyroZ[mDataCount] = droneState.gyroRad.filteredZ;
+					mAccelX[mDataCount] = droneState.accel.filteredX;
+					mAccelY[mDataCount] = droneState.accel.filteredY;
+					mAccelZ[mDataCount] = droneState.accel.filteredZ;
+					mM0[mDataCount] = droneState.motorGas0;
+					mM1[mDataCount] = droneState.motorGas1;
+					mM2[mDataCount] = droneState.motorGas2;
+					mM3[mDataCount] = droneState.motorGas3;
 					mDataCount++;
 					mlbDataCount.setText(Integer.toString(mDataCount));
 				}
@@ -805,10 +805,10 @@ public class PIDlg extends JDialog
        	if(mDataCount > 0)
        	{
        		DroneState droneState = CopterTelemetry.instance().getDroneState();
-       		float yawTarget = (float)Math.toDegrees(droneState.yawRatePid.target);
-       		float pitchTarget = (float)Math.toDegrees(droneState.pitchPid.target);
-       		float rollTarget = (float)Math.toDegrees(droneState.rollPid.target);
-       		float altTarget = droneState.altPid.target;
+       		double yawTarget = Math.toDegrees(droneState.yawRadRatePid.target);
+       		double pitchTarget = Math.toDegrees(droneState.pitchRadPid.target);
+       		double rollTarget = Math.toDegrees(droneState.rollRadPid.target);
+       		double altTarget = droneState.altPid.target;
        		
        		if(mcbDrawYaw.isSelected())
        		{

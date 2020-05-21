@@ -69,6 +69,16 @@ public class CopterCtrlPanel implements WindowListener
 		}
 	}
 	
+	private class OnBtnCharts implements ActionListener
+	{
+		@Override
+		public void actionPerformed(ActionEvent e)
+		{
+			ChartsGui gui = new ChartsGui(mMainFrame);
+			gui.setVisible(true);
+		}
+	}
+	
 	public static class OnMotorsEnabled implements ActionListener
 	{
 		@Override
@@ -151,9 +161,15 @@ public class CopterCtrlPanel implements WindowListener
 	
 	private class OnTelemetryUpdate implements Observer
 	{
+		private long timestamp;
 		@Override
 		public void update(Observable o, Object arg)
 		{
+			if(System.currentTimeMillis() - timestamp < 100)
+				return;
+			
+			timestamp = System.currentTimeMillis();
+			
 			DecimalFormat fmt1 = new DecimalFormat();
 			fmt1.setMaximumFractionDigits(2);
 			fmt1.setMinimumFractionDigits(0);
@@ -168,19 +184,20 @@ public class CopterCtrlPanel implements WindowListener
 								fmt1.format(droneState.battery.percent) + "%";
 			
 			mlbBattery.setText(batState);
-			mlbWifiLevel.setText(Integer.toString(droneState.wifiLevel));
+			mlbWifiLevel.setText(Integer.toString((int)droneState.wifiLevel));
 			
-			float yaw = (float)Math.toDegrees(droneState.yaw);
-			float yawTarget = (float)Math.toDegrees(droneState.yawRatePid.target);
-			float pitch = (float)Math.toDegrees(droneState.pitch);
-			float pitchTarget = (float)Math.toDegrees(droneState.pitchPid.target);
-			float roll = (float)Math.toDegrees(droneState.roll);
-			float rollTarget = (float)Math.toDegrees(droneState.rollPid.target);
+			double yaw = Math.toDegrees(droneState.yawRad);
+			double yawTarget = Math.toDegrees(droneState.yawRadRatePid.target);
+			double pitch = Math.toDegrees(droneState.pitchRad);
+			double pitchTarget = Math.toDegrees(droneState.pitchRadPid.target);
+			double roll = Math.toDegrees(droneState.rollRad);
+			double rollTarget = Math.toDegrees(droneState.rollRadPid.target);
+			double heading = Math.toDegrees(droneState.headingRad);
 			
 			mlbYawValue.setText(fmt1.format(yaw) + "/" + fmt1.format(yawTarget));
 			mlbPitchValue.setText(fmt1.format(pitch) + "/" + fmt1.format(pitchTarget));
 			mlbRollValue.setText(fmt1.format(roll) + "/" + fmt1.format(rollTarget));
-			mlbHeading.setText(fmt2.format(droneState.heading));
+			mlbHeading.setText(fmt2.format(heading));
 			mlbLoopTime.setText(fmt2.format(droneState.mainLoopTime));
 			mlbTemperature.setText(fmt1.format(droneState.temperature));
 			mlbPressure.setText(fmt1.format(droneState.pressure) + "/" +
@@ -192,11 +209,11 @@ public class CopterCtrlPanel implements WindowListener
 			mlbPitch.setIcon(rotateImageIcon(mIconPitch, pitch));
 			mlbRoll.setIcon(rotateImageIcon(mIconRoll, roll));
 
-			mgas0.setGas(droneState.motorGas[0],false);
-			mgas1.setGas(droneState.motorGas[1],false);
-			mgas2.setGas(droneState.motorGas[2],false);
-			mgas3.setGas(droneState.motorGas[3],false);
-			mgasBase.setGas(droneState.baseGas, false);
+			mgas0.setGas((int)droneState.motorGas0,false);
+			mgas1.setGas((int)droneState.motorGas1,false);
+			mgas2.setGas((int)droneState.motorGas2,false);
+			mgas3.setGas((int)droneState.motorGas3,false);
+			mgasBase.setGas((int)droneState.baseGas, false);
 			
 			mcbMotorsEnabled.setSelected(droneState.motorsEnabled);
 			mcbStabilizationEnabled.setSelected(droneState.stabilizationEnabled);
@@ -353,7 +370,7 @@ public class CopterCtrlPanel implements WindowListener
 	{
 		mMainFrame = new JFrame();
 		
-		mMainFrame.setSize(800,600);
+		mMainFrame.setSize(1024,768);
 		mMainFrame.setTitle(Text.get("APP_TITLE"));
 		mMainFrame.setLocationRelativeTo(null);
 		mMainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -384,10 +401,14 @@ public class CopterCtrlPanel implements WindowListener
 		JButton btnPID = new JButton(Text.get("PID"));
 		btnPID.addActionListener(new OnBtnPID());
 		
+		JButton btnCharts = new JButton(Text.get("CHARTS"));
+		btnCharts.addActionListener(new OnBtnCharts());
+		
 		pnlSettings.add(btnConnect);
 		pnlSettings.add(btnSensors);
 		pnlSettings.add(btnSettings);
 		pnlSettings.add(btnPID);
+		pnlSettings.add(btnCharts);
 
 		return pnlSettings;
 	}

@@ -34,6 +34,7 @@ public class TextBundle extends ListResourceBundle
             
             {"CONNECT", "Connect"},
             {"SENSORS", "Sensors"},
+            {"CHARTS", "Charts"},
             {"SETTINGS", "Settings"},
             {"IP_ADDRESS", "IP Address"},
             {"CMD_PORT", "Port 1"},
@@ -46,6 +47,15 @@ public class TextBundle extends ListResourceBundle
             {"CALIBRATION", "Calibration"},
             {"UPDATE_PERIODS", "Update Periods"},
             {"TELEMETRY", "Telemetry"},
+            {"PERIOD", "Period"},
+            {"REALTIME","Realtime"},
+            {"SUBMIT","Submit"},
+            {"SNAPSHOT","Snapshot"},
+            {"DATA","Data"},
+            {"SAVE_IMAGE","Save image"},
+            {"EXPORT_SEL_RANGE","Export sel range"},
+            {"EXPORT_FULL_RANGE","Export full range"},
+            {"TIME_AXIS","time (us)"},
             
             {"ALARMS", "Alarms"},
             {"COLLECT_DATA", "Collect Data"},

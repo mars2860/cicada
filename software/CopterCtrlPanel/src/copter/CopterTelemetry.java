@@ -29,6 +29,11 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 	
 	public static final int TIMEOUT = 3000;
 	
+	private DroneState mDroneState = new DroneState();
+	private int mTelemetryPeriod;
+	private int mBlackBoxSize;
+	private Deque<DroneState> mBlackBox;
+	private static final int MAX_BLACK_BOX_SIZE = 64000;	// about 18 Mb
 	private int mCopterTelemetryPort;
 	private InetAddress mCopterInetAddress;
 	private DatagramSocket mSocket;
@@ -263,13 +268,6 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 			}
 		}
 	}
-	
-	private DroneState mDroneState;
-	private int mTelemetryPeriod;
-	private int mBlackBoxSize;
-	private Deque<DroneState> mBlackBox;
-	private static final int MAX_BLACK_BOX_SIZE = 64000;	// about 18 Mb
-	
 	
 	private CopterTelemetry()
 	{

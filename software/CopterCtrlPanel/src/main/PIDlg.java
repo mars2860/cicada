@@ -634,7 +634,7 @@ public class PIDlg extends JDialog
 		
 		mcbMotorsEnabled = new JCheckBox(Text.get("MOTORS_ENABLED") + "(Q)");
 		mcbMotorsEnabled.setSelected(droneState.motorsEnabled);
-		mcbMotorsEnabled.addActionListener(new CopterCtrlPanel.OnMotorsEnabled());
+		//mcbMotorsEnabled.addActionListener(new CopterCtrlPanel.OnMotorsEnabled());
 		mcbMotorsEnabled.setMnemonic('Q');
 		
 		mSetAllGas = new MotorGasSlider(Text.get("GAS"),true);

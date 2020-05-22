@@ -25,6 +25,10 @@ public class Settings
 	public static final int COPTER_DEFAULT_VIDEO_PORT = 4212;
 	public static final String SETTINGS_FILENAME = "settings.properties";
 	
+	public static final String LANG = "Language";
+	
+	private Properties prop;
+	
 	private String mCopterIp;
 	private int mCopterCmdPort;
 	private int mCopterTelemetryPort;
@@ -62,13 +66,24 @@ public class Settings
 	
 	private Settings()
 	{
+		prop = new Properties();
 		setDefault();
+	}
+	
+	public void setProperty(String key, String value)
+	{
+		prop.setProperty(key, value);
+	}
+	
+	public int getIntProperty(String key)
+	{
+		String value = prop.getProperty(key,"0");
+		
+		return Integer.parseInt(value);
 	}
 	
 	public void save()
 	{
-		Properties prop = new Properties();
-		
 		prop.setProperty("Language", Locale.getDefault().getLanguage());
 		prop.setProperty("CopterIp", mCopterIp);
 		prop.setProperty("CopterCmdPort", Integer.toString(mCopterCmdPort));
@@ -130,8 +145,6 @@ public class Settings
 	public void load()
 	{
 		setDefault();
-		
-		Properties prop = new Properties();
 		
 		try
 		{

@@ -491,6 +491,11 @@ public class ChartsGui extends JFrame
 
 	public ChartsGui(JFrame owner)
 	{
+		createUI();
+	}
+	
+	private void createUI()
+	{
 		this.setTitle(Text.get("CHARTS"));
 		this.setSize(960, 540);
 		this.setLocationRelativeTo(null);

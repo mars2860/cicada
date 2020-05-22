@@ -2,6 +2,7 @@ package main;
 
 import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
@@ -17,15 +18,11 @@ import java.util.Observer;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JSlider;
 import javax.swing.border.TitledBorder;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 import copter.Alarm;
 import copter.AlarmCenter;
@@ -34,21 +31,43 @@ import copter.CopterTelemetry;
 import copter.commands.CmdCalibrateAccel;
 import copter.commands.CmdCalibrateGyro;
 import copter.commands.CmdCalibrateMagnet;
-import copter.commands.CmdEnableStabilization;
 import copter.commands.CmdResetAltitude;
 import copter.commands.CmdSetAltPid;
-import copter.commands.CmdSetBaseGas;
-import copter.commands.CmdSetMotorsGas;
 import copter.commands.CmdSetPeriods;
 import copter.commands.CmdSetPitchPid;
 import copter.commands.CmdSetRollPid;
 import copter.commands.CmdSetYawPid;
-import copter.commands.CmdSwitchMotors;
 
 import net.miginfocom.swing.MigLayout;
 
 public class CopterCtrlPanel implements WindowListener
 {
+	private class OnBtnMotors implements ActionListener
+	{
+		@Override
+		public void actionPerformed(ActionEvent e)
+		{
+			if(mMotorsGui == null)
+			{
+				mMotorsGui = new MotorsGui();
+				mMotorsGui.setIconImage(mIconPropeller.getImage());
+			}
+			
+			if(mMotorsGui.isVisible() == false)
+				mMotorsGui.setVisible(true);
+		}	
+	}
+	
+	private class OnBtnStatus implements ActionListener
+	{
+		@Override
+		public void actionPerformed(ActionEvent e)
+		{
+			// TODO Auto-generated method stub
+			
+		}
+	}
+	
 	private class OnBtnSettings implements ActionListener
 	{
 		@Override
@@ -78,66 +97,7 @@ public class CopterCtrlPanel implements WindowListener
 			gui.setVisible(true);
 		}
 	}
-	
-	public static class OnMotorsEnabled implements ActionListener
-	{
-		@Override
-		public void actionPerformed(ActionEvent e)
-		{
-			boolean state = !CopterTelemetry.instance().getDroneState().motorsEnabled;
-			CopterCommander.instance().addCmd(new CmdSwitchMotors(state));		
-		}
-	}
-	
-	private class OnStabilizationEnabled implements ActionListener
-	{
-		@Override
-		public void actionPerformed(ActionEvent e)
-		{
-			boolean state = !CopterTelemetry.instance().getDroneState().stabilizationEnabled;
-			CopterCommander.instance().addCmd(new CmdEnableStabilization(state));
-		}
-	}
-	
-	private class MotorGasChanged implements ChangeListener
-	{
-		private int mChl;
 		
-		public MotorGasChanged(int channel)
-		{
-			mChl = channel;
-		}
-		
-		@Override
-		public void stateChanged(ChangeEvent e)
-		{
-			JSlider slider = (JSlider)e.getSource();
-	        
-			if(!slider.getValueIsAdjusting())
-			{
-				int value = slider.getValue();
-				mCmdSetGas.setGas(mChl,value);
-				
-				CopterCommander.instance().addCmd(mCmdSetGas);
-	        }	
-		}
-	}
-	
-	private class SetAllMotorGas implements ChangeListener
-	{
-		@Override
-		public void stateChanged(ChangeEvent e)
-		{
-			JSlider slider = (JSlider)e.getSource();
-	        
-			if(!slider.getValueIsAdjusting())
-			{
-				int value = slider.getValue();
-				CopterCommander.instance().addCmd(new CmdSetBaseGas(value));
-	        }
-		}	
-	}
-	
 	private class OnAlarmUpdate implements Observer
 	{
 		@Override
@@ -209,14 +169,7 @@ public class CopterCtrlPanel implements WindowListener
 			mlbPitch.setIcon(rotateImageIcon(mIconPitch, pitch));
 			mlbRoll.setIcon(rotateImageIcon(mIconRoll, roll));
 
-			mgas0.setGas((int)droneState.motorGas0,false);
-			mgas1.setGas((int)droneState.motorGas1,false);
-			mgas2.setGas((int)droneState.motorGas2,false);
-			mgas3.setGas((int)droneState.motorGas3,false);
-			mgasBase.setGas((int)droneState.baseGas, false);
 			
-			mcbMotorsEnabled.setSelected(droneState.motorsEnabled);
-			mcbStabilizationEnabled.setSelected(droneState.stabilizationEnabled);
 		}
 	}
 	
@@ -324,7 +277,8 @@ public class CopterCtrlPanel implements WindowListener
 		}
 	}
 
-	private JFrame mMainFrame;
+	private JSavedFrame mMainFrame;
+	private MotorsGui mMotorsGui;
 	
 	private JLabel mlbAlarmIcon;
 	private JLabel mlbAlarmText;
@@ -342,14 +296,12 @@ public class CopterCtrlPanel implements WindowListener
 	private JLabel mlbPressure;
 	private JLabel mlbAltitude;
 	
-	private JCheckBox mcbMotorsEnabled;
-	private JCheckBox mcbStabilizationEnabled;
-	private MotorGasSlider mgas0;
-	private MotorGasSlider mgas1;
-	private MotorGasSlider mgas2;
-	private MotorGasSlider mgas3;
-	private MotorGasSlider mgasBase;
-	private CmdSetMotorsGas mCmdSetGas = new CmdSetMotorsGas();
+	private JButton mbtnConnect;
+	private JButton mbtnMotors;
+	private JButton mbtnCharts;
+	private JButton mbtnSensors;
+	private JButton mbtnStatus;
+	private JButton mbtnSettings;
 	
 	private ImageIcon mIconOk;
 	private ImageIcon mIconError;
@@ -363,25 +315,76 @@ public class CopterCtrlPanel implements WindowListener
 	private ImageIcon mIconTemperature;
 	private ImageIcon mIconPressure;
 	private ImageIcon mIconAltitude;
+	private ImageIcon mIconPropeller;
+	private ImageIcon mIconConnect;
+	private ImageIcon mIconCharts;
+	private ImageIcon mIconSensors;
+	private ImageIcon mIconGauge;
+	private ImageIcon mIconSettings;
 		
-	public CopterCtrlPanel() {}
+	public CopterCtrlPanel()
+	{
+	}
 	
 	private void createUI()
 	{
-		mMainFrame = new JFrame();
+		mMainFrame = new JSavedFrame(Text.get("APP_TITLE"),1024,768);
 		
-		mMainFrame.setSize(1024,768);
-		mMainFrame.setTitle(Text.get("APP_TITLE"));
-		mMainFrame.setLocationRelativeTo(null);
 		mMainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		mMainFrame.addWindowListener(this);
 		
-		mMainFrame.setLayout(new MigLayout("","[][grow][]","[][grow]"));
+		mMainFrame.setLayout(new MigLayout("","[][grow][]","[][][grow]"));
 
+		mMainFrame.add(this.createToolbarPanel(),"spanx,grow");
 		mMainFrame.add(this.createAlarmPanel(),"spanx 2,grow");
 		mMainFrame.add(this.createSettingsPanel(),"grow,wrap");
 		mMainFrame.add(this.createStatusPanel(),"growy");
-		mMainFrame.add(this.createMotorsPanel(),"growy");
+	}
+	
+	private JPanel createToolbarPanel()
+	{
+		JPanel tb = new JPanel(new MigLayout());
+		
+		Insets zeroInsets = new Insets(0,0,0,0);
+		
+		mbtnConnect = new JButton(mIconConnect);
+		mbtnConnect.setMargin(zeroInsets);
+		mbtnConnect.setToolTipText(Text.get("CONNECT"));
+		mbtnConnect.addActionListener(new OnBtnConnect());
+		
+		mbtnStatus = new JButton(mIconGauge);
+		mbtnStatus.setMargin(zeroInsets);
+		mbtnStatus.setToolTipText(Text.get("STATUS"));
+		mbtnStatus.addActionListener(new OnBtnStatus());
+		
+		mbtnMotors = new JButton(mIconPropeller);
+		mbtnMotors.setMargin(zeroInsets);
+		mbtnMotors.setToolTipText(Text.get("MOTORS"));
+		mbtnMotors.addActionListener(new OnBtnMotors());
+		
+		mbtnSensors = new JButton(mIconSensors);
+		mbtnSensors.setMargin(zeroInsets);
+		mbtnSensors.setToolTipText(Text.get("SENSORS"));
+		mbtnSensors.addActionListener(new OnBtnSensors());
+		
+		mbtnCharts = new JButton(mIconCharts);
+		mbtnCharts.setMargin(zeroInsets);
+		mbtnCharts.setToolTipText(Text.get("CHARTS"));
+		mbtnCharts.addActionListener(new OnBtnCharts());
+		
+		mbtnSettings = new JButton(mIconSettings);
+		mbtnSettings.setMargin(zeroInsets);
+		mbtnSettings.setToolTipText(Text.get("SETTINGS"));
+		mbtnSettings.addActionListener(new OnBtnSettings());
+
+		tb.add(mbtnConnect);
+		tb.add(mbtnStatus);
+		tb.add(mbtnMotors);
+		tb.add(mbtnSensors);
+		tb.add(mbtnCharts);
+		tb.add(mbtnSettings);
+		
+		return tb;
 	}
 	
 	private JPanel createSettingsPanel()
@@ -428,64 +431,6 @@ public class CopterCtrlPanel implements WindowListener
 		pnlAlarm.add(mlbAlarmText,"grow");
 		
 		return pnlAlarm;
-	}
-	
-	private JPanel createMotorsPanel()
-	{
-		JPanel pnlMotorsGas = new JPanel(new MigLayout("","","[][][grow]"));
-		pnlMotorsGas.setBorder(new TitledBorder(Text.get("MOTORS")));
-		
-		mcbMotorsEnabled = new JCheckBox(Text.get("MOTORS_ENABLED"));
-		mcbMotorsEnabled.addActionListener(new OnMotorsEnabled());
-		
-		mcbStabilizationEnabled = new JCheckBox(Text.get("STABILIZATION_ENABLED"));
-		mcbStabilizationEnabled.addActionListener(new OnStabilizationEnabled());
-
-		mgas0 = new MotorGasSlider("M1");
-		mgas1 = new MotorGasSlider("M2");
-		mgas2 = new MotorGasSlider("M3");
-		mgas3 = new MotorGasSlider("M4");
-		mgasBase = new MotorGasSlider("BASE");
-				
-		mgas0.addChangeListener(new MotorGasChanged(0));
-		mgas1.addChangeListener(new MotorGasChanged(1));
-		mgas2.addChangeListener(new MotorGasChanged(2));
-		mgas3.addChangeListener(new MotorGasChanged(3));
-		mgasBase.addChangeListener(new SetAllMotorGas());
-		
-		MotorGasSlider yawSlider = new MotorGasSlider("Yaw");
-		yawSlider.setGas((MotorGasSlider.MIN_GAS + MotorGasSlider.MAX_GAS)/2,false);
-		yawSlider.addChangeListener(new ChangeListener()
-		{
-			int oldValue;
-			
-			@Override
-			public void stateChanged(ChangeEvent e)
-			{
-				JSlider sl = (JSlider)e.getSource();
-				if(!sl.getValueIsAdjusting())
-				{
-					int dx = sl.getValue() - oldValue;
-					oldValue = sl.getValue();
-					
-					mgas0.setGas(mgas0.getGas() + dx,true);
-					mgas2.setGas(mgas2.getGas() + dx,true);
-					mgas1.setGas(mgas1.getGas() - dx,true);
-					mgas3.setGas(mgas3.getGas() - dx,true);
-				}
-			}
-		});
-		
-		pnlMotorsGas.add(mcbMotorsEnabled,"span,wrap");
-		pnlMotorsGas.add(mcbStabilizationEnabled,"span,wrap");
-		pnlMotorsGas.add(mgas0,"grow");
-		pnlMotorsGas.add(mgas1,"grow");
-		pnlMotorsGas.add(mgas2,"grow");
-		pnlMotorsGas.add(mgas3,"grow");
-		pnlMotorsGas.add(mgasBase,"grow");
-		pnlMotorsGas.add(yawSlider,"grow");
-		
-		return pnlMotorsGas;
 	}
 	
 	private JPanel createStatusPanel()
@@ -558,44 +503,35 @@ public class CopterCtrlPanel implements WindowListener
 	
 	private void loadImages()
 	{
-		java.net.URL okUrl = this.getClass().getResource("images/ok.png");
-		mIconOk = new ImageIcon(new ImageIcon(okUrl).getImage().getScaledInstance(32,32,Image.SCALE_SMOOTH));
-		
-		java.net.URL errUrl = this.getClass().getResource("images/error.png");
-		mIconError = new ImageIcon(new ImageIcon(errUrl).getImage().getScaledInstance(32,32,Image.SCALE_SMOOTH));
-		
-		int statusIconWidth = 24;
-		int statusIconHeight = 24;
-		
-		java.net.URL batUrl = this.getClass().getResource("images/battery.png");
-		mIconBat = new ImageIcon(new ImageIcon(batUrl).getImage().getScaledInstance(statusIconWidth,statusIconHeight,Image.SCALE_SMOOTH));
-		
-		java.net.URL wifiUrl = this.getClass().getResource("images/wifi.png");
-		mIconWifi = new ImageIcon(new ImageIcon(wifiUrl).getImage().getScaledInstance(statusIconWidth,statusIconHeight,Image.SCALE_SMOOTH));
-		
-		java.net.URL yawUrl = this.getClass().getResource("images/yaw.png");
-		mIconYaw = new ImageIcon(new ImageIcon(yawUrl).getImage().getScaledInstance(statusIconWidth,statusIconHeight,Image.SCALE_SMOOTH));
-		
-		java.net.URL pitchUrl = this.getClass().getResource("images/pitch.png");
-		mIconPitch = new ImageIcon(new ImageIcon(pitchUrl).getImage().getScaledInstance(statusIconWidth,statusIconHeight,Image.SCALE_SMOOTH));
-		
-		java.net.URL rollUrl = this.getClass().getResource("images/roll.png");
-		mIconRoll = new ImageIcon(new ImageIcon(rollUrl).getImage().getScaledInstance(statusIconWidth,statusIconHeight,Image.SCALE_SMOOTH));
-		
-		java.net.URL headingUrl = this.getClass().getResource("images/heading.png");
-		mIconHeading = new ImageIcon(new ImageIcon(headingUrl).getImage().getScaledInstance(statusIconWidth,statusIconHeight,Image.SCALE_SMOOTH));
-		
-		java.net.URL looptimeUrl = this.getClass().getResource("images/cputime.png");
-		mIconLoopTime = new ImageIcon(new ImageIcon(looptimeUrl).getImage().getScaledInstance(statusIconWidth,statusIconHeight,Image.SCALE_SMOOTH));
-		
-		java.net.URL temperatureUrl = this.getClass().getResource("images/temperature.png");
-		mIconTemperature = new ImageIcon(new ImageIcon(temperatureUrl).getImage().getScaledInstance(statusIconWidth,statusIconHeight,Image.SCALE_SMOOTH));
-		
-		java.net.URL pressureUrl = this.getClass().getResource("images/pressure.png");
-		mIconPressure = new ImageIcon(new ImageIcon(pressureUrl).getImage().getScaledInstance(statusIconWidth,statusIconHeight,Image.SCALE_SMOOTH));
-		
-		java.net.URL altitudeUrl = this.getClass().getResource("images/altitude.png");
-		mIconAltitude = new ImageIcon(new ImageIcon(altitudeUrl).getImage().getScaledInstance(statusIconWidth,statusIconHeight,Image.SCALE_SMOOTH));
+		mIconOk = loadIcon("images/ok.png");
+		mIconError = loadIcon("images/error.png");
+		mIconBat = loadIcon("images/battery.png");
+		mIconWifi = loadIcon("images/wifi.png");
+		mIconYaw = loadIcon("images/yaw.png");
+		mIconPitch = loadIcon("images/pitch.png");
+		mIconRoll = loadIcon("images/roll.png");
+		mIconHeading = loadIcon("images/heading.png");
+		mIconLoopTime = loadIcon("images/cputime.png");
+		mIconTemperature = loadIcon("images/temperature.png");
+		mIconPressure = loadIcon("images/pressure.png");
+		mIconAltitude = loadIcon("images/altitude.png");
+		mIconPropeller = loadIcon("images/propeller.png");
+		mIconConnect = loadIcon("images/key.png");
+		mIconCharts = loadIcon("images/charts.png");
+		mIconSensors = loadIcon("images/sensors.png");
+		mIconGauge = loadIcon("images/gauge.png");
+		mIconSettings = loadIcon("images/settings.png");
+	}
+	
+	private ImageIcon loadIcon(String path)
+	{
+		return loadIcon(path,24,24);
+	}
+	
+	private ImageIcon loadIcon(String path, int w, int h)
+	{
+		java.net.URL url = this.getClass().getResource(path);
+		return new ImageIcon(new ImageIcon(url).getImage().getScaledInstance(w,h,Image.SCALE_SMOOTH));
 	}
 	
 	public void start()

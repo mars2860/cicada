@@ -4,7 +4,7 @@ import java.util.Observable;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import main.Text;
+import main.ResBox;
 
 
 public class AlarmCenter extends Observable
@@ -70,7 +70,7 @@ public class AlarmCenter extends Observable
 	public String getAlarmText()
 	{
 		Alarm alarm = null;
-		String text = Text.get("SYSTEM_OK");
+		String text = ResBox.text("SYSTEM_OK");
 		
 		synchronized(mMutex)
 		{
@@ -85,7 +85,7 @@ public class AlarmCenter extends Observable
 		}
 		
 		if(alarm != null)
-			text = Text.get(alarm.name());
+			text = ResBox.text(alarm.name());
 		
 		return text;
 	}

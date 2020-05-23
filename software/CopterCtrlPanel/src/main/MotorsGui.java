@@ -121,7 +121,8 @@ public class MotorsGui extends JSavedFrame
 	{
 		super("Motors",230,540);
 		
-		this.setTitle(Text.get("MOTORS"));
+		this.setTitle(ResBox.text("MOTORS"));
+		this.setIconImage(ResBox.icon("PROPELLER").getImage());
 		this.createUI();
 		CopterTelemetry.instance().addObserver(new OnTelemetryUpdate());
 	}
@@ -130,10 +131,10 @@ public class MotorsGui extends JSavedFrame
 	{
 		JPanel pnlMotors = new JPanel(new MigLayout("","","[][][grow]"));
 		
-		mcbMotorsEnabled = new JCheckBox(Text.get("MOTORS_ENABLED"));
+		mcbMotorsEnabled = new JCheckBox(ResBox.text("MOTORS_ENABLED"));
 		mcbMotorsEnabled.addActionListener(new OnMotorsEnabled());
 		
-		mcbStabilizationEnabled = new JCheckBox(Text.get("STABILIZATION_ENABLED"));
+		mcbStabilizationEnabled = new JCheckBox(ResBox.text("STABILIZATION_ENABLED"));
 		mcbStabilizationEnabled.addActionListener(new OnStabilizationEnabled());
 
 		mgas0 = new MotorGasSlider("M1");

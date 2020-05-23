@@ -26,6 +26,17 @@ public class TextBundle extends ListResourceBundle
             {"CANCEL", "Cancel"},
             
             {"STATUS", "Status"},
+            {"BATTERY_STATE", "Battery voltage/percent"},
+            {"WIFI_STATE", "Wifi RSSI (db)"},
+            {"YAW_STATE", "Yaw (deg)/Target (deg)"},
+            {"PITCH_STATE","Pitch (deg)/Target (deg)"},
+            {"ROLL_STATE","Roll (deg)/Target (deg)"},
+            {"HEADING_STATE","Magnetic azimuth (deg)"},
+            {"ALTITUDE_STATE","Altitude (QNE meters)"},
+            {"PRESSURE_STATE","Pressure (hPa)"},
+            {"TEMPERATURE_STATE","Temperature (Celsius deg)"},
+            {"LOOP_TIME_STATE","One loop time of thread (us)"},
+            
             
             {"MOTORS", "Motors"},
             {"MOTORS_ENABLED", "Motors enabled"},

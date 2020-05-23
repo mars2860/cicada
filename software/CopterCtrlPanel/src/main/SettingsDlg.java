@@ -120,21 +120,21 @@ public class SettingsDlg extends JDialog
 		mcbLocale.setSelectedItem(Locale.getDefault());
 		
 		JPanel pnlNet = new JPanel(new MigLayout("","[40!][40!][40!]"));
-		pnlNet.setBorder(new TitledBorder(Text.get("NET")));
+		pnlNet.setBorder(new TitledBorder(ResBox.text("NET")));
 		
-		pnlNet.add(new JLabel(Text.get("IP_ADDRESS")),"span,grow,wrap");
+		pnlNet.add(new JLabel(ResBox.text("IP_ADDRESS")),"span,grow,wrap");
 		pnlNet.add(mtfCopterIp, "span,grow,wrap");
 		
-		pnlNet.add(new JLabel(Text.get("CMD_PORT")));
-		pnlNet.add(new JLabel(Text.get("TELEMETRY_PORT")));
-		pnlNet.add(new JLabel(Text.get("VIDEO_PORT")),"wrap");
+		pnlNet.add(new JLabel(ResBox.text("CMD_PORT")));
+		pnlNet.add(new JLabel(ResBox.text("TELEMETRY_PORT")));
+		pnlNet.add(new JLabel(ResBox.text("VIDEO_PORT")),"wrap");
 		
 		pnlNet.add(mtfCopterCmdPort, "grow");
 		pnlNet.add(mtfCopterTelemetryPort, "grow");
 		pnlNet.add(mtfCopterVideoPort, "grow, wrap");
 		
 		JPanel pnlCalibration = new JPanel(new MigLayout());
-		pnlCalibration.setBorder(new TitledBorder(Text.get("CALIBRATION")));
+		pnlCalibration.setBorder(new TitledBorder(ResBox.text("CALIBRATION")));
 
 		pnlCalibration.add(new JLabel("AccelXOffset"));
 		String text = ": " + Integer.toString(Settings.instance().getAccelXOffset());
@@ -179,18 +179,18 @@ public class SettingsDlg extends JDialog
 		pnlCalibration.add(new JLabel(text),"wrap");
 		
 		JPanel pnlPeriods = new JPanel(new MigLayout("","[][60!]"));
-		pnlPeriods.setBorder(new TitledBorder(Text.get("UPDATE_PERIODS")));
+		pnlPeriods.setBorder(new TitledBorder(ResBox.text("UPDATE_PERIODS")));
 		
-		pnlPeriods.add(new JLabel(Text.get("TELEMETRY")));
+		pnlPeriods.add(new JLabel(ResBox.text("TELEMETRY")));
 		pnlPeriods.add(mtfTelemetryPeriod,"grow");
 		pnlPeriods.add(new JLabel("Cur: " + CopterTelemetry.instance().getTelemetryPeriod()),"wrap");
-		pnlPeriods.add(new JLabel(Text.get("PID")));
+		pnlPeriods.add(new JLabel(ResBox.text("PID")));
 		pnlPeriods.add(mtfPidPeriod,"grow");
 		pnlPeriods.add(new JLabel("Cur: " + "5"));// CopterTelemetry.instance().getPidPeriod()));
 
 		JPanel pnlOkCancel = new JPanel(new MigLayout("insets 0 0 0 0","[80!][80!]"));
-		JButton btnOk = new JButton(Text.get("OK"));
-		JButton btnCancel = new JButton(Text.get("CANCEL"));
+		JButton btnOk = new JButton(ResBox.text("OK"));
+		JButton btnCancel = new JButton(ResBox.text("CANCEL"));
 		
 		btnOk.addActionListener(new OnBtnOk());
 		btnCancel.addActionListener(new OnBtnCancel());
@@ -199,28 +199,28 @@ public class SettingsDlg extends JDialog
 		pnlOkCancel.add(btnCancel,"grow");
 		
 		JPanel pnlYawPid = createPidPanel(
-				Text.get("YAW_PID"),
+				ResBox.text("YAW_PID"),
 				Settings.instance().getYawPidEnabled(),
 				Settings.instance().getYawPidKp(),
 				Settings.instance().getYawPidKi(),
 				Settings.instance().getYawPidKd());
 		
 		JPanel pnlPitchPid = createPidPanel(
-				Text.get("PITCH_PID"),
+				ResBox.text("PITCH_PID"),
 				Settings.instance().getPitchPidEnabled(),
 				Settings.instance().getPitchPidKp(),
 				Settings.instance().getPitchPidKi(),
 				Settings.instance().getPitchPidKd());
 		
 		JPanel pnlRollPid = createPidPanel(
-				Text.get("ROLL_PID"),
+				ResBox.text("ROLL_PID"),
 				Settings.instance().getRollPidEnabled(),
 				Settings.instance().getRollPidKp(),
 				Settings.instance().getRollPidKi(),
 				Settings.instance().getRollPidKd());
 		
 		JPanel pnlAltPid = createPidPanel(
-				Text.get("ALT_PID"),
+				ResBox.text("ALT_PID"),
 				Settings.instance().getAltPidEnabled(),
 				Settings.instance().getAltPidKp(),
 				Settings.instance().getAltPidKi(),
@@ -236,14 +236,14 @@ public class SettingsDlg extends JDialog
 		
 		pnlSettings.add(pnlNet,"spanx 2, grow");
 		pnlSettings.add(pnlPeriods,"spanx 2,grow,wrap");
-		pnlSettings.add(new JLabel(Text.get("LANGUAGE")));
+		pnlSettings.add(new JLabel(ResBox.text("LANGUAGE")));
 		pnlSettings.add(mcbLocale, "span,w 80!,wrap");
 		
 		pnlSettings.add(new JPanel(),"h 10!,span,wrap");
 		pnlSettings.add(pnlOkCancel, "span, align right");
 
 		this.setLayout(new MigLayout("","[grow]","[grow]"));
-		this.setTitle(Text.get("SETTINGS"));
+		this.setTitle(ResBox.text("SETTINGS"));
 		this.setResizable(true);
 		this.setSize(585, 500);
 		this.setLocationRelativeTo(null);
@@ -259,7 +259,7 @@ public class SettingsDlg extends JDialog
 		fmt.setMaximumFractionDigits(3);
 		fmt.setGroupingUsed(false);
 		
-		pnl.add(new JLabel(Text.get("PID_ENABLED")));
+		pnl.add(new JLabel(ResBox.text("PID_ENABLED")));
 		pnl.add(new JLabel(": " + Boolean.toString(enabled)),"wrap");
 		pnl.add(new JLabel("Kp"));
 		pnl.add(new JLabel(": " + fmt.format(kp)),"wrap");

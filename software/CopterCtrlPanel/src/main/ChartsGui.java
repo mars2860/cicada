@@ -26,7 +26,6 @@ import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
-import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -51,10 +50,9 @@ import copter.CopterTelemetry;
 import copter.CopterTelemetry.DroneState;
 import net.miginfocom.swing.MigLayout;
 
-public class ChartsGui extends JFrame
+public class ChartsGui extends JSavedFrame
 {
-	private static final long serialVersionUID = 1L;
-	
+	private static final long serialVersionUID = 1426094359626415327L;
 	/// microseconds
 	private static final int REALTIME_CHART_RANGE = 30000000;
 	/// millis
@@ -489,17 +487,15 @@ public class ChartsGui extends JFrame
         }
     };
 
-	public ChartsGui(JFrame owner)
+	public ChartsGui()
 	{
+		super("Charts",960,540);
+		this.setTitle(ResBox.text("CHARTS"));
 		createUI();
 	}
 	
 	private void createUI()
 	{
-		this.setTitle(Text.get("CHARTS"));
-		this.setSize(960, 540);
-		this.setLocationRelativeTo(null);
-		this.setResizable(true);
 		this.setLayout(new MigLayout("","[grow][]","[grow][35%]"));
 		this.addComponentListener(new OnFrameResize());
 		this.addWindowListener(new OnWindowListener());
@@ -507,8 +503,8 @@ public class ChartsGui extends JFrame
 		//---------------------------------------------------------------------
 		// Period panel
 		
-		rbSnapshot = new JRadioButton(Text.get("SNAPSHOT"));
-		rbRealtime = new JRadioButton(Text.get("REALTIME"));
+		rbSnapshot = new JRadioButton(ResBox.text("SNAPSHOT"));
+		rbRealtime = new JRadioButton(ResBox.text("REALTIME"));
 		
 		ButtonGroup bgPeriod = new ButtonGroup();
 		bgPeriod.add(rbSnapshot);
@@ -516,11 +512,11 @@ public class ChartsGui extends JFrame
 		
 		rbSnapshot.setSelected(true);
 		
-		JButton btnSubmit = new JButton(Text.get("SUBMIT"));
+		JButton btnSubmit = new JButton(ResBox.text("SUBMIT"));
 		btnSubmit.addActionListener(new OnBtnSubmit());
 		
 		JPanel pnlPeriod = new JPanel(new MigLayout("","[grow]",""));
-		pnlPeriod.setBorder(new TitledBorder(Text.get("PERIOD")));
+		pnlPeriod.setBorder(new TitledBorder(ResBox.text("PERIOD")));
 		
 		pnlPeriod.add(rbRealtime,"grow,wrap");
 		pnlPeriod.add(rbSnapshot,"grow,wrap");
@@ -536,11 +532,11 @@ public class ChartsGui extends JFrame
 	    lstSource.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 	    lstSource.addMouseListener(new OnCheckListMouseClick());
 	    
-	    btnSaveImage = new JButton(Text.get("SAVE_IMAGE"));
+	    btnSaveImage = new JButton(ResBox.text("SAVE_IMAGE"));
 	    btnSaveImage.addActionListener(new OnBtnSaveImage());
-	    btnExportSelRange = new JButton(Text.get("EXPORT_SEL_RANGE"));
+	    btnExportSelRange = new JButton(ResBox.text("EXPORT_SEL_RANGE"));
 	    btnExportSelRange.addActionListener(new OnBtnExportSelRange());
-	    btnExportFullRange = new JButton(Text.get("EXPORT_FULL_RANGE"));
+	    btnExportFullRange = new JButton(ResBox.text("EXPORT_FULL_RANGE"));
 	    btnExportFullRange.addActionListener(new OnBtnExportFullRange());
 	    
 	    btnSaveImage.setEnabled(false);
@@ -548,7 +544,7 @@ public class ChartsGui extends JFrame
 		btnExportFullRange.setEnabled(false);
 	    
 	    JPanel pnlData = new JPanel(new MigLayout("","[grow]","[grow][][]"));
-	    pnlData.setBorder(new TitledBorder(Text.get("DATA")));
+	    pnlData.setBorder(new TitledBorder(ResBox.text("DATA")));
 	    pnlData.add(new JScrollPane(lstSource),"grow,wrap");
 	    pnlData.add(btnSaveImage,"grow,wrap");
 	    pnlData.add(btnExportSelRange,"grow,wrap");
@@ -617,7 +613,7 @@ public class ChartsGui extends JFrame
         c.setClipping();
 		//c.addTitle(Text.get("DATA"));
 		c.addLegend(60, 5, false);
-	    c.xAxis().setTitle(Text.get("TIME_AXIS"));
+	    c.xAxis().setTitle(ResBox.text("TIME_AXIS"));
 	    c.xAxis().setMargin(0,0);    
 	    c.yAxis().setTitle("");
 	    c.yAxis().setMargin(0,0);

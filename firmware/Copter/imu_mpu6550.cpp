@@ -31,7 +31,7 @@ void pdlSetupAccel(pdlDroneState *ds)
   mpu.setSleepEnabled(false);
   mpu.setDLPFMode(MPU6050_DLPF_BW_42);
   mpu.setRate(4); pdlSetImuReadPeriod(5000);  // 200 Hz
-  // I2CDev has a bug. If you update it take a look at
+  // I2CDev has a bug. Take a look at mpu6050.cpp
   // if ((ReadAddress == 0x3B)&&(i == 2)) Reading -= Gravity; //remove Gravity
   // MPU6050::PID
   // It causes wrong calibration of accel

@@ -14,7 +14,6 @@ import java.util.Observer;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -33,7 +32,7 @@ import copter.commands.CmdSelfCalibrateGyro;
 import helper.ArrayHelper;
 import net.miginfocom.swing.MigLayout;
 
-public class SensorsGui extends JFrame
+public class SensorsGui extends JSavedFrame
 {
 	private static final long serialVersionUID = -4310119839211305793L;
 
@@ -386,9 +385,12 @@ public class SensorsGui extends JFrame
 	
 	private boolean mModified = false;
 	
-	public SensorsGui(JFrame owner)
+	public SensorsGui()
 	{
-		super(Text.get("SENSORS"));
+		super("Sensors",680,568);
+		
+		this.setTitle(ResBox.text("SENSORS"));
+		this.setIconImage(ResBox.icon("SENSORS").getImage());
 		
 		mObserver = new OnTelemetryUpdate();
 		mAccelX = new double[MAX_DATA_COUNT];
@@ -406,10 +408,6 @@ public class SensorsGui extends JFrame
 	
 	private void createUI()
 	{
-		this.setTitle(Text.get("SENSORS"));
-		this.setSize(680, 568);
-		this.setLocationRelativeTo(null);
-		this.setResizable(true);
 		this.setLayout(new MigLayout("","[][80!][center,grow]"));
 		
 		mlbAx = new JLabel();
@@ -432,15 +430,15 @@ public class SensorsGui extends JFrame
 		mlbMz.setHorizontalAlignment(JLabel.LEFT);
 		
 		mChartViewer = new ChartViewer();
-		mcbCollectData = new JCheckBox(Text.get("COLLECT_DATA"));
+		mcbCollectData = new JCheckBox(ResBox.text("COLLECT_DATA"));
 		mlbDataCount = new JLabel();
-		mrbAccel = new JRadioButton(Text.get("SHOW_ACCEL"));
-		mrbMagnet = new JRadioButton(Text.get("SHOW_MAGNET"));
-		JButton btnCalibrateAccel = new JButton(Text.get("CALIBRATE_ACCEL"));
-		JButton btnCalibrateGyro = new JButton(Text.get("CALIBRATE_GYRO"));
-		JButton btnCalibrateMagnet = new JButton(Text.get("CALIBRATE_MAGNET"));
-		JButton btnResetCalibration = new JButton(Text.get("RESET_CALIBRATION"));
-		JButton btnResetMagnetCalibration = new JButton(Text.get("RESET_MAGNET_CALIBRATION"));
+		mrbAccel = new JRadioButton(ResBox.text("SHOW_ACCEL"));
+		mrbMagnet = new JRadioButton(ResBox.text("SHOW_MAGNET"));
+		JButton btnCalibrateAccel = new JButton(ResBox.text("CALIBRATE_ACCEL"));
+		JButton btnCalibrateGyro = new JButton(ResBox.text("CALIBRATE_GYRO"));
+		JButton btnCalibrateMagnet = new JButton(ResBox.text("CALIBRATE_MAGNET"));
+		JButton btnResetCalibration = new JButton(ResBox.text("RESET_CALIBRATION"));
+		JButton btnResetMagnetCalibration = new JButton(ResBox.text("RESET_MAGNET_CALIBRATION"));
 		
 		ButtonGroup group = new ButtonGroup();
 		group.add(mrbAccel);
@@ -491,7 +489,7 @@ public class SensorsGui extends JFrame
 		
 		this.add(new JPanel(),"h 10!,wrap");
 		
-		this.add(new JLabel(Text.get("DATA_COUNT")));
+		this.add(new JLabel(ResBox.text("DATA_COUNT")));
 		this.add(mlbDataCount,"wrap");
 		this.add(mcbCollectData,"spanx 2, wrap");
 		this.add(mrbAccel,"spanx 2, wrap");
@@ -522,7 +520,7 @@ public class SensorsGui extends JFrame
 			if(mModified)
 			{
 				int result = JOptionPane.showConfirmDialog(	this,
-															Text.get("CONFIRM_SAVE_SETTINGS"),
+															ResBox.text("CONFIRM_SAVE_SETTINGS"),
 															"",
 															JOptionPane.YES_NO_OPTION,
 															JOptionPane.QUESTION_MESSAGE);

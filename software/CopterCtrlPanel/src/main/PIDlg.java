@@ -92,7 +92,7 @@ public class PIDlg extends JDialog
 			mlbKi = new JLabel("0");
 			mlbKd = new JLabel("0");		
 			mlbEnabled = new JLabel();
-			mcbEnabled = new JCheckBox(Text.get("PID_ENABLED"));
+			mcbEnabled = new JCheckBox(ResBox.text("PID_ENABLED"));
 			mslTarget = new JSlider(JSlider.HORIZONTAL, minTarget, maxTarget, 0);
 			mslTarget.setMinorTickSpacing(1);
 			mlbTarget = new JLabel(Integer.toString(mslTarget.getValue()));
@@ -110,7 +110,7 @@ public class PIDlg extends JDialog
 			mtfKi.setDocument(new NumericDocument(3,false));
 			mtfKd.setDocument(new NumericDocument(3,false));
 			
-			mbtnSet = new JButton(Text.get("SET"));
+			mbtnSet = new JButton(ResBox.text("SET"));
 			
 			JPanel pnlKoef = new JPanel(new MigLayout("insets 0 0 0 0"));
 			
@@ -130,7 +130,7 @@ public class PIDlg extends JDialog
 			pnlKoef.add(mlbEnabled);
 
 			this.add(mcbEnabled);
-			this.add(new JLabel(Text.get("TARGET")));
+			this.add(new JLabel(ResBox.text("TARGET")));
 			this.add(mslTarget,"grow");
 			this.add(mlbTarget,"w 30!,wrap");
 			this.add(pnlKoef,"spanx,grow");	
@@ -627,21 +627,21 @@ public class PIDlg extends JDialog
 		this.setResizable(true);
 		this.setSize(1060,660);
 		this.setLocationRelativeTo(null);
-		this.setTitle(Text.get("PID"));
+		this.setTitle(ResBox.text("PID"));
 		this.setLayout(new MigLayout("","[]10[]","[center]"));
 		
 		DroneState droneState = CopterTelemetry.instance().getDroneState();
 		
-		mcbMotorsEnabled = new JCheckBox(Text.get("MOTORS_ENABLED") + "(Q)");
+		mcbMotorsEnabled = new JCheckBox(ResBox.text("MOTORS_ENABLED") + "(Q)");
 		mcbMotorsEnabled.setSelected(droneState.motorsEnabled);
 		//mcbMotorsEnabled.addActionListener(new CopterCtrlPanel.OnMotorsEnabled());
 		mcbMotorsEnabled.setMnemonic('Q');
 		
-		mSetAllGas = new MotorGasSlider(Text.get("GAS"),true);
-		mYawPid = new PidPanel(Text.get("YAW_PID"),-180,180);
-		mPitchPid = new PidPanel(Text.get("PITCH_PID"),-180,180);
-		mRollPid = new PidPanel(Text.get("ROLL_PID"),-180,180);
-		mAltPid = new PidPanel(Text.get("ALT_PID"),0,200);
+		mSetAllGas = new MotorGasSlider(ResBox.text("GAS"),true);
+		mYawPid = new PidPanel(ResBox.text("YAW_PID"),-180,180);
+		mPitchPid = new PidPanel(ResBox.text("PITCH_PID"),-180,180);
+		mRollPid = new PidPanel(ResBox.text("ROLL_PID"),-180,180);
+		mAltPid = new PidPanel(ResBox.text("ALT_PID"),0,200);
 		
 		mSetAllGas.addChangeListener(new GasChanged());
 		mcbMotorsEnabled.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("Z"),"addGas");
@@ -676,19 +676,19 @@ public class PIDlg extends JDialog
 		mAltPid.onSet(new OnSetAltPid());
 		mAltPid.onTarget(new AltitudeTargetChanged());
 		
-		mcbCollectData = new JCheckBox(Text.get("COLLECT_DATA"));
+		mcbCollectData = new JCheckBox(ResBox.text("COLLECT_DATA"));
 		mcbCollectData.addItemListener(new OnCollectData());
 		mlbDataCount = new JLabel("0");
 		
-		mcbDrawYaw = new JCheckBox(Text.get("YAW"));
-		mcbDrawPitch = new JCheckBox(Text.get("PITCH"));
-		mcbDrawRoll = new JCheckBox(Text.get("ROLL"));
-		mcbDrawHeading = new JCheckBox(Text.get("HEADING"));
-		mcbDrawYawOutput = new JCheckBox(Text.get("YAW_OUTPUT"));
-		mcbDrawPitchOutput = new JCheckBox(Text.get("PITCH_OUTPUT"));
-		mcbDrawRollOutput = new JCheckBox(Text.get("ROLL_OUTPUT"));
-		mcbDrawAlt = new JCheckBox(Text.get("ALTITUDE"));
-		mcbDrawAltOutput = new JCheckBox(Text.get("ALT_OUTPUT"));
+		mcbDrawYaw = new JCheckBox(ResBox.text("YAW"));
+		mcbDrawPitch = new JCheckBox(ResBox.text("PITCH"));
+		mcbDrawRoll = new JCheckBox(ResBox.text("ROLL"));
+		mcbDrawHeading = new JCheckBox(ResBox.text("HEADING"));
+		mcbDrawYawOutput = new JCheckBox(ResBox.text("YAW_OUTPUT"));
+		mcbDrawPitchOutput = new JCheckBox(ResBox.text("PITCH_OUTPUT"));
+		mcbDrawRollOutput = new JCheckBox(ResBox.text("ROLL_OUTPUT"));
+		mcbDrawAlt = new JCheckBox(ResBox.text("ALTITUDE"));
+		mcbDrawAltOutput = new JCheckBox(ResBox.text("ALT_OUTPUT"));
 		mcbDrawGyroX = new JCheckBox("GyroX");
 		mcbDrawGyroY = new JCheckBox("GyroY");
 		mcbDrawGyroZ = new JCheckBox("GyroZ");
@@ -723,7 +723,7 @@ public class PIDlg extends JDialog
 		mChartViewer = new ChartViewer();
 		
 		JPanel pnlDraw = new JPanel(new MigLayout());
-		pnlDraw.setBorder(new TitledBorder(Text.get("PLOT")));
+		pnlDraw.setBorder(new TitledBorder(ResBox.text("PLOT")));
 		pnlDraw.add(mcbDrawYaw);
 		pnlDraw.add(mcbDrawPitch);
 		pnlDraw.add(mcbDrawRoll);
@@ -748,9 +748,9 @@ public class PIDlg extends JDialog
 		this.add(mSetAllGas,"spanx 3,growx");
 		this.add(mChartViewer,"spany 7,grow,wrap");
 		this.add(mcbCollectData);
-		this.add(new JLabel(Text.get("DATA_COUNT") + ":"));
+		this.add(new JLabel(ResBox.text("DATA_COUNT") + ":"));
 		this.add(mlbDataCount);
-		this.add(new JLabel(Text.get("TELEMETRY") + ":  " + CopterTelemetry.instance().getTelemetryPeriod() + "ms"),"grow,wrap");
+		this.add(new JLabel(ResBox.text("TELEMETRY") + ":  " + CopterTelemetry.instance().getTelemetryPeriod() + "ms"),"grow,wrap");
 		this.add(pnlDraw,"spanx 4,grow,wrap");
 		this.add(mYawPid,"spanx 4,grow,wrap");
 		this.add(mPitchPid,"spanx 4,grow,wrap");
@@ -928,7 +928,7 @@ public class PIDlg extends JDialog
 		else
 		{
 			int result = JOptionPane.showConfirmDialog(	this,
-														Text.get("CONFIRM_SAVE_SETTINGS"),
+														ResBox.text("CONFIRM_SAVE_SETTINGS"),
 														"",
 														JOptionPane.YES_NO_OPTION,
 														JOptionPane.QUESTION_MESSAGE);

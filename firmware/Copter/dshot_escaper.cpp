@@ -10,6 +10,16 @@
 
 void pdlSetupEscaper(pdlDroneState*)
 {
+  pinMode(M1_PIN, OUTPUT);
+  pinMode(M2_PIN, OUTPUT);
+  pinMode(M3_PIN, OUTPUT);
+  pinMode(M4_PIN, OUTPUT);
+
+  digitalWrite(M1_PIN, LOW);  // digitalWrite takes 175 cpu cycles to execute!
+  digitalWrite(M2_PIN, LOW);
+  digitalWrite(M3_PIN, LOW);
+  digitalWrite(M4_PIN, LOW);
+
   dshotSetup(M1_PIN,M2_PIN,M3_PIN,M4_PIN,1000);
   pdlSetMotorGasLimits(0,0,2000);
   /*
@@ -73,8 +83,10 @@ void pdlUpdateEscaper(pdlDroneState* ds)
   }
 
   if(modified)
+  {
     dshotSet( ds->motorGas[0] + 48,
               ds->motorGas[1] + 48,
               ds->motorGas[2] + 48,
               ds->motorGas[3] + 48);
+  }
 }

@@ -48,7 +48,7 @@ void dshotEnable(uint8_t enable)
   if(enabled && timeGapTicks > 0)
   {
     timer1_enable(TIM_DIV16, TIM_EDGE, TIM_SINGLE); // ticks every 0.2 us
-    timer1_write(300);
+    timer1_write(timeGapTicks);
   }
   else if(!enabled)
   {
@@ -75,6 +75,7 @@ void dshotSetup(uint8_t pin1, uint8_t pin2, uint8_t pin3, uint8_t pin4, uint32_t
   if(timeGap > 0)
   {
     timeGapTicks = (timeGap*10)/2;
+    timer1_isr_init();
     timer1_attachInterrupt(onTimerISR);
     //timer1_enable(TIM_DIV16, TIM_EDGE, TIM_SINGLE); // ticks every 0.2 us
     //timer1_write(timeGapTicks);

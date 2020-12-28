@@ -93,8 +93,11 @@ public class CopterCtrlPanel implements WindowListener
 		@Override
 		public void actionPerformed(ActionEvent e)
 		{
-			SettingsDlg dlg = new SettingsDlg(CopterCtrlPanel.this);
-			dlg.setVisible(true);
+			if(mSettingsGui == null)
+				mSettingsGui = new SettingsGui();
+			
+			if(mSettingsGui.isVisible() == false)
+				mSettingsGui.setVisible(true);
 		}
 	}
 		
@@ -228,6 +231,7 @@ public class CopterCtrlPanel implements WindowListener
 	private StatusGui mStatusGui;
 	private SensorsGui mSensorsGui;
 	private ChartsGui mChartsGui;
+	private SettingsGui mSettingsGui;
 	
 	private JLabel mlbAlarmIcon;
 	private JLabel mlbAlarmText;

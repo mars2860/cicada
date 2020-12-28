@@ -29,10 +29,7 @@ public class Settings
 	
 	private Properties prop;
 	
-	private String mCopterIp;
-	private int mCopterCmdPort;
-	private int mCopterTelemetryPort;
-	private int mCopterVideoPort;
+
 	private int mAccelXOffset;
 	private int mAccelYOffset;
 	private int mAccelZOffset;
@@ -64,9 +61,20 @@ public class Settings
 	private int mTelemetryPeriod;
 	private int mPidPeriod;
 	
+	public class Net
+	{
+		private String mCopterIp;
+		private int mCopterCmdPort;
+		private int mCopterTelemetryPort;
+		private int mCopterVideoPort;
+	}
+	
+	private Net net;
+	
 	private Settings()
 	{
 		prop = new Properties();
+		net = new Net();
 		setDefault();
 	}
 	
@@ -85,10 +93,10 @@ public class Settings
 	public void save()
 	{
 		prop.setProperty("Language", Locale.getDefault().getLanguage());
-		prop.setProperty("CopterIp", mCopterIp);
-		prop.setProperty("CopterCmdPort", Integer.toString(mCopterCmdPort));
-		prop.setProperty("CopterTelemetryPort", Integer.toString(mCopterTelemetryPort));
-		prop.setProperty("CopterVideoPort", Integer.toString(mCopterVideoPort));
+		prop.setProperty("CopterIp", net.mCopterIp);
+		prop.setProperty("CopterCmdPort", Integer.toString(net.mCopterCmdPort));
+		prop.setProperty("CopterTelemetryPort", Integer.toString(net.mCopterTelemetryPort));
+		prop.setProperty("CopterVideoPort", Integer.toString(net.mCopterVideoPort));
 		prop.setProperty("AccelXOffset", Integer.toString(mAccelXOffset));
 		prop.setProperty("AccelYOffset", Integer.toString(mAccelYOffset));
 		prop.setProperty("AccelZOffset", Integer.toString(mAccelZOffset));
@@ -136,10 +144,10 @@ public class Settings
 	
 	public void setDefault()
 	{
-		mCopterIp = COPTER_DEFAULT_IP;
-		mCopterCmdPort = COPTER_DEFAULT_CMD_PORT;
-		mCopterTelemetryPort = COPTER_DEFAULT_TELEMETRY_PORT;
-		mCopterVideoPort = COPTER_DEFAULT_VIDEO_PORT;
+		net.mCopterIp = COPTER_DEFAULT_IP;
+		net.mCopterCmdPort = COPTER_DEFAULT_CMD_PORT;
+		net.mCopterTelemetryPort = COPTER_DEFAULT_TELEMETRY_PORT;
+		net.mCopterVideoPort = COPTER_DEFAULT_VIDEO_PORT;
 	}
 	
 	public void load()
@@ -154,16 +162,16 @@ public class Settings
 			Locale locale = new Locale(lang);
 			Locale.setDefault(locale);
 			
-			mCopterIp = prop.getProperty("CopterIp", mCopterIp);
+			net.mCopterIp = prop.getProperty("CopterIp", net.mCopterIp);
 			
-			String value = prop.getProperty("CopterCmdPort", Integer.toString(mCopterCmdPort));
-			mCopterCmdPort = Integer.parseInt(value);
+			String value = prop.getProperty("CopterCmdPort", Integer.toString(net.mCopterCmdPort));
+			net.mCopterCmdPort = Integer.parseInt(value);
 			
-			value = prop.getProperty("CopterTelemetryPort", Integer.toString(mCopterTelemetryPort));
-			mCopterTelemetryPort = Integer.parseInt(value);
+			value = prop.getProperty("CopterTelemetryPort", Integer.toString(net.mCopterTelemetryPort));
+			net.mCopterTelemetryPort = Integer.parseInt(value);
 			
-			value = prop.getProperty("CopterVideoPort", Integer.toString(mCopterVideoPort));
-			mCopterVideoPort = Integer.parseInt(value);
+			value = prop.getProperty("CopterVideoPort", Integer.toString(net.mCopterVideoPort));
+			net.mCopterVideoPort = Integer.parseInt(value);
 			
 			value = prop.getProperty("AccelXOffset", Integer.toString(0));
 			mAccelXOffset = Integer.parseInt(value);
@@ -267,42 +275,42 @@ public class Settings
 
 	public String getCopterIp()
 	{
-		return mCopterIp;
+		return net.mCopterIp;
 	}
 
 	public void setCopterIp(String ip)
 	{
-		this.mCopterIp = ip;
+		this.net.mCopterIp = ip;
 	}
 
 	public int getCopterCmdPort()
 	{
-		return mCopterCmdPort;
+		return net.mCopterCmdPort;
 	}
 
 	public void setCopterCmdPort(int port)
 	{
-		this.mCopterCmdPort = port;
+		this.net.mCopterCmdPort = port;
 	}
 
 	public int getCopterTelemetryPort()
 	{
-		return mCopterTelemetryPort;
+		return net.mCopterTelemetryPort;
 	}
 
 	public void setCopterTelemetryPort(int port)
 	{
-		this.mCopterTelemetryPort = port;
+		this.net.mCopterTelemetryPort = port;
 	}
 
 	public int getCopterVideoPort()
 	{
-		return mCopterVideoPort;
+		return net.mCopterVideoPort;
 	}
 
 	public void setCopterVideoPort(int port)
 	{
-		this.mCopterVideoPort = port;
+		this.net.mCopterVideoPort = port;
 	}
 
 	public int getAccelXOffset()

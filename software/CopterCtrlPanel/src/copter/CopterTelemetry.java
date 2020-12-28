@@ -48,9 +48,28 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 	@Target(ElementType.FIELD)
 	public @interface NoChart {}
 	
+	@Retention(RetentionPolicy.RUNTIME)
+	@Target(ElementType.FIELD)
+	public @interface Setting {}
+	
 	/** @note all types are double for fast processing charts */
 	public class DroneState implements Cloneable
 	{	
+		public class Vector3
+		{
+			public double x;
+			public double y;
+			public double z;
+		}
+		
+		public class Net
+		{
+			public String hostIp;
+			public int cmdPort;
+			public int telemetryPort;
+			public int videoPort;
+		}
+		
 		public class Battery implements Cloneable
 		{
 			public double voltage;

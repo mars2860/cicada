@@ -67,6 +67,9 @@ public class MotorsGui extends JSavedFrame
 			{
 				int value = slider.getValue();
 				CopterCommander.instance().addCmd(new CmdSetBaseGas(value));
+				// также меняем газ в одиночной команде, чтобы потом
+				// когда изменили газ одного двигателя, остальные двигатели не падали
+				mCmdSetGas.setGasForAll(value);
 	        }
 		}	
 	}

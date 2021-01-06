@@ -95,4 +95,12 @@ public class CmdSetMotorsGas extends AbstractCopterCmd
 			break;
 		}
 	}
+	
+	public void setGasForAll(int gas)
+	{
+		mgas0 = gas;
+		mgas1 = gas;
+		mgas2 = gas;
+		mgas3 = gas;
+	}
 }

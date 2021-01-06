@@ -146,7 +146,8 @@ void pdlCrossFrameApplyPids(pdlDroneState *ds)
   dg[3] = ds->baseGas;
 
   dg[0] += ds->pitchPid.out - ds->yawRatePid.out;
-  dg[1] += ds->rollPid.out + ds->yawRatePid.out;
+  dg[1] += ds->rollPid.out;// + ds->yawRatePid.out;
+  dg[2] -= ds->yawRatePid.out;
 
 #ifndef PDL_ASYMMETRIC_STABILIZATION
   dg[2] += -ds->pitchPid.out - ds->yawRatePid.out;

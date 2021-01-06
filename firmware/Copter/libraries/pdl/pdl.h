@@ -32,8 +32,8 @@ extern "C" {
 #define PDL_DEFAULT_ESCAPER_UPDATE_PERIOD 0
 /// Remote control update period. Use pdlSetRcUpdatePeriod in pdlRcSetup
 #define PDL_DEFAULT_RC_UPDATE_PERIOD     0
-/// Drone frame
-#define PDL_DRONE_FRAME                 PDL_DRONE_FRAME_X
+/// Drone frame PDL_DRONE_FRAME_X | PDL_DRONE_FRAME_CROSS
+#define PDL_DRONE_FRAME                 PDL_DRONE_FRAME_CROSS
 /// comment to enable symmetric motors regulation in stabilization
 #define PDL_ASYMMETRIC_STABILIZATION
 

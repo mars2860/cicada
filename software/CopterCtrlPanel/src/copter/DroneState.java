@@ -17,6 +17,18 @@ public class DroneState implements Cloneable
 	@Target(ElementType.FIELD)
 	public @interface Setting {}
 	
+	@Retention(RetentionPolicy.RUNTIME)
+	@Target(ElementType.FIELD)
+	public @interface SettingGroup
+	{
+		public String name();
+	}
+	
+	public static final String DEFAULT_IP = "192.168.1.33";
+	public static final int DEFAULT_CMD_PORT = 4210;
+	public static final int DEFAULT_TELEMETRY_PORT = 4211;
+	public static final int DEFAULT_VIDEO_PORT = 4212;
+	
 	public class Vector3
 	{
 		public double x;
@@ -26,10 +38,18 @@ public class DroneState implements Cloneable
 	
 	public class Net
 	{
-		public String ip;
-		public int cmdPort;
-		public int telemetryPort;
-		public int videoPort;
+		@Setting
+		@NoChart
+		public String ip = DEFAULT_IP;
+		@Setting
+		@NoChart
+		public int cmdPort = DEFAULT_CMD_PORT;
+		@Setting
+		@NoChart
+		public int telemetryPort = DEFAULT_TELEMETRY_PORT;
+		@Setting
+		@NoChart
+		public int videoPort = DEFAULT_VIDEO_PORT;
 	}
 	
 	public class Battery implements Cloneable
@@ -65,10 +85,13 @@ public class DroneState implements Cloneable
 		public double pureY;
 		public double pureZ;
 		@NoChart
+		@Setting
 		public double offsetX;
 		@NoChart
+		@Setting
 		public double offsetY;
 		@NoChart
+		@Setting
 		public double offsetZ;
 		// no sense variable, this is 2 bytes gap in C structure
 		protected int gap;
@@ -105,14 +128,19 @@ public class DroneState implements Cloneable
 	public class Pid implements Cloneable
 	{
 		@NoChart
+		@Setting
 		public boolean enabled;
 		@NoChart
+		@Setting
 		public double kp;
 		@NoChart
+		@Setting
 		public double ki;
 		@NoChart
+		@Setting
 		public double kd;
 		@NoChart
+		@Setting
 		public double target;
 		@NoChart
 		public double errSum;
@@ -144,9 +172,12 @@ public class DroneState implements Cloneable
 	public double timestamp;
 	public Battery battery = new Battery();
 	public double wifiLevel;
+	@SettingGroup(name = "ACCEL")
 	public TripleAxisSensor accel = new TripleAxisSensor();
+	@SettingGroup(name = "GYRO")
 	public TripleAxisSensor gyroRad = new TripleAxisSensor();
 	public TripleAxisSensor gyroDeg = new TripleAxisSensor();
+	@SettingGroup(name = "MAGNETO")
 	public TripleAxisSensor magneto = new TripleAxisSensor();
 	public double yawRad;
 	public double yawDeg;
@@ -156,12 +187,16 @@ public class DroneState implements Cloneable
 	public double rollDeg;
 	public double headingRad;
 	public double headingDeg;
+	@SettingGroup(name = "YAW_RATE_PID")
 	public Pid yawRadRatePid = new Pid();
 	public Pid yawDegRatePid = new Pid();
+	@SettingGroup(name = "PITCH_PID")
 	public Pid pitchRadPid = new Pid();
 	public Pid pitchDegPid = new Pid();
+	@SettingGroup(name = "ROLL_PID")
 	public Pid rollRadPid = new Pid();
 	public Pid rollDegPid = new Pid();
+	@SettingGroup(name = "ALT_PID")
 	public Pid altPid = new Pid();
 	@NoChart
 	public boolean motorsEnabled;

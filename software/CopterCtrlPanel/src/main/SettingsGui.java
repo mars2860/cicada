@@ -8,6 +8,9 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
 
+import copter.CopterTelemetry;
+import copter.DroneState;
+import copter.DroneState.SettingGroup;
 import treetable.AbstractTreeTableModel;
 import treetable.JTreeTable;
 import treetable.TreeTableModel;
@@ -20,6 +23,7 @@ public class SettingsGui extends JSavedFrame
 	public class Node
 	{
 		public String name;
+		public String value;
 		public List<Node> childs = new ArrayList<Node>();
 		
 		public Node()
@@ -44,19 +48,7 @@ public class SettingsGui extends JSavedFrame
 		private String mColName[] = {	ResBox.text("PARAM"),
 										ResBox.text("NEW_VALUE"),
 										ResBox.text("CURRENT_VALUE")};
-		
-		/*private String mRootNode[] = {	ResBox.text("NET"),
-										ResBox.text("ACCEL"),
-										ResBox.text("GYRO"),
-										ResBox.text("MAGNETO"),
-										ResBox.text("YAW_RATE_PID"),
-										ResBox.text("PITCH_PID"),
-										ResBox.text("ROLL_PID"),
-										ResBox.text("ALT_PID"),
-										ResBox.text("OTHER") };*/
-		
-		//private Node mRootNode;
-		
+				
 		public SettingsTreeTableModel(Node root)
 		{
 			super(root);
@@ -88,10 +80,13 @@ public class SettingsGui extends JSavedFrame
 		@Override
 		public Object getValueAt(Object node, int column)
 		{
+			Node n = (Node)node;
 			if(column == 0)
-				return node.toString();
+				return n.name;
+			if(column == 2)
+				return n.value;
 			
-			return node.toString() + ".col" + Integer.toString(column);
+			return "";
 		}
 
 		@Override
@@ -123,24 +118,37 @@ public class SettingsGui extends JSavedFrame
 	
 	private void createUI()
 	{
-		
+		DroneState ds = CopterTelemetry.instance().getDroneState();
 		Node root = new Node(ResBox.text("SETTINGS"));
 		
 		// Build settings tree by settings class
 		// Each nested class of Settings is Group of Params
 		// Each member of that class is Param
 		
-		for(java.lang.reflect.Field field : Settings.class.getFields())
+		for(java.lang.reflect.Field settingGroupField : DroneState.class.getFields())
 		{
-			Class<?> paramGroup = field.getType();
+			SettingGroup settingGroupAnnotation = settingGroupField.getAnnotation(DroneState.SettingGroup.class);
 			
-			if(paramGroup.isMemberClass())
+			if(settingGroupAnnotation != null)
 			{
-				Node groupNode = new Node(paramGroup.getSimpleName());
+				Node groupNode = new Node(ResBox.text(settingGroupAnnotation.name()));
 				
-				for(java.lang.reflect.Field param : paramGroup.getFields())
+				for(java.lang.reflect.Field settingField : settingGroupField.getType().getFields())
 				{
-					Node paramNode = new Node(param.getName());
+					if(settingField.isAnnotationPresent(DroneState.Setting.class) == false)
+						continue;
+					
+					Node paramNode = new Node(settingField.getName());
+					
+					try
+					{
+						paramNode.value = settingField.get(settingGroupField.get(ds)).toString();
+					}
+					catch(Exception e)
+					{
+						e.printStackTrace();
+					}
+					
 					groupNode.childs.add(paramNode);
 				}
 				

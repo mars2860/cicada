@@ -3,7 +3,6 @@ package main;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
@@ -11,6 +10,7 @@ import javax.swing.ListSelectionModel;
 import copter.CopterTelemetry;
 import copter.DroneState;
 import copter.DroneState.SettingGroup;
+import main.Settings.WndState;
 import treetable.AbstractTreeTableModel;
 import treetable.JTreeTable;
 import treetable.TreeTableModel;
@@ -108,6 +108,8 @@ public class SettingsGui extends JSavedFrame
 		}
 	}
 	
+	private JTreeTable mtt;
+	
 	public SettingsGui()
 	{
 		super("Settings",640,480);
@@ -118,7 +120,21 @@ public class SettingsGui extends JSavedFrame
 	
 	private void createUI()
 	{
-		DroneState ds = CopterTelemetry.instance().getDroneState();
+		DroneState ds = Settings.instance().getDroneSettings();
+		Node root = buildSettingsTree(ds);
+
+		JPanel pnlSettings = new JPanel(new MigLayout("","[grow]","[grow]"));
+		
+		mtt = new JTreeTable(new SettingsTreeTableModel(root));
+		mtt.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		
+		pnlSettings.add(new JScrollPane(mtt),"grow");
+		
+		this.add(pnlSettings);
+	}
+	
+	private Node buildSettingsTree(DroneState ds)
+	{
 		Node root = new Node(ResBox.text("SETTINGS"));
 		
 		// Build settings tree by settings class
@@ -156,14 +172,18 @@ public class SettingsGui extends JSavedFrame
 			}
 		}
 		
-		JPanel pnlSettings = new JPanel(new MigLayout("","[grow]","[grow]"));
-		
-		JTreeTable jtt = new JTreeTable(new SettingsTreeTableModel(root));
-		
-		jtt.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		
-		pnlSettings.add(new JScrollPane(jtt),"grow");
-		
-		this.add(pnlSettings);
+		return root;
+	}
+
+	@Override
+	protected WndState loadWndState()
+	{
+		return Settings.instance().getSettingsWnd();
+	}
+
+	@Override
+	protected void saveWndState(WndState ws)
+	{
+		Settings.instance().setSettingsWnd(ws);
 	}
 }

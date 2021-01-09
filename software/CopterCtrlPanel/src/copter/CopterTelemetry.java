@@ -26,7 +26,6 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 	public static final int TIMEOUT = 3000;
 	
 	private DroneState mDroneState = new DroneState();
-	private int mTelemetryPeriod;
 	private int mBlackBoxSize;
 	private Deque<DroneState> mBlackBox;
 	private static final int MAX_BLACK_BOX_SIZE = 64000;	// about 18 Mb
@@ -119,7 +118,7 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 		
 		synchronized(objDataSync)
 		{
-			result = mTelemetryPeriod;
+			result = mDroneState.net.telemetryPeriod;
 		}
 		
 		return result;
@@ -151,7 +150,6 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 						droneStateSize = parser.getUint32t(receivedPacket);
 						mDroneState = new DroneState();
 						mDroneState.parse(parser, receivedPacket);
-						mTelemetryPeriod = (int)parser.getUint32t(receivedPacket);
 						mBlackBox.offer(mDroneState);
 						mBlackBoxSize++;
 						if(mBlackBoxSize >= MAX_BLACK_BOX_SIZE)
@@ -190,10 +188,11 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 	public DroneState[] getBlackBox(int range)
 	{
 		DroneState[] result = new DroneState[0];
+		int telemetryPeriod = mDroneState.net.telemetryPeriod;
 		
-		if(range > 0 && mTelemetryPeriod > 0)
+		if(range > 0 && telemetryPeriod > 0)
 		{
-			int count = Math.min(range/mTelemetryPeriod, mBlackBoxSize);
+			int count = Math.min(range/telemetryPeriod, mBlackBoxSize);
 
 			result = new DroneState[count];
 			Iterator<DroneState> iter = mBlackBox.descendingIterator();

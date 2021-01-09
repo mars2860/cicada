@@ -9,6 +9,7 @@ import javax.swing.JPanel;
 
 import copter.CopterTelemetry;
 import copter.DroneState;
+import main.Settings.WndState;
 import net.miginfocom.swing.MigLayout;
 
 public class StatusGui extends JSavedFrame
@@ -171,5 +172,17 @@ public class StatusGui extends JSavedFrame
 		pnlStatus.add(mlbLoopTime,"grow,wrap");
 
 		this.add(pnlStatus);
+	}
+
+	@Override
+	protected WndState loadWndState()
+	{
+		return Settings.instance().getStatusWnd();
+	}
+
+	@Override
+	protected void saveWndState(WndState ws)
+	{
+		Settings.instance().setStatusWnd(ws);	
 	}
 }

@@ -48,6 +48,7 @@ import ChartDirector.ViewPortChangedEvent;
 import ChartDirector.XYChart;
 import copter.CopterTelemetry;
 import copter.DroneState;
+import main.Settings.WndState;
 import net.miginfocom.swing.MigLayout;
 
 public class ChartsGui extends JSavedFrame
@@ -777,5 +778,17 @@ public class ChartsGui extends JSavedFrame
               
             System.out.println(ex.getMessage());
         }
+	}
+
+	@Override
+	protected WndState loadWndState()
+	{
+		return Settings.instance().getChartsWnd();
+	}
+
+	@Override
+	protected void saveWndState(WndState ws)
+	{
+		Settings.instance().setChartsWnd(ws);
 	}
 }

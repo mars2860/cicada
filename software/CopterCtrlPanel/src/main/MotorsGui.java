@@ -18,6 +18,7 @@ import copter.commands.CmdEnableStabilization;
 import copter.commands.CmdSetBaseGas;
 import copter.commands.CmdSetMotorsGas;
 import copter.commands.CmdSwitchMotors;
+import main.Settings.WndState;
 import net.miginfocom.swing.MigLayout;
 
 public class MotorsGui extends JSavedFrame
@@ -128,6 +129,7 @@ public class MotorsGui extends JSavedFrame
 		this.setTitle(ResBox.text("MOTORS"));
 		this.setIconImage(ResBox.icon("PROPELLER").getImage());
 		this.createUI();
+		
 		CopterTelemetry.instance().addObserver(new OnTelemetryUpdate());
 	}
 	
@@ -188,5 +190,17 @@ public class MotorsGui extends JSavedFrame
 		//pnlMotorsGas.add(yawSlider,"grow");
 		
 		this.add(pnlMotors);
+	}
+
+	@Override
+	protected WndState loadWndState()
+	{
+		return Settings.instance().getMotorsWnd();
+	}
+
+	@Override
+	protected void saveWndState(WndState ws)
+	{
+		Settings.instance().setMotorsWnd(ws);
 	}
 }

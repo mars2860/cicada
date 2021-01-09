@@ -6,6 +6,19 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.net.DatagramPacket;
 
+import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
+
+import copter.commands.CmdCalibrateAccel;
+import copter.commands.CmdCalibrateGyro;
+import copter.commands.CmdCalibrateMagnet;
+import copter.commands.CmdResetAltitude;
+import copter.commands.CmdSetAltPid;
+import copter.commands.CmdSetPeriods;
+import copter.commands.CmdSetPitchPid;
+import copter.commands.CmdSetRollPid;
+import copter.commands.CmdSetYawPid;
+
 /** @note all types are double for fast processing charts */
 public class DroneState implements Cloneable
 {	
@@ -28,31 +41,40 @@ public class DroneState implements Cloneable
 	public static final int DEFAULT_CMD_PORT = 4210;
 	public static final int DEFAULT_TELEMETRY_PORT = 4211;
 	public static final int DEFAULT_VIDEO_PORT = 4212;
+	public static final int DEFAULT_TELEMETRY_PERIOD = 50000;
 	
-	public class Vector3
+	public static class Vector3
 	{
 		public double x;
 		public double y;
 		public double z;
 	}
 	
-	public class Net
+	public static class Net
 	{
 		@Setting
 		@NoChart
+		@Expose
 		public String ip = DEFAULT_IP;
 		@Setting
 		@NoChart
+		@Expose
 		public int cmdPort = DEFAULT_CMD_PORT;
 		@Setting
 		@NoChart
+		@Expose
 		public int telemetryPort = DEFAULT_TELEMETRY_PORT;
 		@Setting
 		@NoChart
+		@Expose
 		public int videoPort = DEFAULT_VIDEO_PORT;
+		@Setting
+		@NoChart
+		@Expose
+		public int telemetryPeriod = DEFAULT_TELEMETRY_PERIOD;
 	}
 	
-	public class Battery implements Cloneable
+	public static class Battery implements Cloneable
 	{
 		public double voltage;
 		public double percent;
@@ -70,7 +92,7 @@ public class DroneState implements Cloneable
 		}
 	}
 	
-	public class TripleAxisSensor implements Cloneable
+	public static class TripleAxisSensor implements Cloneable
 	{
 		// raw values from sensor
 		public double rawX;
@@ -86,13 +108,16 @@ public class DroneState implements Cloneable
 		public double pureZ;
 		@NoChart
 		@Setting
-		public double offsetX;
+		@Expose
+		public int offsetX;
 		@NoChart
 		@Setting
-		public double offsetY;
+		@Expose
+		public int offsetY;
 		@NoChart
 		@Setting
-		public double offsetZ;
+		@Expose
+		public int offsetZ;
 		// no sense variable, this is 2 bytes gap in C structure
 		protected int gap;
 		
@@ -125,20 +150,24 @@ public class DroneState implements Cloneable
 		}
 	}
 	
-	public class Pid implements Cloneable
+	public static class Pid implements Cloneable
 	{
 		@NoChart
 		@Setting
+		@Expose
 		public boolean enabled;
 		@NoChart
 		@Setting
-		public double kp;
+		@Expose
+		public float kp;
 		@NoChart
 		@Setting
-		public double ki;
+		@Expose
+		public float ki;
 		@NoChart
 		@Setting
-		public double kd;
+		@Expose
+		public float kd;
 		@NoChart
 		@Setting
 		public double target;
@@ -168,16 +197,26 @@ public class DroneState implements Cloneable
 		}
 	}
 	
+	@Expose
+	@SettingGroup(name = "NET")
+	@SerializedName("net")
+	public Net net = new Net();
 	@NoChart
 	public double timestamp;
 	public Battery battery = new Battery();
 	public double wifiLevel;
 	@SettingGroup(name = "ACCEL")
+	@Expose
+	@SerializedName("accel")
 	public TripleAxisSensor accel = new TripleAxisSensor();
 	@SettingGroup(name = "GYRO")
+	@Expose
+	@SerializedName("gyro")
 	public TripleAxisSensor gyroRad = new TripleAxisSensor();
 	public TripleAxisSensor gyroDeg = new TripleAxisSensor();
 	@SettingGroup(name = "MAGNETO")
+	@Expose
+	@SerializedName("magneto")
 	public TripleAxisSensor magneto = new TripleAxisSensor();
 	public double yawRad;
 	public double yawDeg;
@@ -188,15 +227,23 @@ public class DroneState implements Cloneable
 	public double headingRad;
 	public double headingDeg;
 	@SettingGroup(name = "YAW_RATE_PID")
+	@Expose
+	@SerializedName("yawRatePid")
 	public Pid yawRadRatePid = new Pid();
 	public Pid yawDegRatePid = new Pid();
 	@SettingGroup(name = "PITCH_PID")
+	@Expose
+	@SerializedName("pitchPid")
 	public Pid pitchRadPid = new Pid();
 	public Pid pitchDegPid = new Pid();
 	@SettingGroup(name = "ROLL_PID")
+	@Expose
+	@SerializedName("rollPid")
 	public Pid rollRadPid = new Pid();
 	public Pid rollDegPid = new Pid();
 	@SettingGroup(name = "ALT_PID")
+	@Expose
+	@SerializedName("altPid")
 	public Pid altPid = new Pid();
 	@NoChart
 	public boolean motorsEnabled;
@@ -264,6 +311,7 @@ public class DroneState implements Cloneable
 		motorsEnabled = parser.getBool(packet);
 		stabilizationEnabled = parser.getBool(packet);
 		gap = parser.getInt16t(packet);
+		net.telemetryPeriod = (int)parser.getUint32t(packet);
 		
 		try
 		{
@@ -285,5 +333,93 @@ public class DroneState implements Cloneable
 		{
 			e.printStackTrace();
 		}
+	}
+	
+	public void sendSettingsToDrone()
+	{
+		DroneState ds = this;
+		int dx = ds.accel.offsetX;
+		int dy = ds.accel.offsetY;
+		int dz = ds.accel.offsetZ;
+		
+		CmdCalibrateAccel cmd1 = new CmdCalibrateAccel(dx,dy,dz);
+		
+		dx = ds.gyroRad.offsetX;
+		dy = ds.gyroRad.offsetY;
+		dz = ds.gyroRad.offsetZ;
+		
+		CmdCalibrateGyro cmd2 = new CmdCalibrateGyro(dx,dy,dz);
+		
+		dx = ds.magneto.offsetX;
+		dy = ds.magneto.offsetY;
+		dz = ds.magneto.offsetZ;
+		
+		CmdCalibrateMagnet cmd3 = new CmdCalibrateMagnet(dx,dy,dz,1.f,1.f,1.f);
+		
+		boolean enabled = ds.yawRadRatePid.enabled;
+		float kp = ds.yawRadRatePid.kp;
+		float ki = ds.yawRadRatePid.ki;
+		float kd = ds.yawRadRatePid.kd;
+		CmdSetYawPid cmd4 = new CmdSetYawPid(enabled,kp,ki,kd);
+		
+		enabled = ds.pitchRadPid.enabled;
+		kp = ds.pitchRadPid.kp;
+		ki = ds.pitchRadPid.ki;
+		kd = ds.pitchRadPid.kd;
+		CmdSetPitchPid cmd5 = new CmdSetPitchPid(enabled,kp,ki,kd);
+		
+		enabled = ds.rollRadPid.enabled;
+		kp = ds.rollRadPid.kp;
+		ki = ds.rollRadPid.ki;
+		kd = ds.rollRadPid.kd;
+		CmdSetRollPid cmd6 = new CmdSetRollPid(enabled,kp,ki,kd);
+		
+		enabled = ds.altPid.enabled;
+		kp = ds.altPid.kp;
+		ki = ds.altPid.ki;
+		kd = ds.altPid.kd;
+		CmdSetAltPid cmd7 = new CmdSetAltPid(enabled,kp,ki,kd);
+		
+		dx = ds.net.telemetryPeriod;
+		dy = 1;
+		CmdSetPeriods cmd8 = new CmdSetPeriods(dx,dy);
+		
+		CmdResetAltitude cmd9 = new CmdResetAltitude();
+		
+		CopterCommander.instance().addCmd(cmd1);
+		CopterCommander.instance().addCmd(cmd1);
+		CopterCommander.instance().addCmd(cmd1);
+		
+		CopterCommander.instance().addCmd(cmd2);
+		CopterCommander.instance().addCmd(cmd2);
+		CopterCommander.instance().addCmd(cmd2);
+		
+		CopterCommander.instance().addCmd(cmd3);
+		CopterCommander.instance().addCmd(cmd3);
+		CopterCommander.instance().addCmd(cmd3);
+		
+		CopterCommander.instance().addCmd(cmd4);
+		CopterCommander.instance().addCmd(cmd4);
+		CopterCommander.instance().addCmd(cmd4);
+		
+		CopterCommander.instance().addCmd(cmd5);
+		CopterCommander.instance().addCmd(cmd5);
+		CopterCommander.instance().addCmd(cmd5);
+		
+		CopterCommander.instance().addCmd(cmd6);
+		CopterCommander.instance().addCmd(cmd6);
+		CopterCommander.instance().addCmd(cmd6);
+		
+		CopterCommander.instance().addCmd(cmd7);
+		CopterCommander.instance().addCmd(cmd7);
+		CopterCommander.instance().addCmd(cmd7);
+		
+		CopterCommander.instance().addCmd(cmd8);
+		CopterCommander.instance().addCmd(cmd8);
+		CopterCommander.instance().addCmd(cmd8);
+		
+		CopterCommander.instance().addCmd(cmd9);
+		CopterCommander.instance().addCmd(cmd9);
+		CopterCommander.instance().addCmd(cmd9);
 	}
 }

@@ -31,6 +31,7 @@ import copter.commands.CmdCalibrateMagnet;
 import copter.commands.CmdSelfCalibrateAccel;
 import copter.commands.CmdSelfCalibrateGyro;
 import helper.ArrayHelper;
+import main.Settings.WndState;
 import net.miginfocom.swing.MigLayout;
 
 public class SensorsGui extends JSavedFrame
@@ -530,21 +531,7 @@ public class SensorsGui extends JSavedFrame
 				{
 					DroneState droneState = CopterTelemetry.instance().getDroneState();
 					
-					Settings.instance().accel.offsetX = (int)droneState.accel.offsetX;
-					Settings.instance().accel.offsetY = (int)droneState.accel.offsetY;
-					Settings.instance().accel.offsetZ = (int)droneState.accel.offsetZ;
-				
-					Settings.instance().setGyroXOffset((int)droneState.gyroRad.offsetX);
-					Settings.instance().setGyroYOffset((int)droneState.gyroRad.offsetY);
-					Settings.instance().setGyroZOffset((int)droneState.gyroRad.offsetZ);
-				
-					Settings.instance().setMagnetXOffset((int)droneState.magneto.offsetX);
-					Settings.instance().setMagnetYOffset((int)droneState.magneto.offsetY);
-					Settings.instance().setMagnetZOffset((int)droneState.magneto.offsetZ);
-				
-					Settings.instance().setMagnetXScale(1);
-					Settings.instance().setMagnetYScale(1);
-					Settings.instance().setMagnetZScale(1);
+					Settings.instance().setDroneSettings(droneState);
 				
 					Settings.instance().save();
 				}
@@ -591,5 +578,17 @@ public class SensorsGui extends JSavedFrame
         }
         
         mChartViewer.setChart(c);
+	}
+
+	@Override
+	protected WndState loadWndState()
+	{
+		return Settings.instance().getSensorsWnd();
+	}
+
+	@Override
+	protected void saveWndState(WndState ws)
+	{
+		Settings.instance().setSensorsWnd(ws);
 	}
 }

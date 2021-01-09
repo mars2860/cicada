@@ -11,34 +11,25 @@ import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 
 /** Saves own position to settings */
-public class JSavedFrame extends JFrame
+public abstract class JSavedFrame extends JFrame
 {
 	private static final long serialVersionUID = 1L;
-	
-	private String KEY_X;
-	private String KEY_Y;
-	private String KEY_WIDTH;
-	private String KEY_HEIGHT;
-	
+
 	public JSavedFrame(String title, int width, int height)
 	{
 		super(title);
 		
-		KEY_X = title + ".x";
-		KEY_Y = title + ".y";
-		KEY_WIDTH = title + ".width";
-		KEY_HEIGHT = title + ".height";
+		Settings.WndState ws = loadWndState();
 		
-		int x = Settings.instance().getIntProperty(KEY_X);
-		int y = Settings.instance().getIntProperty(KEY_Y);
-		int w = Settings.instance().getIntProperty(KEY_WIDTH);
-		int h = Settings.instance().getIntProperty(KEY_HEIGHT);
-		
-		if(w != 0 && h != 0)
+		if(ws.w != 0 && ws.h != 0)
 		{
-			width = w;
-			height = h;
-			this.setLocation(x, y);
+			width = ws.w;
+			height = ws.h;
+			this.setLocation(ws.x, ws.y);
+		}
+		else
+		{
+			this.setLocationByPlatform(true);
 		}
 		
 		this.setSize(width, height);
@@ -57,10 +48,13 @@ public class JSavedFrame extends JFrame
 				int width = JSavedFrame.this.getWidth();
 				int height = JSavedFrame.this.getHeight();
 				
-				Settings.instance().setProperty(KEY_X, Integer.toString(location.x));
-				Settings.instance().setProperty(KEY_Y, Integer.toString(location.y));
-				Settings.instance().setProperty(KEY_WIDTH, Integer.toString(width));
-				Settings.instance().setProperty(KEY_HEIGHT, Integer.toString(height));
+				Settings.WndState ws = new Settings.WndState();
+				ws.x = location.x;
+				ws.y = location.y;
+				ws.w = width;
+				ws.h = height;
+				
+				saveWndState(ws);
 			}
 
 			@Override
@@ -99,4 +93,7 @@ public class JSavedFrame extends JFrame
 
 		return picture;
 	}
+	
+	protected abstract Settings.WndState loadWndState();
+	protected abstract void saveWndState(Settings.WndState ws);
 }

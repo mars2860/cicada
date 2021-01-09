@@ -29,10 +29,6 @@ public class Settings
 	
 	private Properties prop;
 	
-
-	private int mAccelXOffset;
-	private int mAccelYOffset;
-	private int mAccelZOffset;
 	private int mGyroXOffset;
 	private int mGyroYOffset;
 	private int mGyroZOffset;
@@ -63,18 +59,38 @@ public class Settings
 	
 	public class Net
 	{
-		private String mCopterIp;
-		private int mCopterCmdPort;
-		private int mCopterTelemetryPort;
-		private int mCopterVideoPort;
+		public String ip;
+		public int cmdPort;
+		public int telemetryPort;
+		public int videoPort;
+		
+		public void save()
+		{
+			
+		}
+		
+		public void load()
+		{
+			
+		}
 	}
 	
-	private Net net;
+	public Net net;
+	
+	public class Accel
+	{
+		public int offsetX;
+		public int offsetY;
+		public int offsetZ;
+	}
+	
+	public Accel accel;
 	
 	private Settings()
 	{
 		prop = new Properties();
 		net = new Net();
+		accel = new Accel();
 		setDefault();
 	}
 	
@@ -93,13 +109,11 @@ public class Settings
 	public void save()
 	{
 		prop.setProperty("Language", Locale.getDefault().getLanguage());
-		prop.setProperty("CopterIp", net.mCopterIp);
-		prop.setProperty("CopterCmdPort", Integer.toString(net.mCopterCmdPort));
-		prop.setProperty("CopterTelemetryPort", Integer.toString(net.mCopterTelemetryPort));
-		prop.setProperty("CopterVideoPort", Integer.toString(net.mCopterVideoPort));
-		prop.setProperty("AccelXOffset", Integer.toString(mAccelXOffset));
-		prop.setProperty("AccelYOffset", Integer.toString(mAccelYOffset));
-		prop.setProperty("AccelZOffset", Integer.toString(mAccelZOffset));
+		prop.setProperty("CopterIp", net.ip);
+		prop.setProperty("CopterCmdPort", Integer.toString(net.cmdPort));
+		prop.setProperty("CopterTelemetryPort", Integer.toString(net.telemetryPort));
+		prop.setProperty("CopterVideoPort", Integer.toString(net.videoPort));
+		
 		prop.setProperty("GyroXOffset", Integer.toString(mGyroXOffset));
 		prop.setProperty("GyroYOffset", Integer.toString(mGyroYOffset));
 		prop.setProperty("GyroZOffset", Integer.toString(mGyroZOffset));
@@ -144,10 +158,10 @@ public class Settings
 	
 	public void setDefault()
 	{
-		net.mCopterIp = COPTER_DEFAULT_IP;
-		net.mCopterCmdPort = COPTER_DEFAULT_CMD_PORT;
-		net.mCopterTelemetryPort = COPTER_DEFAULT_TELEMETRY_PORT;
-		net.mCopterVideoPort = COPTER_DEFAULT_VIDEO_PORT;
+		net.ip = COPTER_DEFAULT_IP;
+		net.cmdPort = COPTER_DEFAULT_CMD_PORT;
+		net.telemetryPort = COPTER_DEFAULT_TELEMETRY_PORT;
+		net.videoPort = COPTER_DEFAULT_VIDEO_PORT;
 	}
 	
 	public void load()
@@ -162,26 +176,17 @@ public class Settings
 			Locale locale = new Locale(lang);
 			Locale.setDefault(locale);
 			
-			net.mCopterIp = prop.getProperty("CopterIp", net.mCopterIp);
+			net.ip = prop.getProperty("CopterIp", net.ip);
 			
-			String value = prop.getProperty("CopterCmdPort", Integer.toString(net.mCopterCmdPort));
-			net.mCopterCmdPort = Integer.parseInt(value);
+			String value = prop.getProperty("CopterCmdPort", Integer.toString(net.cmdPort));
+			net.cmdPort = Integer.parseInt(value);
 			
-			value = prop.getProperty("CopterTelemetryPort", Integer.toString(net.mCopterTelemetryPort));
-			net.mCopterTelemetryPort = Integer.parseInt(value);
+			value = prop.getProperty("CopterTelemetryPort", Integer.toString(net.telemetryPort));
+			net.telemetryPort = Integer.parseInt(value);
 			
-			value = prop.getProperty("CopterVideoPort", Integer.toString(net.mCopterVideoPort));
-			net.mCopterVideoPort = Integer.parseInt(value);
-			
-			value = prop.getProperty("AccelXOffset", Integer.toString(0));
-			mAccelXOffset = Integer.parseInt(value);
+			value = prop.getProperty("CopterVideoPort", Integer.toString(net.videoPort));
+			net.videoPort = Integer.parseInt(value);
 
-			value = prop.getProperty("AccelYOffset", Integer.toString(0));
-			mAccelYOffset = Integer.parseInt(value);
-			
-			value = prop.getProperty("AccelZOffset", Integer.toString(0));
-			mAccelZOffset = Integer.parseInt(value);
-			
 			value = prop.getProperty("GyroXOffset", Integer.toString(0));
 			mGyroXOffset = Integer.parseInt(value);
 			
@@ -275,72 +280,42 @@ public class Settings
 
 	public String getCopterIp()
 	{
-		return net.mCopterIp;
+		return net.ip;
 	}
 
 	public void setCopterIp(String ip)
 	{
-		this.net.mCopterIp = ip;
+		this.net.ip = ip;
 	}
 
 	public int getCopterCmdPort()
 	{
-		return net.mCopterCmdPort;
+		return net.cmdPort;
 	}
 
 	public void setCopterCmdPort(int port)
 	{
-		this.net.mCopterCmdPort = port;
+		this.net.cmdPort = port;
 	}
 
 	public int getCopterTelemetryPort()
 	{
-		return net.mCopterTelemetryPort;
+		return net.telemetryPort;
 	}
 
 	public void setCopterTelemetryPort(int port)
 	{
-		this.net.mCopterTelemetryPort = port;
+		this.net.telemetryPort = port;
 	}
 
 	public int getCopterVideoPort()
 	{
-		return net.mCopterVideoPort;
+		return net.videoPort;
 	}
 
 	public void setCopterVideoPort(int port)
 	{
-		this.net.mCopterVideoPort = port;
-	}
-
-	public int getAccelXOffset()
-	{
-		return mAccelXOffset;
-	}
-
-	public void setAccelXOffset(int offset)
-	{
-		this.mAccelXOffset = offset;
-	}
-
-	public int getAccelYOffset()
-	{
-		return mAccelYOffset;
-	}
-
-	public void setAccelYOffset(int offset)
-	{
-		this.mAccelYOffset = offset;
-	}
-
-	public int getAccelZOffset()
-	{
-		return mAccelZOffset;
-	}
-
-	public void setAccelZOffset(int offset)
-	{
-		this.mAccelZOffset = offset;
+		this.net.videoPort = port;
 	}
 
 	public int getGyroXOffset()

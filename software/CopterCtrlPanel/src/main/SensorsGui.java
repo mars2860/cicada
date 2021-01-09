@@ -24,6 +24,7 @@ import ChartDirector.ChartViewer;
 import ChartDirector.XYChart;
 import copter.CopterCommander;
 import copter.CopterTelemetry;
+import copter.DroneState;
 import copter.commands.CmdCalibrateAccel;
 import copter.commands.CmdCalibrateGyro;
 import copter.commands.CmdCalibrateMagnet;
@@ -52,7 +53,7 @@ public class SensorsGui extends JSavedFrame
 			DecimalFormat fmt = new DecimalFormat();
 			fmt.setMaximumFractionDigits(2);
 			
-			CopterTelemetry.DroneState droneState = CopterTelemetry.instance().getDroneState();
+			DroneState droneState = CopterTelemetry.instance().getDroneState();
 			
 			text = ": " + Integer.toString((int)droneState.accel.filteredX) + "/" +
 							Integer.toString((int)droneState.accel.offsetX);
@@ -527,11 +528,11 @@ public class SensorsGui extends JSavedFrame
 
 				if(result == JOptionPane.YES_OPTION)
 				{
-					CopterTelemetry.DroneState droneState = CopterTelemetry.instance().getDroneState();
+					DroneState droneState = CopterTelemetry.instance().getDroneState();
 					
-					Settings.instance().setAccelXOffset((int)droneState.accel.offsetX);
-					Settings.instance().setAccelYOffset((int)droneState.accel.offsetY);
-					Settings.instance().setAccelZOffset((int)droneState.accel.offsetZ);
+					Settings.instance().accel.offsetX = (int)droneState.accel.offsetX;
+					Settings.instance().accel.offsetY = (int)droneState.accel.offsetY;
+					Settings.instance().accel.offsetZ = (int)droneState.accel.offsetZ;
 				
 					Settings.instance().setGyroXOffset((int)droneState.gyroRad.offsetX);
 					Settings.instance().setGyroYOffset((int)droneState.gyroRad.offsetY);

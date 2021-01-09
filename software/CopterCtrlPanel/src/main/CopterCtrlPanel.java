@@ -127,9 +127,9 @@ public class CopterCtrlPanel implements WindowListener
 		@Override
 		public void actionPerformed(ActionEvent e)
 		{
-			int dx = Settings.instance().getAccelXOffset();
-			int dy = Settings.instance().getAccelYOffset();
-			int dz = Settings.instance().getAccelZOffset();
+			int dx = Settings.instance().accel.offsetX;
+			int dy = Settings.instance().accel.offsetY;
+			int dz = Settings.instance().accel.offsetZ;
 			
 			CmdCalibrateAccel cmd1 = new CmdCalibrateAccel(dx,dy,dz);
 			

@@ -137,21 +137,21 @@ public class SettingsDlg extends JDialog
 		pnlCalibration.setBorder(new TitledBorder(ResBox.text("CALIBRATION")));
 
 		pnlCalibration.add(new JLabel("AccelXOffset"));
-		String text = ": " + Integer.toString(Settings.instance().getAccelXOffset());
+		String text = ": " + Integer.toString(Settings.instance().accel.offsetX);
 		pnlCalibration.add(new JLabel(text));
 		pnlCalibration.add(new JLabel("GyroXOffset"));
 		text = ": " + Integer.toString(Settings.instance().getGyroXOffset());
 		pnlCalibration.add(new JLabel(text),"wrap");
 		
 		pnlCalibration.add(new JLabel("AccelYOffset"));
-		text = ": " + Integer.toString(Settings.instance().getAccelYOffset());
+		text = ": " + Integer.toString(Settings.instance().accel.offsetY);
 		pnlCalibration.add(new JLabel(text));
 		pnlCalibration.add(new JLabel("GyroYOffset"));
 		text = ": " + Integer.toString(Settings.instance().getGyroYOffset());
 		pnlCalibration.add(new JLabel(text),"wrap");
 		
 		pnlCalibration.add(new JLabel("AccelZOffset"));
-		text = ": " + Integer.toString(Settings.instance().getAccelZOffset());
+		text = ": " + Integer.toString(Settings.instance().accel.offsetZ);
 		pnlCalibration.add(new JLabel(text));
 		pnlCalibration.add(new JLabel("GyroZOffset"));
 		text = ": " + Integer.toString(Settings.instance().getGyroZOffset());

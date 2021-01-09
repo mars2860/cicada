@@ -13,6 +13,7 @@ import javax.swing.event.ChangeListener;
 
 import copter.CopterCommander;
 import copter.CopterTelemetry;
+import copter.DroneState;
 import copter.commands.CmdEnableStabilization;
 import copter.commands.CmdSetBaseGas;
 import copter.commands.CmdSetMotorsGas;
@@ -107,7 +108,7 @@ public class MotorsGui extends JSavedFrame
 			
 			timestamp = System.currentTimeMillis();
 			
-			CopterTelemetry.DroneState droneState = CopterTelemetry.instance().getDroneState();
+			DroneState droneState = CopterTelemetry.instance().getDroneState();
 			
 			mgas0.setGas((int)droneState.motorGas0,false);
 			mgas1.setGas((int)droneState.motorGas1,false);

@@ -8,6 +8,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import copter.CopterTelemetry;
+import copter.DroneState;
 import net.miginfocom.swing.MigLayout;
 
 public class StatusGui extends JSavedFrame
@@ -41,7 +42,7 @@ public class StatusGui extends JSavedFrame
 			
 			timestamp = System.currentTimeMillis();
 			
-			CopterTelemetry.DroneState droneState = CopterTelemetry.instance().getDroneState();
+			DroneState droneState = CopterTelemetry.instance().getDroneState();
 			
 			DecimalFormat fmt1 = new DecimalFormat();
 			fmt1.setMaximumFractionDigits(2);

@@ -47,7 +47,7 @@ import ChartDirector.ViewPortAdapter;
 import ChartDirector.ViewPortChangedEvent;
 import ChartDirector.XYChart;
 import copter.CopterTelemetry;
-import copter.CopterTelemetry.DroneState;
+import copter.DroneState;
 import net.miginfocom.swing.MigLayout;
 
 public class ChartsGui extends JSavedFrame
@@ -525,7 +525,7 @@ public class ChartsGui extends JSavedFrame
 		//---------------------------------------------------------------------
 		// Source panel
 		
-		List<CheckListItem> items = buildCheckListItems(CopterTelemetry.DroneState.class, "");
+		List<CheckListItem> items = buildCheckListItems(DroneState.class, "");
 		JList<CheckListItem> lstSource = new JList<CheckListItem>(items.toArray(new CheckListItem[0]));
 		
 		lstSource.setCellRenderer(new CheckListRenderer());
@@ -584,7 +584,7 @@ public class ChartsGui extends JSavedFrame
 			{
 				items.addAll(buildCheckListItems(fields[i].getType(), fields[i].getName() + "."));
 			}
-			else if(fields[i].getAnnotation(CopterTelemetry.NoChart.class) == null)
+			else if(fields[i].getAnnotation(DroneState.NoChart.class) == null)
 			{
 				CheckListItem j = new CheckListItem(baseName + fields[i].getName());
 				items.add(j);

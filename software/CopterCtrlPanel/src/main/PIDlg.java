@@ -29,7 +29,7 @@ import ChartDirector.ChartViewer;
 import ChartDirector.XYChart;
 import copter.CopterCommander;
 import copter.CopterTelemetry;
-import copter.CopterTelemetry.DroneState;
+import copter.DroneState;
 import copter.commands.CmdSetAltPid;
 import copter.commands.CmdSetAltitude;
 import copter.commands.CmdSetBaseGas;
@@ -264,7 +264,7 @@ public class PIDlg extends JDialog
 		@Override
 		public void actionPerformed(ActionEvent e)
 		{
-			CopterTelemetry.DroneState droneState = CopterTelemetry.instance().getDroneState();
+			DroneState droneState = CopterTelemetry.instance().getDroneState();
 			double yaw = droneState.yawRadRatePid.target;
 			double pitch = droneState.pitchRadPid.target;
 			double roll = droneState.rollRadPid.target;
@@ -293,7 +293,7 @@ public class PIDlg extends JDialog
 		@Override
 		public void actionPerformed(ActionEvent e)
 		{
-			CopterTelemetry.DroneState droneState = CopterTelemetry.instance().getDroneState();
+			DroneState droneState = CopterTelemetry.instance().getDroneState();
 			double yaw = droneState.yawRadRatePid.target;
 			double pitch = droneState.pitchRadPid.target;
 			double roll = droneState.rollRadPid.target;
@@ -325,7 +325,7 @@ public class PIDlg extends JDialog
 		@Override
 		public void actionPerformed(ActionEvent e)
 		{
-			CopterTelemetry.DroneState droneState = CopterTelemetry.instance().getDroneState();
+			DroneState droneState = CopterTelemetry.instance().getDroneState();
 			double yaw = droneState.yawRadRatePid.target;
 			double pitch = droneState.pitchRadPid.target;
 			double roll = droneState.rollRadPid.target;
@@ -353,7 +353,7 @@ public class PIDlg extends JDialog
 		@Override
 		public void actionPerformed(ActionEvent e)
 		{
-			CopterTelemetry.DroneState droneState = CopterTelemetry.instance().getDroneState();
+			DroneState droneState = CopterTelemetry.instance().getDroneState();
 			double yaw = droneState.yawRadRatePid.target;
 			double pitch = droneState.pitchRadPid.target;
 			double roll = droneState.rollRadPid.target;
@@ -408,7 +408,7 @@ public class PIDlg extends JDialog
 	
 	private class OnTelemetryUpdate implements Observer
 	{
-		private void updatePidPanel(PidPanel panel, CopterTelemetry.DroneState.Pid pid)
+		private void updatePidPanel(PidPanel panel, DroneState.Pid pid)
 		{
 			panel.setLbEnabled(pid.enabled);
 			panel.setLbKp(pid.kp);
@@ -419,7 +419,7 @@ public class PIDlg extends JDialog
 		@Override
 		public void update(Observable o, Object arg)
 		{
-			CopterTelemetry.DroneState droneState = CopterTelemetry.instance().getDroneState();
+			DroneState droneState = CopterTelemetry.instance().getDroneState();
 			
 			updatePidPanel(mYawPid, droneState.yawRadRatePid);
 			updatePidPanel(mPitchPid, droneState.pitchRadPid);

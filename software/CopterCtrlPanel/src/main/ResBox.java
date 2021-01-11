@@ -41,7 +41,7 @@ public class ResBox
 	
 	private static ImageIcon loadIcon(String path)
 	{
-		return loadIcon(path,24,24);
+		return loadIcon(path,32,32);
 	}
 	
 	private static ImageIcon loadIcon(String path, int w, int h)
@@ -70,5 +70,6 @@ public class ResBox
 		icons.put("SENSORS", loadIcon("images/sensors.png"));
 		icons.put("GAUGE", loadIcon("images/gauge.png"));
 		icons.put("SETTINGS", loadIcon("images/settings.png"));
+		icons.put("REMOTE_CONTROL", loadIcon("images/remotecontrol.png"));
 	}
 }

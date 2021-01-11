@@ -86,6 +86,19 @@ public class StartGui extends JSavedFrame
 				mSettingsGui.setVisible(true);
 		}
 	}
+	
+	private class OnBtnRemoteControl implements ActionListener
+	{
+		@Override
+		public void actionPerformed(ActionEvent e)
+		{
+			if(mRemoteControlGui == null)
+				mRemoteControlGui = new RemoteControlGui();
+			
+			if(mRemoteControlGui.isVisible() == false)
+				mRemoteControlGui.setVisible(true);
+		}
+	}
 		
 	private class OnAlarmUpdate implements Observer
 	{
@@ -123,6 +136,7 @@ public class StartGui extends JSavedFrame
 	private SensorsGui mSensorsGui;
 	private ChartsGui mChartsGui;
 	private SettingsGui mSettingsGui;
+	private RemoteControlGui mRemoteControlGui;
 	
 	private JLabel mlbAlarmIcon;
 	private JLabel mlbAlarmText;
@@ -133,6 +147,7 @@ public class StartGui extends JSavedFrame
 	private JButton mbtnSensors;
 	private JButton mbtnStatus;
 	private JButton mbtnSettings;
+	private JButton mbtnRemoteControl;
 	
 	public StartGui()
 	{
@@ -190,6 +205,11 @@ public class StartGui extends JSavedFrame
 		mbtnSettings.setMargin(zeroInsets);
 		mbtnSettings.setToolTipText(ResBox.text("SETTINGS"));
 		mbtnSettings.addActionListener(new OnBtnSettings());
+		
+		mbtnRemoteControl = new JButton(ResBox.icon("REMOTE_CONTROL"));
+		mbtnRemoteControl.setMargin(zeroInsets);
+		mbtnRemoteControl.setToolTipText(ResBox.text("REMOTE_CONTROL"));
+		mbtnRemoteControl.addActionListener(new OnBtnRemoteControl());
 
 		tb.add(mbtnConnect);
 		tb.add(mbtnStatus);
@@ -197,6 +217,7 @@ public class StartGui extends JSavedFrame
 		tb.add(mbtnSensors);
 		tb.add(mbtnCharts);
 		tb.add(mbtnSettings);
+		tb.add(mbtnRemoteControl);
 		
 		return tb;
 	}

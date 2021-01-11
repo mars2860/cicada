@@ -56,6 +56,8 @@ public class Settings
 	private WndState statusWnd;
 	@Expose
 	private WndState settingsWnd;
+	@Expose
+	private WndState rcWnd;
 	
 	private Settings()
 	{
@@ -122,6 +124,16 @@ public class Settings
 		return settingsWnd;
 	}
 	
+	public void setRcWnd(WndState ws)
+	{
+		rcWnd = ws;
+	}
+	
+	public WndState getRcWnd()
+	{
+		return rcWnd;
+	}
+	
 	public void setLang(String lang)
 	{
 		this.lang = lang;
@@ -185,6 +197,7 @@ public class Settings
 		sensorsWnd = new WndState();
 		statusWnd = new WndState();
 		settingsWnd = new WndState();
+		rcWnd = new WndState();
 	}
 	
 	public void load()

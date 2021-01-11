@@ -47,6 +47,7 @@ public class TextBundle extends ListResourceBundle
             {"SENSORS", "Sensors"},
             {"CHARTS", "Charts"},
             {"SETTINGS", "Settings"},
+            {"REMOTE_CONTROL", "Remote control"},
             
             {"IP_ADDRESS", "IP Address"},
             {"CMD_PORT", "Port 1"},

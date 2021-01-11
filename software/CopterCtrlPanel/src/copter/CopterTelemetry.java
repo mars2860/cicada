@@ -36,6 +36,7 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 	private boolean mTelemetryRun;
 	private Object objTelemetrySync;
 	private Object objDataSync;
+	private boolean mCopterConnected;
 
 	private CopterTelemetry()
 	{
@@ -93,6 +94,11 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 		AlarmCenter.instance().clearAlarm(Alarm.COPTER_RECEIVE_ERROR);
 	}
 	
+	public boolean isCopterConnected()
+	{
+		return mCopterConnected;
+	}
+	
 	public DroneState getDroneState()
 	{
 		DroneState state = new DroneState();
@@ -146,6 +152,7 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 
 					synchronized(objDataSync)
 					{
+						mCopterConnected = true;
 						BinaryParser parser = new BinaryParser();
 						droneStateSize = parser.getUint32t(receivedPacket);
 						mDroneState = new DroneState();
@@ -166,6 +173,7 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 			}
 			catch(SocketTimeoutException e)
 			{
+				mCopterConnected = false;
 				AlarmCenter.instance().setAlarm(Alarm.COPTER_NOT_FOUND);
 			}
 			catch(IOException e)

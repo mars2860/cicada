@@ -41,38 +41,49 @@ public class JTreeTable extends JTable {
 	
 	/** A subclass of JTree. */
     protected TreeTableCellRenderer tree;
+    protected TreeTableModel mTreeTableModel;
 
     public JTreeTable(TreeTableModel treeTableModel) {
 	super();
+	this.setTreeTableModel(treeTableModel);
+    }
+    
+    public void setTreeTableModel(TreeTableModel treeTableModel)
+    {
+    	mTreeTableModel = treeTableModel;
+    	// Create the tree. It will be used as a renderer and editor. 
+    	tree = new TreeTableCellRenderer(treeTableModel);
 
-	// Create the tree. It will be used as a renderer and editor. 
-	tree = new TreeTableCellRenderer(treeTableModel);
+    	// Install a tableModel representing the visible rows in the tree. 
+    	super.setModel(new TreeTableModelAdapter(treeTableModel, tree));
 
-	// Install a tableModel representing the visible rows in the tree. 
-	super.setModel(new TreeTableModelAdapter(treeTableModel, tree));
+    	// Force the JTable and JTree to share their row selection models. 
+    	ListToTreeSelectionModelWrapper selectionWrapper = new 
+    	                        ListToTreeSelectionModelWrapper();
+    	tree.setSelectionModel(selectionWrapper);
+    	setSelectionModel(selectionWrapper.getListSelectionModel()); 
 
-	// Force the JTable and JTree to share their row selection models. 
-	ListToTreeSelectionModelWrapper selectionWrapper = new 
-	                        ListToTreeSelectionModelWrapper();
-	tree.setSelectionModel(selectionWrapper);
-	setSelectionModel(selectionWrapper.getListSelectionModel()); 
+    	// Install the tree editor renderer and editor. 
+    	setDefaultRenderer(TreeTableModel.class, tree); 
+    	setDefaultEditor(TreeTableModel.class, new TreeTableCellEditor());
 
-	// Install the tree editor renderer and editor. 
-	setDefaultRenderer(TreeTableModel.class, tree); 
-	setDefaultEditor(TreeTableModel.class, new TreeTableCellEditor());
+    	// No grid.
+    	setShowGrid(false);
 
-	// No grid.
-	setShowGrid(false);
+    	// No intercell spacing
+    	setIntercellSpacing(new Dimension(0, 0));	
 
-	// No intercell spacing
-	setIntercellSpacing(new Dimension(0, 0));	
-
-	// And update the height of the trees row to match that of
-	// the table.
-	if (tree.getRowHeight() < 1) {
-	    // Metal looks better like this.
-	    setRowHeight(18);
-	}
+    	// And update the height of the trees row to match that of
+    	// the table.
+    	if (tree.getRowHeight() < 1) {
+    	    // Metal looks better like this.
+    	    setRowHeight(18);
+    	}	
+    }
+    
+    public TreeTableModel getTreeTableModel()
+    {
+    	return mTreeTableModel;
     }
 
     /**

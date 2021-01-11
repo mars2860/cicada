@@ -60,11 +60,11 @@ public class StatusGui extends JSavedFrame
 			mlbWifiLevel.setText(Integer.toString((int)droneState.wifiLevel));
 			
 			double yaw = droneState.yawDeg;
-			double yawTarget = droneState.yawDegRatePid.target;
+			double yawTarget = droneState.yawRatePid.targetDeg;
 			double pitch = droneState.pitchDeg;
-			double pitchTarget = droneState.pitchDegPid.target;
+			double pitchTarget = droneState.pitchPid.targetDeg;
 			double roll = droneState.rollDeg;
-			double rollTarget = droneState.rollDegPid.target;
+			double rollTarget = droneState.rollPid.targetDeg;
 			double heading = droneState.headingDeg;
 			
 			mlbYawValue.setText(fmt1.format(yaw) + "/" + fmt1.format(yawTarget));

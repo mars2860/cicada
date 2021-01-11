@@ -50,7 +50,7 @@ public class DroneState implements Cloneable
 		public double z;
 	}
 	
-	public static class Net
+	public static class Net implements Cloneable
 	{
 		@Setting
 		@NoChart
@@ -72,6 +72,12 @@ public class DroneState implements Cloneable
 		@NoChart
 		@Expose
 		public int telemetryPeriod = DEFAULT_TELEMETRY_PERIOD;
+		
+		@Override
+		public Object clone() throws CloneNotSupportedException
+		{
+			return super.clone();
+		}
 	}
 	
 	public static class Battery implements Cloneable
@@ -121,7 +127,7 @@ public class DroneState implements Cloneable
 		// no sense variable, this is 2 bytes gap in C structure
 		protected int gap;
 		
-		private void parse(BinaryParser parser, DatagramPacket packet)
+		protected void parse(BinaryParser parser, DatagramPacket packet)
 		{
 			pureX = parser.getFloat(packet);
 			pureY = parser.getFloat(packet);
@@ -168,9 +174,9 @@ public class DroneState implements Cloneable
 		@Setting
 		@Expose
 		public float kd;
-		@NoChart
-		@Setting
+
 		public double target;
+
 		@NoChart
 		public double errSum;
 		@NoChart
@@ -178,7 +184,7 @@ public class DroneState implements Cloneable
 		
 		public double out;
 		
-		private void parse(BinaryParser parser, DatagramPacket packet)
+		protected void parse(BinaryParser parser, DatagramPacket packet)
 		{
 			kp = parser.getFloat(packet);
 			ki = parser.getFloat(packet);
@@ -188,6 +194,50 @@ public class DroneState implements Cloneable
 			errSum = parser.getFloat(packet);
 			prevErr = parser.getFloat(packet);
 			enabled = (parser.getUint32t(packet) > 0)?true:false;
+		}
+		
+		@Override
+		public Object clone() throws CloneNotSupportedException
+		{
+			return super.clone();
+		}
+	}
+	
+	/**@note it class needs only to have target fields in rad and deg to plot its on chart */
+	public static class AngularPid extends Pid implements Cloneable
+	{
+		public double targetDeg;
+		
+		@Override
+		protected void parse(BinaryParser parser, DatagramPacket packet)
+		{
+			super.parse(parser, packet);
+			
+			targetDeg = Math.toDegrees(this.target);
+		}
+
+		@Override
+		public Object clone() throws CloneNotSupportedException
+		{
+			return super.clone();
+		}
+	}
+	
+	/**@note it class needs only to have pure fields in rad and deg to plot its on chart */
+	public static class AngularSensor extends TripleAxisSensor implements Cloneable
+	{
+		public double pureXdeg;
+		public double pureYdeg;
+		public double pureZdeg;
+		
+		@Override
+		protected void parse(BinaryParser parser, DatagramPacket packet)
+		{
+			super.parse(parser, packet);
+			
+			pureXdeg = Math.toDegrees(this.pureX);
+			pureYdeg = Math.toDegrees(this.pureY);
+			pureZdeg = Math.toDegrees(this.pureZ);
 		}
 		
 		@Override
@@ -212,8 +262,7 @@ public class DroneState implements Cloneable
 	@SettingGroup(name = "GYRO")
 	@Expose
 	@SerializedName("gyro")
-	public TripleAxisSensor gyroRad = new TripleAxisSensor();
-	public TripleAxisSensor gyroDeg = new TripleAxisSensor();
+	public AngularSensor gyro = new AngularSensor();
 	@SettingGroup(name = "MAGNETO")
 	@Expose
 	@SerializedName("magneto")
@@ -229,18 +278,15 @@ public class DroneState implements Cloneable
 	@SettingGroup(name = "YAW_RATE_PID")
 	@Expose
 	@SerializedName("yawRatePid")
-	public Pid yawRadRatePid = new Pid();
-	public Pid yawDegRatePid = new Pid();
+	public AngularPid yawRatePid = new AngularPid();
 	@SettingGroup(name = "PITCH_PID")
 	@Expose
 	@SerializedName("pitchPid")
-	public Pid pitchRadPid = new Pid();
-	public Pid pitchDegPid = new Pid();
+	public AngularPid pitchPid = new AngularPid();
 	@SettingGroup(name = "ROLL_PID")
 	@Expose
 	@SerializedName("rollPid")
-	public Pid rollRadPid = new Pid();
-	public Pid rollDegPid = new Pid();
+	public AngularPid rollPid = new AngularPid();
 	@SettingGroup(name = "ALT_PID")
 	@Expose
 	@SerializedName("altPid")
@@ -267,13 +313,14 @@ public class DroneState implements Cloneable
 	public Object clone() throws CloneNotSupportedException
 	{
 		DroneState state = (DroneState)super.clone();
+		state.net = (Net)net.clone();
 		state.battery = (Battery)battery.clone();
 		state.accel = (TripleAxisSensor)accel.clone();
-		state.gyroRad = (TripleAxisSensor)gyroRad.clone();
+		state.gyro = (AngularSensor)gyro.clone();
 		state.magneto = (TripleAxisSensor)magneto.clone();
-		state.yawRadRatePid = (Pid)yawRadRatePid.clone();
-		state.pitchRadPid = (Pid)pitchRadPid.clone();
-		state.rollRadPid = (Pid)rollRadPid.clone();
+		state.yawRatePid = (AngularPid)yawRatePid.clone();
+		state.pitchPid = (AngularPid)pitchPid.clone();
+		state.rollPid = (AngularPid)rollPid.clone();
 		state.altPid = (Pid)altPid.clone();
 		return state;
 	}
@@ -284,7 +331,7 @@ public class DroneState implements Cloneable
 		battery.parse(parser, packet);
 		wifiLevel = parser.getInt32t(packet);
 		accel.parse(parser, packet);
-		gyroRad.parse(parser, packet);
+		gyro.parse(parser, packet);
 		magneto.parse(parser, packet);
 		yawRad = parser.getFloat(packet);
 		yawDeg = Math.toDegrees(yawRad);
@@ -299,9 +346,9 @@ public class DroneState implements Cloneable
 		pressure = parser.getFloat(packet);
 		altitude = parser.getFloat(packet);
 		seaLevel = parser.getFloat(packet);
-		yawRadRatePid.parse(parser, packet);
-		pitchRadPid.parse(parser, packet);
-		rollRadPid.parse(parser, packet);
+		yawRatePid.parse(parser, packet);
+		pitchPid.parse(parser, packet);
+		rollPid.parse(parser, packet);
 		altPid.parse(parser, packet);
 		baseGas = parser.getInt32t(packet);
 		motorGas0 = parser.getInt32t(packet);
@@ -312,27 +359,6 @@ public class DroneState implements Cloneable
 		stabilizationEnabled = parser.getBool(packet);
 		gap = parser.getInt16t(packet);
 		net.telemetryPeriod = (int)parser.getUint32t(packet);
-		
-		try
-		{
-			gyroDeg = (TripleAxisSensor)gyroRad.clone();
-			gyroDeg.pureX = Math.toDegrees(gyroRad.pureX);
-			gyroDeg.pureY = Math.toDegrees(gyroRad.pureY);
-			gyroDeg.pureZ = Math.toDegrees(gyroRad.pureZ);
-			
-			yawDegRatePid = (Pid)yawRadRatePid.clone();
-			yawDegRatePid.target = Math.toDegrees(yawRadRatePid.target);
-			
-			pitchDegPid = (Pid)pitchRadPid.clone();
-			pitchDegPid.target = Math.toDegrees(pitchRadPid.target);
-			
-			rollDegPid = (Pid)rollRadPid.clone();
-			rollDegPid.target = Math.toDegrees(rollRadPid.target);
-		}
-		catch(CloneNotSupportedException e)
-		{
-			e.printStackTrace();
-		}
 	}
 	
 	public void sendSettingsToDrone()
@@ -344,9 +370,9 @@ public class DroneState implements Cloneable
 		
 		CmdCalibrateAccel cmd1 = new CmdCalibrateAccel(dx,dy,dz);
 		
-		dx = ds.gyroRad.offsetX;
-		dy = ds.gyroRad.offsetY;
-		dz = ds.gyroRad.offsetZ;
+		dx = ds.gyro.offsetX;
+		dy = ds.gyro.offsetY;
+		dz = ds.gyro.offsetZ;
 		
 		CmdCalibrateGyro cmd2 = new CmdCalibrateGyro(dx,dy,dz);
 		
@@ -356,22 +382,22 @@ public class DroneState implements Cloneable
 		
 		CmdCalibrateMagnet cmd3 = new CmdCalibrateMagnet(dx,dy,dz,1.f,1.f,1.f);
 		
-		boolean enabled = ds.yawRadRatePid.enabled;
-		float kp = ds.yawRadRatePid.kp;
-		float ki = ds.yawRadRatePid.ki;
-		float kd = ds.yawRadRatePid.kd;
+		boolean enabled = ds.yawRatePid.enabled;
+		float kp = ds.yawRatePid.kp;
+		float ki = ds.yawRatePid.ki;
+		float kd = ds.yawRatePid.kd;
 		CmdSetYawPid cmd4 = new CmdSetYawPid(enabled,kp,ki,kd);
 		
-		enabled = ds.pitchRadPid.enabled;
-		kp = ds.pitchRadPid.kp;
-		ki = ds.pitchRadPid.ki;
-		kd = ds.pitchRadPid.kd;
+		enabled = ds.pitchPid.enabled;
+		kp = ds.pitchPid.kp;
+		ki = ds.pitchPid.ki;
+		kd = ds.pitchPid.kd;
 		CmdSetPitchPid cmd5 = new CmdSetPitchPid(enabled,kp,ki,kd);
 		
-		enabled = ds.rollRadPid.enabled;
-		kp = ds.rollRadPid.kp;
-		ki = ds.rollRadPid.ki;
-		kd = ds.rollRadPid.kd;
+		enabled = ds.rollPid.enabled;
+		kp = ds.rollPid.kp;
+		ki = ds.rollPid.ki;
+		kd = ds.rollPid.kd;
 		CmdSetRollPid cmd6 = new CmdSetRollPid(enabled,kp,ki,kd);
 		
 		enabled = ds.altPid.enabled;

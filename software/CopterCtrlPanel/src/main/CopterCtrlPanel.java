@@ -55,15 +55,15 @@ public class CopterCtrlPanel
 		if(mMainFrame != null)
 			return;
 		
+		AlarmCenter.instance().deleteObservers();
+		CopterTelemetry.instance().deleteObservers();
+		
 		Settings.instance().load();
 		ResBox.load();
 		
 		mMainFrame = new StartGui();
 		mMainFrame.setVisible(true);
 		mMainFrame.addWindowListener(new OnMainWndListener());
-			
-		AlarmCenter.instance().deleteObservers();
-		CopterTelemetry.instance().deleteObservers();
 	
 		try
 		{

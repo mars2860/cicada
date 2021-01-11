@@ -585,7 +585,8 @@ public class ChartsGui extends JSavedFrame
 			{
 				items.addAll(buildCheckListItems(fields[i].getType(), fields[i].getName() + "."));
 			}
-			else if(fields[i].getAnnotation(DroneState.NoChart.class) == null)
+			else if( fields[i].getAnnotation(DroneState.NoChart.class) == null && 
+					 java.lang.reflect.Modifier.isStatic(fields[i].getModifiers()) == false)
 			{
 				CheckListItem j = new CheckListItem(baseName + fields[i].getName());
 				items.add(j);
@@ -638,6 +639,8 @@ public class ChartsGui extends JSavedFrame
         int endIndex = (int)Math.ceil(Chart.bSearch(timestamp, timestampEnd));
         int noOfPoints = endIndex - startIndex + 1;
         double[] viewportTimestamp = (double[])Chart.arraySlice(timestamp, startIndex, noOfPoints);
+        if(viewportTimestamp.length < 2)
+        	return;
         timestampStart = viewportTimestamp[0];
         timestampEnd = viewportTimestamp[viewportTimestamp.length - 1];
         double minDataValue = 0;

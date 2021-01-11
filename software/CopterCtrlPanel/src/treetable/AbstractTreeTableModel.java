@@ -38,6 +38,11 @@ public abstract class AbstractTreeTableModel implements TreeTableModel {
     public Object getRoot() {
         return root;
     }
+    
+    public void setRoot(Object root) {
+    	this.root = root;
+    	this.fireTreeStructureChanged(this, null, null, null);
+    }
 
     public boolean isLeaf(Object node) {
         return getChildCount(node) == 0; 

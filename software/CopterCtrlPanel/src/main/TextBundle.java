@@ -114,6 +114,16 @@ public class TextBundle extends ListResourceBundle
             {"PLOT","Plot"},
             {"SET", "Set"},
             {"CONFIRM_SAVE_SETTINGS", "Do you want to save settings?"},
+            {"RECEIVE","Receive"},
+            {"SEND","Send"},
+            {"LOAD","Load"},
+            {"SAVE","Save"},
+            {"SETTINGS_RECEIVED","Settings has been received from a drone"},
+            {"SETTINGS_SENT","New settings has been sent to a drone"},
+            {"SETTINGS_SAVED","Settings has been saved to a disk"},
+            {"SETTINGS_LOADED","Settings has been loaded from a disk"},
+            {"CANT_GRAB_SETTINGS","Can't grab new settings from a table"},
+            {"INVALID_VALUE","Invalid value for"},
         // END OF MATERIAL TO LOCALIZE
         };
     }

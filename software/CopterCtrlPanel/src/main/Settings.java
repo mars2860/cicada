@@ -134,12 +134,24 @@ public class Settings
 	
 	public void setDroneSettings(DroneState ds)
 	{
+		// TODO после получения ds от CopterTelemetry стираются настройки сети (DroneState.Net)
 		droneSettings = ds;
 	}
 	
 	public DroneState getDroneSettings()
 	{
-		return droneSettings;
+		DroneState ds = new DroneState();
+		
+		try
+		{
+			ds = (DroneState)droneSettings.clone(); 
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+		
+		return ds; 
 	}
 
 	public void save()
@@ -186,6 +198,8 @@ public class Settings
 					 .excludeFieldsWithoutExposeAnnotation().create();
 
 			mSingleton = gson.fromJson(content, Settings.class);
+			
+			Locale.setDefault(new Locale(this.getLang()));
 		}
 		catch(Exception e)
 		{

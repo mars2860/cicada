@@ -2,6 +2,7 @@ package main;
 
 import java.awt.Image;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 
@@ -16,7 +17,10 @@ public class ResBox
 	{
 		ResourceBundle.clearCache();
 		icons = new HashMap<String, ImageIcon>();
-		bundle = ResourceBundle.getBundle("main.TextBundle");
+		if(Locale.getDefault().getLanguage().startsWith("ru"))
+			bundle = ResourceBundle.getBundle("main.TextBundle_ru");
+		else
+			bundle = ResourceBundle.getBundle("main.TextBundle");
 		loadImages();
 	}
 	

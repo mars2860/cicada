@@ -219,6 +219,10 @@ public class ChartsGui extends JSavedFrame
 			if(userSelection == JFileChooser.APPROVE_OPTION)
 			{
 				File fileToSave = fc.getSelectedFile();
+				if(fileToSave.getName().contains(".") == false)
+				{
+					fileToSave = new File(fileToSave.getPath() + ".png");
+				}
 			    mDataChartViewer.getChart().makeChart(fileToSave.getAbsolutePath());
 			}
 		}

@@ -226,6 +226,9 @@ public class DroneState implements Cloneable
 	/**@note it class needs only to have pure fields in rad and deg to plot its on chart */
 	public static class AngularSensor extends TripleAxisSensor implements Cloneable
 	{
+		public double pureXrad;
+		public double pureYrad;
+		public double pureZrad;
 		public double pureXdeg;
 		public double pureYdeg;
 		public double pureZdeg;
@@ -235,6 +238,9 @@ public class DroneState implements Cloneable
 		{
 			super.parse(parser, packet);
 			
+			pureXrad = this.pureX;
+			pureYrad = this.pureY;
+			pureZrad = this.pureZ;
 			pureXdeg = Math.toDegrees(this.pureX);
 			pureYdeg = Math.toDegrees(this.pureY);
 			pureZdeg = Math.toDegrees(this.pureZ);

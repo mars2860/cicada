@@ -15,7 +15,7 @@ public class NumericDocument extends PlainDocument
     protected boolean allowNegative = false;
     
     private static String comma = String.valueOf(DecimalFormatSymbols.getInstance().getDecimalSeparator());
-    private static String minus = String.valueOf(DecimalFormatSymbols.getInstance().getPatternSeparator());
+    private static String minus = String.valueOf(DecimalFormatSymbols.getInstance().getMinusSign());
 
      public NumericDocument(int decimalPrecision, boolean allowNegative) 
      {

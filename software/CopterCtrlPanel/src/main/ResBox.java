@@ -71,5 +71,14 @@ public class ResBox
 		icons.put("GAUGE", loadIcon("images/gauge.png"));
 		icons.put("SETTINGS", loadIcon("images/settings.png"));
 		icons.put("REMOTE_CONTROL", loadIcon("images/remotecontrol.png"));
+		icons.put("ARROW_UP", loadIcon("images/arrow_up.png"));
+		icons.put("ARROW_DOWN", loadIcon("images/arrow_down.png"));
+		icons.put("ARROW_LEFT", loadIcon("images/arrow_left.png"));
+		icons.put("ARROW_RIGHT", loadIcon("images/arrow_right.png"));
+		icons.put("ARROW_GET_UP", loadIcon("images/get_up.png"));
+		icons.put("ARROW_GET_DOWN", loadIcon("images/get_down.png"));
+		icons.put("ROTATE_CW", loadIcon("images/rotate_cw.png"));
+		icons.put("ROTATE_CCW", loadIcon("images/rotate_ccw.png"));
+		icons.put("STOP", loadIcon("images/stop.png"));
 	}
 }

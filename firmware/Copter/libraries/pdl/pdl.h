@@ -35,7 +35,7 @@ extern "C" {
 /// Drone frame PDL_DRONE_FRAME_X | PDL_DRONE_FRAME_CROSS
 #define PDL_DRONE_FRAME                 PDL_DRONE_FRAME_CROSS
 /// comment to enable symmetric motors regulation in stabilization
-#define PDL_ASYMMETRIC_STABILIZATION
+//#define PDL_ASYMMETRIC_STABILIZATION
 
 //-----------------------------------------------------------------------------
 

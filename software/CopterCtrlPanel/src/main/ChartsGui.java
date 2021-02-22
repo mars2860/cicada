@@ -496,6 +496,7 @@ public class ChartsGui extends JSavedFrame
 	{
 		super("Charts",960,540);
 		this.setTitle(ResBox.text("CHARTS"));
+		this.setIconImage(ResBox.icon("CHARTS").getImage());
 		createUI();
 	}
 	
@@ -667,6 +668,12 @@ public class ChartsGui extends JSavedFrame
 					
 					if(value instanceof Double)
 						data[k] = (Double)value;
+					
+					// Заплатка. Иногда в массив данных попадают бесконечности. Откуда - не понятно
+					// Nan тоже на всякий случай фильтруем
+					if(Double.isInfinite(data[k]) ||
+					   Double.isNaN(data[k]) )
+					   data[k] = 0.0;
 					
 					if(initMaxMinDataValue)
 					{

@@ -2,18 +2,18 @@ package copter.commands;
 
 public class CmdSetYPR extends AbstractCopterCmd
 {
-	private float mYaw;
-	private float mPitch;
-	private float mRoll;
+	private float mYaw = 0.f;
+	private float mPitch = 0.f;
+	private float mRoll = 0.f;
 	
 	/** Angles should be in radians */
-	public CmdSetYPR(float yaw, float pitch, float roll)
+	public CmdSetYPR(float yawRad, float pitchRad, float rollRad)
 	{
 		super(111);
 		
-		mYaw = yaw;
-		mPitch = pitch;
-		mRoll = roll;
+		mYaw = yawRad;
+		mPitch = pitchRad;
+		mRoll = rollRad;
 	}
 
 	@Override
@@ -28,5 +28,25 @@ public class CmdSetYPR extends AbstractCopterCmd
 		pos = writeFloat(pos,data,mRoll);
 		
 		return data;
+	}
+	
+	public void setYawRateDeg(float yawRateDeg)
+	{
+		mYaw = (float)Math.toRadians(yawRateDeg);
+	}
+	
+	public void setRollDeg(float rollDeg)
+	{
+		mRoll = (float)Math.toRadians(rollDeg);
+	}
+	
+	public void setPitchDeg(float pitchDeg)
+	{
+		mPitch = (float)Math.toRadians(pitchDeg);
+	}
+	
+	public boolean isNull()
+	{
+		return (mYaw == 0.f && mRoll == 0.f && mPitch == 0.f)?true:false;
 	}
 }

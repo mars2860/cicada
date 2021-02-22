@@ -4,8 +4,8 @@ import copter.CopterCommander;
 
 public class TakeOff
 {
-	protected int mStartGas = 1500;
-	protected int mEndGas = 800;
+	protected int mStartGas = 1000;
+	protected int mEndGas = 500;
 	protected int mStartTime = 700;
 	//protected int mEndGas = 650;
 	//protected int mStartTime = 500;

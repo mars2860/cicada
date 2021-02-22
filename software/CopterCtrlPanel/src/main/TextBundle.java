@@ -119,6 +119,7 @@ public class TextBundle extends ListResourceBundle
             {"SEND","Send"},
             {"LOAD","Load"},
             {"SAVE","Save"},
+            
             {"SETTINGS_RECEIVED","Settings has been received from a drone"},
             {"SETTINGS_SENT","New settings has been sent to a drone"},
             {"SETTINGS_SAVED","Settings has been saved to a disk"},

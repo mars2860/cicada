@@ -5,14 +5,7 @@
 #include "I2Cdev.h"
 #include "MPU6050.h"
 
-
-#include "RTFusion.h"
-#include "RTFusionRTQF.h"
-#include "RTFusionKalman4.h"
-
 MPU6050 mpu;
-
-RTFusion* imuFusion;
 
 //SampleFilter axFilter, ayFilter, azFilter, gxFilter, gyFilter, gzFilter;
 /*Filter axFilter(20.0, 0.005, IIR::ORDER::OD3);
@@ -43,18 +36,6 @@ void pdlSetupAccel(pdlDroneState *ds)
   mpu.setZAccelOffset(ds->accel.offset[PDL_Z]);
 
   imuReadAccelOffset(ds);
-
-  //imuFusion = new RTFusionRTQF();
-  imuFusion = new RTFusionKalman4();
-  // Slerp power controls the fusion and can be between 0 and 1
-  // 0 means that only gyros are used, 1 means that only accels/compass are used
-  // In-between gives the fusion mix.
-  imuFusion->setSlerpPower(0.02f);
-  // use of sensors in the fusion algorithm can be controlled here
-  // change any of these to false to disable that sensor
-  imuFusion->setGyroEnable(true);
-  imuFusion->setAccelEnable(true);
-  imuFusion->setCompassEnable(false);
 }
 
 void pdlSetupGyro(pdlDroneState *ds)
@@ -143,31 +124,3 @@ void pdlReadAccel(pdlDroneState *ds)
 }
 
 void pdlReadGyro(pdlDroneState*) {}
-
-void pdlTripleAxisSensorFusion(pdlDroneState *ds)
-{
-  // sort out axes as in RTIMUMPU9250
-  RTIMU_DATA fusionData;
-  fusionData.fusionPoseValid = false;
-  fusionData.fusionQPoseValid = false;
-  fusionData.timestamp = ds->timestamp;
-
-  fusionData.gyro = RTVector3(ds->gyro.pure[PDL_X], -ds->gyro.pure[PDL_Y], -ds->gyro.pure[PDL_Z]);
-  fusionData.accelValid = true;
-  fusionData.accel = RTVector3(-ds->accel.pure[PDL_X], ds->accel.pure[PDL_Y], ds->accel.pure[PDL_Z]);
-  fusionData.compassValid = true;
-  fusionData.compass = RTVector3(ds->magneto.pure[PDL_X], ds->magneto.pure[PDL_Y], -ds->magneto.pure[PDL_Z]);
-  fusionData.pressureValid = false;
-  fusionData.temperatureValid = false;
-  fusionData.humidityValid = false;
-  imuFusion->newIMUData(fusionData, 0);
-  const RTVector3 &pose = fusionData.fusionPose;
-  ds->yaw = pose.z();
-  ds->pitch = pose.y();
-  ds->roll = pose.x();
-
-  if(imuFusion->getCompassEnable())
-    ds->heading = pose.z() + RTMATH_PI;
-  else
-    ds->heading = pdlCalcHeading(ds);
-}

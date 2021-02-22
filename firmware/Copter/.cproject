@@ -86,11 +86,11 @@
 							<tool id="io.sloeber.tool.size.683985670" name="Arduino tool Print Size" superClass="io.sloeber.tool.size"/>
 						</toolChain>
 					</folderInfo>
-					<fileInfo id="io.sloeber.core.toolChain.release.303228233.701121024" name="pwm.c" rcbsApplicability="disable" resourcePath="pwm.c" toolsToInvoke="io.sloeber.tool.compiler.c.447114762.66015360">
-						<tool id="io.sloeber.tool.compiler.c.447114762.66015360" name="Arduino C Compiler" superClass="io.sloeber.tool.compiler.c.447114762"/>
+					<fileInfo id="io.sloeber.core.toolChain.release.303228233.1243643702" name="mag_hmc5983.cpp" rcbsApplicability="disable" resourcePath="mag_hmc5983.cpp" toolsToInvoke="io.sloeber.tool.sketch.compiler.cpp.848463985.262003952">
+						<tool id="io.sloeber.tool.sketch.compiler.cpp.848463985.262003952" name="Arduino C++ Compiler" superClass="io.sloeber.tool.sketch.compiler.cpp.848463985"/>
 					</fileInfo>
 					<sourceEntries>
-						<entry excluding="pwm.c|pwm_escaper.cpp|imu_mpu6550dmp.cpp|imu_mpu6550dmp_qmc5883.cpp|libraries/?*/**/test*/**|libraries/?*/**/third-party/**|MAX1704X|drivers|libraries/?*/utility/*/*|libraries/?*/**/?xamples/**|libraries/?*/**/?xtras/**|Copter.ino|libraries/**/._*" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="mag_hmc5983.cpp|battery_max1704x.cpp|mag_qmc5883.cpp|pwm.c|pwm_escaper.cpp|imu_mpu6550dmp.cpp|imu_mpu6550dmp_qmc5883.cpp|libraries/?*/**/test*/**|libraries/?*/**/third-party/**|MAX1704X|drivers|libraries/?*/utility/*/*|libraries/?*/**/?xamples/**|libraries/?*/**/?xtras/**|Copter.ino|libraries/**/._*" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="drivers"/>
 					</sourceEntries>
 				</configuration>

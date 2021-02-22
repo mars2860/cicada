@@ -145,13 +145,14 @@ void pdlCrossFrameApplyPids(pdlDroneState *ds)
   dg[2] = ds->baseGas;
   dg[3] = ds->baseGas;
 
-  dg[0] += ds->pitchPid.out - ds->yawRatePid.out;
-  dg[1] += ds->rollPid.out;// + ds->yawRatePid.out;
-  dg[2] -= ds->yawRatePid.out;
+  dg[0] += ds->pitchPid.out + ds->yawRatePid.out;
+  dg[1] += -ds->rollPid.out;
+  dg[2] += ds->yawRatePid.out;
 
 #ifndef PDL_ASYMMETRIC_STABILIZATION
-  dg[2] += -ds->pitchPid.out - ds->yawRatePid.out;
-  dg[3] += -ds->rollPid.out + ds->yawRatePid.out;
+  dg[1] += -ds->yawRatePid.out;
+  dg[2] += -ds->pitchPid.out;
+  dg[3] += ds->rollPid.out - ds->yawRatePid.out;
 #endif
 
   for(uint8_t i = 0; i < PDL_MOTOR_COUNT; i++)

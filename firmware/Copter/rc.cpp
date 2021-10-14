@@ -15,6 +15,7 @@
 #define DEFAULT_TELEMETRY_PORT          4211
 
 #define DEFAULT_TELEMETRY_PERIOD        50000
+// max packet size may be 512, this size is resctricted by esp8266 platform
 #define TELEMETRY_MAX_PACKET_SIZE       320
 
 IPAddress ip;

@@ -306,7 +306,8 @@ public class DroneState implements Cloneable
 	public double motorGas3;
 	@NoChart
 	public boolean stabilizationEnabled;
-	public double mainLoopTime;
+	public double avgLoopTime;
+	public double maxLoopTime;
 	public double temperature;
 	public double pressure;
 	public double altitude;
@@ -347,7 +348,8 @@ public class DroneState implements Cloneable
 		rollDeg = Math.toDegrees(rollRad);
 		headingRad = parser.getFloat(packet);
 		headingDeg = Math.toDegrees(headingRad);
-		mainLoopTime = parser.getInt32t(packet);
+		avgLoopTime = parser.getInt32t(packet);
+		maxLoopTime = parser.getInt32t(packet);
 		temperature = parser.getFloat(packet);
 		pressure = parser.getFloat(packet);
 		altitude = parser.getFloat(packet);

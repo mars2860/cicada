@@ -5,6 +5,7 @@
 #include "RTFusion.h"
 #include "RTFusionRTQF.h"
 #include "RTFusionKalman4.h"
+#include "movingAvg.h"
 
 //-----------------------------------------------------------------------------
 // INSTALL
@@ -17,6 +18,7 @@
 pdlDroneState droneState;
 RTFusion* imuFusion;
 RTIMU_DATA fusionData;
+movingAvg avgLoopTime(20);
 
 uint32_t pdlMicros()
 {
@@ -78,6 +80,8 @@ void setup()
   imuFusion->setGyroEnable(true);
   imuFusion->setAccelEnable(true);
   imuFusion->setCompassEnable(false);
+
+  avgLoopTime.begin();
 }
 
 //-----------------------------------------------------------------------------
@@ -85,12 +89,18 @@ void setup()
 void loop()
 {
   static uint32_t loopStartTime = 0;
+  uint32_t loopTime = 0;
 
   loopStartTime = micros();
 
   pdlUpdate(&droneState);
 
-  droneState.mainLoopTime = micros() - loopStartTime;
+  loopTime = micros() - loopStartTime;
+
+  if(loopTime > droneState.maxLoopTime)
+    droneState.maxLoopTime = loopTime;
+
+  droneState.avgLoopTime = avgLoopTime.reading(loopTime);
 }
 
 void pdlSetupMagneto(pdlDroneState*)

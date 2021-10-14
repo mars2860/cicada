@@ -105,8 +105,10 @@ typedef struct
   float roll;
   // radians
   float heading;
-  // Time of executing one loop in microseconds
-  uint32_t mainLoopTime;
+  // Averaging time of executing one loop in microseconds
+  uint32_t avgLoopTime;
+  // Max time of executing one loop in microseconds
+  uint32_t maxLoopTime;
   // degree
   float temperature;
   // hPa

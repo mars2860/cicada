@@ -1,13 +1,13 @@
 package copter.commands;
 
-public class CmdSetYawPid extends AbstractCopterCmd
+public class CmdSetYawRatePid extends AbstractCopterCmd
 {
 	protected boolean mEnabled;
 	protected float mKp;
 	protected float mKi;
 	protected float mKd;
 	
-	public CmdSetYawPid(boolean enabled, float kp, float ki, float kd)
+	public CmdSetYawRatePid(boolean enabled, float kp, float ki, float kd)
 	{
 		super(107);
 		

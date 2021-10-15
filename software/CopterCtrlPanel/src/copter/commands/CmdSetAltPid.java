@@ -1,6 +1,6 @@
 package copter.commands;
 
-public class CmdSetAltPid extends CmdSetYawPid
+public class CmdSetAltPid extends CmdSetYawRatePid
 {
 	public CmdSetAltPid(boolean enabled, float kp, float ki, float kd)
 	{

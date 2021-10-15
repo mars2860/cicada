@@ -18,7 +18,7 @@
 pdlDroneState droneState;
 RTFusion* imuFusion;
 RTIMU_DATA fusionData;
-movingAvg avgLoopTime(20);
+movingAvg avgLoopTime(10);
 
 uint32_t pdlMicros()
 {

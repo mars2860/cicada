@@ -331,13 +331,13 @@ public class RemoteControlGui extends JSavedFrame
 		this.setIconImage(ResBox.icon("REMOTE_CONTROL").getImage());
 
 		mtfYaw = new JTextField();
-		mtfYaw.setDocument(new NumericDocument(0,true));
+		mtfYaw.setDocument(new NumericDocument(2,true));
 		mtfYaw.setText("0");
 		mtfPitch = new JTextField();
-		mtfPitch.setDocument(new NumericDocument(0,true));
+		mtfPitch.setDocument(new NumericDocument(2,true));
 		mtfPitch.setText("0");
 		mtfRoll = new JTextField();
-		mtfRoll.setDocument(new NumericDocument(0,true));
+		mtfRoll.setDocument(new NumericDocument(2,true));
 		mtfRoll.setText("0");
 		
 		JButton btnSendYpr = new JButton(ResBox.text("SEND"));

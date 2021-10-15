@@ -91,9 +91,18 @@ void pdlUpdate(pdlDroneState *ds)
 
     if(ds->stabilizationEnabled && ds->motorsEnabled)
     {
-      pdlUpdatePid(&ds->yawRatePid, ds->gyro.pure[PDL_Z], dt);
       pdlUpdatePid(&ds->pitchPid, ds->pitch, dt);
       pdlUpdatePid(&ds->rollPid, ds->roll, dt);
+
+      pdlUpdatePid(&ds->yawRatePid, ds->gyro.pure[PDL_Z], dt);
+
+      if(ds->pitchPid.enabled)
+        ds->pitchRatePid.target = ds->pitchPid.out;
+      pdlUpdatePid(&ds->pitchRatePid, ds->gyro.pure[PDL_Y], dt);
+
+      if(ds->rollPid.enabled)
+        ds->rollRatePid.target = ds->rollPid.out;
+      pdlUpdatePid(&ds->rollRatePid, ds->gyro.pure[PDL_X], dt);
 
       switch(PDL_DRONE_FRAME)
       {
@@ -108,6 +117,8 @@ void pdlUpdate(pdlDroneState *ds)
     else
     {
       pdlResetPid(&ds->yawRatePid);
+      pdlResetPid(&ds->pitchRatePid);
+      pdlResetPid(&ds->rollRatePid);
       pdlResetPid(&ds->pitchPid);
       pdlResetPid(&ds->rollPid);
     }
@@ -145,14 +156,18 @@ void pdlCrossFrameApplyPids(pdlDroneState *ds)
   dg[2] = ds->baseGas;
   dg[3] = ds->baseGas;
 
-  dg[0] += ds->pitchPid.out + ds->yawRatePid.out;
-  dg[1] += -ds->rollPid.out;
+  //dg[0] += ds->pitchPid.out + ds->yawRatePid.out;
+  //dg[1] += -ds->rollPid.out;
+  //dg[2] += ds->yawRatePid.out;
+#ifdef PDL_ASYMMETRIC_STABILIZATION
+  dg[0] += ds->pitchRatePid.out + ds->yawRatePid.out;
   dg[2] += ds->yawRatePid.out;
-
-#ifndef PDL_ASYMMETRIC_STABILIZATION
-  dg[1] += -ds->yawRatePid.out;
-  dg[2] += -ds->pitchPid.out;
-  dg[3] += ds->rollPid.out - ds->yawRatePid.out;
+  dg[3] += ds->rollRatePid.out;
+#else
+  dg[0] += ds->yawRatePid.out + ds->pitchRatePid.out;
+  dg[1] += -ds->yawRatePid.out - ds->rollRatePid.out;
+  dg[2] += ds->yawRatePid.out - ds->pitchRatePid.out;
+  dg[3] += -ds->yawRatePid.out + ds->rollRatePid.out;
 #endif
 
   for(uint8_t i = 0; i < PDL_MOTOR_COUNT; i++)
@@ -168,15 +183,15 @@ void pdlXFrameApplyPids(pdlDroneState *ds)
   dg[2] = ds->baseGas;
   dg[3] = ds->baseGas;
 
-  dg[1] += ds->yawRatePid.out + ds->pitchPid.out;
-  dg[2] += ds->pitchPid.out + ds->rollPid.out;
-  dg[3] += ds->yawRatePid.out + ds->rollPid.out;
-
-#ifndef PDL_ASYMMETRIC_STABILIZATION
-  dg[0] += -ds->yawRatePid.out - ds->pitchPid.out - ds->rollPid.out;
-  dg[1] += -ds->rollPid.out;
-  dg[2] += -ds->yawRatePid.out;
-  dg[3] += -ds->pitchPid.out;
+#ifdef PDL_ASYMMETRIC_STABILIZATION
+  dg[1] += ds->yawRatePid.out + ds->pitchRatePid.out;
+  dg[2] += ds->pitchRatePid.out + ds->rollRatePid.out;
+  dg[3] += ds->yawRatePid.out + ds->rollRatePid.out;
+#else
+  dg[0] += -ds->yawRatePid.out - ds->pitchRatePid.out - ds->rollRatePid.out;
+  dg[1] += ds->yawRatePid.out + ds->pitchRatePid.out - ds->rollRatePid.out;
+  dg[2] += -ds->yawRatePid.out + ds->pitchRatePid.out + ds->rollRatePid.out;
+  dg[3] += ds->yawRatePid.out - ds->pitchRatePid.out + ds->rollRatePid.out;
 #endif
 
   for(uint8_t i = 0; i < PDL_MOTOR_COUNT; i++)

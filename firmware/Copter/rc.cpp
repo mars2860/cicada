@@ -16,7 +16,7 @@
 
 #define DEFAULT_TELEMETRY_PERIOD        50000
 // max packet size may be 512, this size is resctricted by esp8266 platform
-#define TELEMETRY_MAX_PACKET_SIZE       320
+#define TELEMETRY_MAX_PACKET_SIZE       512
 
 IPAddress ip;
 IPAddress gateway;
@@ -44,7 +44,7 @@ uint32_t telemetryPeriod;
 #define CMD_SET_MAGNET_OFFSET     104
 #define CMD_SELF_CALIB_ACCEL      105
 #define CMD_SELF_CALIB_GYRO       106
-#define CMD_SET_YAW_PID           107
+#define CMD_SET_YAW_RATE_PID      107
 #define CMD_SET_PITCH_PID         108
 #define CMD_SET_ROLL_PID          109
 #define CMD_SET_ALT_PID           110
@@ -55,6 +55,8 @@ uint32_t telemetryPeriod;
 #define CMD_SET_SEA_LEVEL         115
 #define CMD_SET_ALTITUDE          116
 #define CMD_SET_BASE_GAS          117
+#define CMD_SET_PITCH_RATE_PID    118
+#define CMD_SET_ROLL_RATE_PID     119
 
 /// Writes data to telemetry packet at given position. Returns new position to write
 uint16_t writeTelemetryPacket(uint16_t pos, byte *packet, void *value, size_t valueSize);
@@ -203,7 +205,7 @@ void processCommand(pdlDroneState *ds)
       case CMD_SELF_CALIB_GYRO:
         imuCalibrateGyro(ds);
         break;
-      case CMD_SET_YAW_PID:
+      case CMD_SET_YAW_RATE_PID:
         enabled = udpPacket[1];
         memcpy(&kp, &udpPacket[2], sizeof(kp));
         memcpy(&ki, &udpPacket[2 + sizeof(kp)], sizeof(ki));
@@ -213,6 +215,26 @@ void processCommand(pdlDroneState *ds)
         ds->yawRatePid.ki = ki;
         ds->yawRatePid.kd = kd;
         break;
+      case CMD_SET_PITCH_RATE_PID:
+        enabled = udpPacket[1];
+        memcpy(&kp, &udpPacket[2], sizeof(kp));
+        memcpy(&ki, &udpPacket[2 + sizeof(kp)], sizeof(ki));
+        memcpy(&kd, &udpPacket[2 + sizeof(kp) + sizeof(ki)], sizeof(kd));
+        ds->pitchRatePid.enabled = enabled;
+        ds->pitchRatePid.kp = kp;
+        ds->pitchRatePid.ki = ki;
+        ds->pitchRatePid.kd = kd;
+        break;
+      case CMD_SET_ROLL_RATE_PID:
+         enabled = udpPacket[1];
+         memcpy(&kp, &udpPacket[2], sizeof(kp));
+         memcpy(&ki, &udpPacket[2 + sizeof(kp)], sizeof(ki));
+         memcpy(&kd, &udpPacket[2 + sizeof(kp) + sizeof(ki)], sizeof(kd));
+         ds->rollRatePid.enabled = enabled;
+         ds->rollRatePid.kp = kp;
+         ds->rollRatePid.ki = ki;
+         ds->rollRatePid.kd = kd;
+         break;
       case CMD_SET_PITCH_PID:
         enabled = udpPacket[1];
         memcpy(&kp, &udpPacket[2], sizeof(kp));
@@ -248,8 +270,16 @@ void processCommand(pdlDroneState *ds)
         memcpy(&ki, &udpPacket[1 + sizeof(kp)], sizeof(ki));
         memcpy(&kd, &udpPacket[1 + sizeof(kp) + sizeof(ki)], sizeof(kd));
         ds->yawRatePid.target = kp;
-        ds->pitchPid.target = ki;
-        ds->rollPid.target = kd;
+
+        if(ds->pitchPid.enabled)
+          ds->pitchPid.target = ki;
+        else
+          ds->pitchRatePid.target = ki;
+
+        if(ds->rollPid.enabled)
+          ds->rollPid.target = kd;
+        else
+          ds->rollRatePid.target = kd;
         break;
       case CMD_SET_PERIODS:
         memcpy(&telemetryPeriod, &udpPacket[1], sizeof(telemetryPeriod));

@@ -1,6 +1,6 @@
 package copter.commands;
 
-public class CmdSetRollPid extends CmdSetYawPid
+public class CmdSetRollPid extends CmdSetYawRatePid
 {
 	public CmdSetRollPid(boolean enabled, float kp, float ki, float kd)
 	{

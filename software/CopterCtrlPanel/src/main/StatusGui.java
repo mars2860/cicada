@@ -71,7 +71,7 @@ public class StatusGui extends JSavedFrame
 			mlbPitchValue.setText(fmt1.format(pitch) + "/" + fmt1.format(pitchTarget));
 			mlbRollValue.setText(fmt1.format(roll) + "/" + fmt1.format(rollTarget));
 			mlbHeading.setText(fmt2.format(heading));
-			mlbLoopTime.setText(fmt2.format(droneState.maxLoopTime));
+			mlbLoopTime.setText(fmt2.format(droneState.avgLoopTime));
 			mlbTemperature.setText(fmt1.format(droneState.temperature));
 			mlbPressure.setText(fmt1.format(droneState.pressure) + "/" +
 								fmt1.format(droneState.seaLevel));

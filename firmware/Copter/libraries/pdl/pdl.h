@@ -16,7 +16,7 @@ extern "C" {
 //-----------------------------------------------------------------------------
 // SETTINGS
 
-/// Number of motors, motors are indexed from left-top in counterclockwise direction
+/// Number of motors, motors are indexed from left-top in counterclockwise direction like pins of chip
 #define PDL_MOTOR_COUNT                 4
 /// Default maximum gas of motor. Use pdlSetMotorGasLimits in your pdlSetupEscaper
 #define PDL_DEFAULT_MAX_MOTOR_GAS       2000
@@ -119,6 +119,10 @@ typedef struct
   float seaLevel;
   // Yaw Rate PID
   pdlPidState yawRatePid;
+  // Pitch Rate PID
+  pdlPidState pitchRatePid;
+  // Roll Rate PID
+  pdlPidState rollRatePid;
   // Pitch PID
   pdlPidState pitchPid;
   // Roll PID

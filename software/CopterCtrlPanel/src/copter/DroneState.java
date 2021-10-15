@@ -16,8 +16,10 @@ import copter.commands.CmdResetAltitude;
 import copter.commands.CmdSetAltPid;
 import copter.commands.CmdSetPeriods;
 import copter.commands.CmdSetPitchPid;
+import copter.commands.CmdSetPitchRatePid;
 import copter.commands.CmdSetRollPid;
-import copter.commands.CmdSetYawPid;
+import copter.commands.CmdSetRollRatePid;
+import copter.commands.CmdSetYawRatePid;
 
 /** @note all types are double for fast processing charts */
 public class DroneState implements Cloneable
@@ -285,6 +287,14 @@ public class DroneState implements Cloneable
 	@Expose
 	@SerializedName("yawRatePid")
 	public AngularPid yawRatePid = new AngularPid();
+	@SettingGroup(name = "PITCH_RATE_PID")
+	@Expose
+	@SerializedName("pitchRatePid")
+	public AngularPid pitchRatePid = new AngularPid();
+	@SettingGroup(name = "ROLL_RATE_PID")
+	@Expose
+	@SerializedName("rollRatePid")
+	public AngularPid rollRatePid = new AngularPid();
 	@SettingGroup(name = "PITCH_PID")
 	@Expose
 	@SerializedName("pitchPid")
@@ -355,6 +365,8 @@ public class DroneState implements Cloneable
 		altitude = parser.getFloat(packet);
 		seaLevel = parser.getFloat(packet);
 		yawRatePid.parse(parser, packet);
+		pitchRatePid.parse(parser, packet);
+		rollRatePid.parse(parser, packet);
 		pitchPid.parse(parser, packet);
 		rollPid.parse(parser, packet);
 		altPid.parse(parser, packet);
@@ -394,7 +406,19 @@ public class DroneState implements Cloneable
 		float kp = ds.yawRatePid.kp;
 		float ki = ds.yawRatePid.ki;
 		float kd = ds.yawRatePid.kd;
-		CmdSetYawPid cmd4 = new CmdSetYawPid(enabled,kp,ki,kd);
+		CmdSetYawRatePid cmd4 = new CmdSetYawRatePid(enabled,kp,ki,kd);
+		
+		enabled = ds.pitchRatePid.enabled;
+		kp = ds.pitchRatePid.kp;
+		ki = ds.pitchRatePid.ki;
+		kd = ds.pitchRatePid.kd;
+		CmdSetPitchRatePid cmd31 = new CmdSetPitchRatePid(enabled,kp,ki,kd);
+		
+		enabled = ds.rollRatePid.enabled;
+		kp = ds.rollRatePid.kp;
+		ki = ds.rollRatePid.ki;
+		kd = ds.rollRatePid.kd;
+		CmdSetRollRatePid cmd32 = new CmdSetRollRatePid(enabled,kp,ki,kd);
 		
 		enabled = ds.pitchPid.enabled;
 		kp = ds.pitchPid.kp;
@@ -455,5 +479,13 @@ public class DroneState implements Cloneable
 		CopterCommander.instance().addCmd(cmd9);
 		CopterCommander.instance().addCmd(cmd9);
 		CopterCommander.instance().addCmd(cmd9);
+		
+		CopterCommander.instance().addCmd(cmd31);
+		CopterCommander.instance().addCmd(cmd31);
+		CopterCommander.instance().addCmd(cmd31);
+		
+		CopterCommander.instance().addCmd(cmd32);
+		CopterCommander.instance().addCmd(cmd32);
+		CopterCommander.instance().addCmd(cmd32);
 	}
 }

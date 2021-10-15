@@ -100,6 +100,8 @@ public class TextBundle extends ListResourceBundle
             {"PID_ENABLED", "PID Enabled"},
             {"YAW_PID", "Yaw PID"},
             {"YAW_RATE_PID", "Yaw Rate PID"},
+            {"PITCH_RATE_PID", "Pitch Rate PID"},
+            {"ROLL_RATE_PID", "Roll Rate PID"},
             {"PITCH_PID", "Pitch PID"},
             {"ROLL_PID", "Roll PID"},
             {"ALT_PID", "Alt PID"},

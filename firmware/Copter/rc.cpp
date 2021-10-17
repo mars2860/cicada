@@ -139,6 +139,8 @@ void processCommand(pdlDroneState *ds)
         if(ds->motorsEnabled)
         {
           ds->yawRatePid.target = 0;
+          ds->pitchRatePid.target = 0;
+          ds->rollRatePid.target = 0;
           ds->pitchPid.target = 0;
           ds->rollPid.target = 0;
         }

@@ -21,7 +21,7 @@ void pdlSetupEscaper(pdlDroneState*)
   digitalWrite(M4_PIN, LOW);
 
   dshotSetup(M1_PIN,M2_PIN,M3_PIN,M4_PIN,1000);
-  pdlSetMotorGasLimits(0,0,2000);
+  pdlSetMotorGasLimits(0,0,1999);
   /*
     dshotEnable(0);
 

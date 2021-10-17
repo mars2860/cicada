@@ -129,7 +129,7 @@ void processCommand(pdlDroneState *ds)
     uint8_t cmd = udpPacket[0];
     int16_t dx,dy,dz;
     int32_t t0,t1,t2,t3;
-    float kp,ki,kd;
+    float kp,ki,kd,maxOut;
     uint8_t enabled;
     switch(cmd)
     {
@@ -210,60 +210,72 @@ void processCommand(pdlDroneState *ds)
         memcpy(&kp, &udpPacket[2], sizeof(kp));
         memcpy(&ki, &udpPacket[2 + sizeof(kp)], sizeof(ki));
         memcpy(&kd, &udpPacket[2 + sizeof(kp) + sizeof(ki)], sizeof(kd));
+        memcpy(&maxOut, &udpPacket[2 + sizeof(kp) + sizeof(ki) + sizeof(kd)], sizeof(maxOut));
         ds->yawRatePid.enabled = enabled;
         ds->yawRatePid.kp = kp;
         ds->yawRatePid.ki = ki;
         ds->yawRatePid.kd = kd;
+        ds->yawRatePid.maxOut = maxOut;
         break;
       case CMD_SET_PITCH_RATE_PID:
         enabled = udpPacket[1];
         memcpy(&kp, &udpPacket[2], sizeof(kp));
         memcpy(&ki, &udpPacket[2 + sizeof(kp)], sizeof(ki));
         memcpy(&kd, &udpPacket[2 + sizeof(kp) + sizeof(ki)], sizeof(kd));
+        memcpy(&maxOut, &udpPacket[2 + sizeof(kp) + sizeof(ki) + sizeof(kd)], sizeof(maxOut));
         ds->pitchRatePid.enabled = enabled;
         ds->pitchRatePid.kp = kp;
         ds->pitchRatePid.ki = ki;
         ds->pitchRatePid.kd = kd;
+        ds->pitchRatePid.maxOut = maxOut;
         break;
       case CMD_SET_ROLL_RATE_PID:
          enabled = udpPacket[1];
          memcpy(&kp, &udpPacket[2], sizeof(kp));
          memcpy(&ki, &udpPacket[2 + sizeof(kp)], sizeof(ki));
          memcpy(&kd, &udpPacket[2 + sizeof(kp) + sizeof(ki)], sizeof(kd));
+         memcpy(&maxOut, &udpPacket[2 + sizeof(kp) + sizeof(ki) + sizeof(kd)], sizeof(maxOut));
          ds->rollRatePid.enabled = enabled;
          ds->rollRatePid.kp = kp;
          ds->rollRatePid.ki = ki;
          ds->rollRatePid.kd = kd;
+         ds->rollRatePid.maxOut = maxOut;
          break;
       case CMD_SET_PITCH_PID:
         enabled = udpPacket[1];
         memcpy(&kp, &udpPacket[2], sizeof(kp));
         memcpy(&ki, &udpPacket[2 + sizeof(kp)], sizeof(ki));
         memcpy(&kd, &udpPacket[2 + sizeof(kp) + sizeof(ki)], sizeof(kd));
+        memcpy(&maxOut, &udpPacket[2 + sizeof(kp) + sizeof(ki) + sizeof(kd)], sizeof(maxOut));
         ds->pitchPid.enabled = enabled;
         ds->pitchPid.kp = kp;
         ds->pitchPid.ki = ki;
         ds->pitchPid.kd = kd;
+        ds->pitchPid.maxOut = maxOut;
         break;
       case CMD_SET_ROLL_PID:
         enabled = udpPacket[1];
         memcpy(&kp, &udpPacket[2], sizeof(kp));
         memcpy(&ki, &udpPacket[2 + sizeof(kp)], sizeof(ki));
         memcpy(&kd, &udpPacket[2 + sizeof(kp) + sizeof(ki)], sizeof(kd));
+        memcpy(&maxOut, &udpPacket[2 + sizeof(kp) + sizeof(ki) + sizeof(kd)], sizeof(maxOut));
         ds->rollPid.enabled = enabled;
         ds->rollPid.kp = kp;
         ds->rollPid.ki = ki;
         ds->rollPid.kd = kd;
+        ds->rollPid.maxOut = maxOut;
         break;
       case CMD_SET_ALT_PID:
         enabled = udpPacket[1];
         memcpy(&kp, &udpPacket[2], sizeof(kp));
         memcpy(&ki, &udpPacket[2 + sizeof(kp)], sizeof(ki));
         memcpy(&kd, &udpPacket[2 + sizeof(kp) + sizeof(ki)], sizeof(kd));
+        memcpy(&maxOut, &udpPacket[2 + sizeof(kp) + sizeof(ki) + sizeof(kd)], sizeof(maxOut));
         ds->altPid.enabled = enabled;
         ds->altPid.kp = kp;
         ds->altPid.ki = ki;
         ds->altPid.kd = kd;
+        ds->altPid.maxOut = maxOut;
         break;
       case CMD_SET_YPR:
         memcpy(&kp, &udpPacket[1], sizeof(kp));

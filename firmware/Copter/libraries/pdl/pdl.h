@@ -64,6 +64,7 @@ typedef struct s_pdlPidState
   float out;
   float errSum;
   float prevInput;
+  float maxOut;
   uint32_t enabled; // not use uint8_t because it needs to align divisible by 4 bytes
 } pdlPidState;  // 32 bytes
 

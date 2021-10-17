@@ -33,6 +33,10 @@ public class RemoteControlGui extends JSavedFrame
 	// и после того как отпускаем клавишу, дрон продолжает ещё принимать старые команды
 	private static final long KEYBOARD_PERIOD = 40; 	// FPS 25
 	
+	private static final float LEVEL_CTRL_DELTA = 10.f;
+	private static final int MOTOR_CTRL_DELTA = 4;//2;
+	private static final float ROTATE_CTRL_DELTA = 100.f;//80.f;
+	
 	private JTextField mtfYaw;
 	private JTextField mtfPitch;
 	private JTextField mtfRoll;
@@ -95,14 +99,14 @@ public class RemoteControlGui extends JSavedFrame
 			// get up
 			if(btnGetUp.getModel().isPressed())
 			{
-				CmdSetBaseGas cmd = new CmdSetBaseGas((int)ds.baseGas + 2);
+				CmdSetBaseGas cmd = new CmdSetBaseGas((int)ds.baseGas + MOTOR_CTRL_DELTA);
 				CopterCommander.instance().addCmd(cmd);
 			}
 
 			// get down
 			if(btnGetDown.getModel().isPressed())
 			{
-				CmdSetBaseGas cmd = new CmdSetBaseGas((int)ds.baseGas - 2);
+				CmdSetBaseGas cmd = new CmdSetBaseGas((int)ds.baseGas - MOTOR_CTRL_DELTA);
 				CopterCommander.instance().addCmd(cmd);
 			}
 			
@@ -111,32 +115,32 @@ public class RemoteControlGui extends JSavedFrame
 			// roll left
 			if(btnLeft.getModel().isPressed())
 			{
-				cmdYpr.setRollDeg(-5.f);
+				cmdYpr.setRollDeg(-LEVEL_CTRL_DELTA);
 			}
 			// roll right
 			if(btnRight.getModel().isPressed())
 			{
-				cmdYpr.setRollDeg(5.f);
+				cmdYpr.setRollDeg(LEVEL_CTRL_DELTA);
 			}
 			// pitch fwd
 			if(btnFwd.getModel().isPressed())
 			{
-				cmdYpr.setPitchDeg(5.f);
+				cmdYpr.setPitchDeg(LEVEL_CTRL_DELTA);
 			}
 			// pitch bck
 			if(btnBck.getModel().isPressed())
 			{
-				cmdYpr.setPitchDeg(-5.f);
+				cmdYpr.setPitchDeg(-LEVEL_CTRL_DELTA);
 			}
 			// rotate cw
 			if(btnCw.getModel().isPressed())
 			{
-				cmdYpr.setYawRateDeg(-30.f);
+				cmdYpr.setYawRateDeg(-ROTATE_CTRL_DELTA);
 			}
 			// rotate ccw
 			if(btnCcw.getModel().isPressed())
 			{
-				cmdYpr.setYawRateDeg(30.f);
+				cmdYpr.setYawRateDeg(ROTATE_CTRL_DELTA);
 			}
 			
 			if(cmdYpr.isNull() == false)

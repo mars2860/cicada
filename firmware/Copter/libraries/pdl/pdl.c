@@ -268,6 +268,13 @@ void pdlUpdatePid(pdlPidState *pid, float input, float dt)
   pid->errSum += dt*(err + prevErr)/2.f;
   pid->out = pid->kp*err + pid->ki*pid->errSum + pid->kd*(err - prevErr)/dt;
   pid->prevInput = input;
+  if(fabsf(pid->out) > fabsf(pid->maxOut))
+  {
+    if(pid->out > 0)
+      pid->out = pid->maxOut;
+    else
+      pid->out = -pid->maxOut;
+  }
 }
 
 void pdlResetPid(pdlPidState *pid)

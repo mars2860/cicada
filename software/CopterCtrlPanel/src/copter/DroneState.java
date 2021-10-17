@@ -176,13 +176,17 @@ public class DroneState implements Cloneable
 		@Setting
 		@Expose
 		public float kd;
+		@NoChart
+		@Setting
+		@Expose
+		public float maxOut;
 
 		public double target;
 
 		@NoChart
 		public double errSum;
 		@NoChart
-		public double prevErr;
+		public double prevInput;
 		
 		public double out;
 		
@@ -194,7 +198,8 @@ public class DroneState implements Cloneable
 			target = parser.getFloat(packet);
 			out = parser.getFloat(packet);
 			errSum = parser.getFloat(packet);
-			prevErr = parser.getFloat(packet);
+			prevInput = parser.getFloat(packet);
+			maxOut = parser.getFloat(packet);
 			enabled = (parser.getUint32t(packet) > 0)?true:false;
 		}
 		
@@ -406,37 +411,43 @@ public class DroneState implements Cloneable
 		float kp = ds.yawRatePid.kp;
 		float ki = ds.yawRatePid.ki;
 		float kd = ds.yawRatePid.kd;
-		CmdSetYawRatePid cmd4 = new CmdSetYawRatePid(enabled,kp,ki,kd);
+		float maxOut = ds.yawRatePid.maxOut;
+		CmdSetYawRatePid cmd4 = new CmdSetYawRatePid(enabled,kp,ki,kd,maxOut);
 		
 		enabled = ds.pitchRatePid.enabled;
 		kp = ds.pitchRatePid.kp;
 		ki = ds.pitchRatePid.ki;
 		kd = ds.pitchRatePid.kd;
-		CmdSetPitchRatePid cmd31 = new CmdSetPitchRatePid(enabled,kp,ki,kd);
+		maxOut = ds.pitchRatePid.maxOut;
+		CmdSetPitchRatePid cmd31 = new CmdSetPitchRatePid(enabled,kp,ki,kd,maxOut);
 		
 		enabled = ds.rollRatePid.enabled;
 		kp = ds.rollRatePid.kp;
 		ki = ds.rollRatePid.ki;
 		kd = ds.rollRatePid.kd;
-		CmdSetRollRatePid cmd32 = new CmdSetRollRatePid(enabled,kp,ki,kd);
+		maxOut = ds.rollRatePid.maxOut;
+		CmdSetRollRatePid cmd32 = new CmdSetRollRatePid(enabled,kp,ki,kd,maxOut);
 		
 		enabled = ds.pitchPid.enabled;
 		kp = ds.pitchPid.kp;
 		ki = ds.pitchPid.ki;
 		kd = ds.pitchPid.kd;
-		CmdSetPitchPid cmd5 = new CmdSetPitchPid(enabled,kp,ki,kd);
+		maxOut = ds.pitchPid.maxOut;
+		CmdSetPitchPid cmd5 = new CmdSetPitchPid(enabled,kp,ki,kd,maxOut);
 		
 		enabled = ds.rollPid.enabled;
 		kp = ds.rollPid.kp;
 		ki = ds.rollPid.ki;
 		kd = ds.rollPid.kd;
-		CmdSetRollPid cmd6 = new CmdSetRollPid(enabled,kp,ki,kd);
+		maxOut = ds.rollPid.maxOut;
+		CmdSetRollPid cmd6 = new CmdSetRollPid(enabled,kp,ki,kd,maxOut);
 		
 		enabled = ds.altPid.enabled;
 		kp = ds.altPid.kp;
 		ki = ds.altPid.ki;
 		kd = ds.altPid.kd;
-		CmdSetAltPid cmd7 = new CmdSetAltPid(enabled,kp,ki,kd);
+		maxOut = ds.altPid.maxOut;
+		CmdSetAltPid cmd7 = new CmdSetAltPid(enabled,kp,ki,kd,maxOut);
 		
 		dx = ds.net.telemetryPeriod;
 		dy = 1;

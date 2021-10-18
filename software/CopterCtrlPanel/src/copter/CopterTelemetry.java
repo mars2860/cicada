@@ -219,4 +219,18 @@ public class CopterTelemetry extends java.util.Observable implements Runnable
 		
 		return result; 
 	}
+	
+	public void clearBlackBox()
+	{
+		synchronized(objDataSync)
+		{
+			mBlackBox.clear();
+			mBlackBoxSize = 0;
+		}
+		
+		this.setChanged();
+		this.notifyObservers();
+		this.clearChanged();
+	}
+
 }

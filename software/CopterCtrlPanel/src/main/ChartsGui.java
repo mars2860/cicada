@@ -69,6 +69,7 @@ public class ChartsGui extends JSavedFrame
 	private JButton btnSaveImage;
 	private JButton btnExportSelRange;
 	private JButton btnExportFullRange;
+	private JButton btnClearBlackBox;
 	private ChartViewer mDataChartViewer;
 	private ChartMouseListener mChartMouseListener;
 	private Timer mRealtimeChartTimer;
@@ -266,6 +267,15 @@ public class ChartsGui extends JSavedFrame
 		protected double getEndTimestamp()
 		{
 			return mData[mData.length - 1].timestamp;
+		}
+	}
+	
+	private class OnBtnClearBlackBox implements ActionListener
+	{
+		@Override
+		public void actionPerformed(ActionEvent e)
+		{
+			CopterTelemetry.instance().clearBlackBox();
 		}
 	}
 	
@@ -544,6 +554,8 @@ public class ChartsGui extends JSavedFrame
 	    btnExportSelRange.addActionListener(new OnBtnExportSelRange());
 	    btnExportFullRange = new JButton(ResBox.text("EXPORT_FULL_RANGE"));
 	    btnExportFullRange.addActionListener(new OnBtnExportFullRange());
+	    btnClearBlackBox = new JButton(ResBox.text("CLEAR_BLACK_BOX"));
+	    btnClearBlackBox.addActionListener(new OnBtnClearBlackBox());
 	    
 	    btnSaveImage.setEnabled(false);
 		btnExportSelRange.setEnabled(false);
@@ -555,6 +567,7 @@ public class ChartsGui extends JSavedFrame
 	    pnlData.add(btnSaveImage,"grow,wrap");
 	    pnlData.add(btnExportSelRange,"grow,wrap");
 	    pnlData.add(btnExportFullRange,"grow,wrap");
+	    pnlData.add(btnClearBlackBox,"grow,wrap");
 
 	    JPanel pnlSource = new JPanel(new MigLayout("insets 0 0 0 0","[grow]","[][grow]"));
 	    

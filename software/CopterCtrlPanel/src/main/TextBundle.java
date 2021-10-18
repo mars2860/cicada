@@ -77,6 +77,7 @@ public class TextBundle extends ListResourceBundle
             {"EXPORT_SEL_RANGE","Export sel range"},
             {"EXPORT_FULL_RANGE","Export full range"},
             {"TIME_AXIS","time (us)"},
+            {"CLEAR_BLACK_BOX","Clear BlackBox"},
             
             {"ALARMS", "Alarms"},
             {"COLLECT_DATA", "Collect Data"},

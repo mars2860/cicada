@@ -80,5 +80,6 @@ public class ResBox
 		icons.put("ROTATE_CW", loadIcon("images/rotate_cw.png"));
 		icons.put("ROTATE_CCW", loadIcon("images/rotate_ccw.png"));
 		icons.put("STOP", loadIcon("images/stop.png"));
+		icons.put("LIDAR", loadIcon("images/lidar.png"));
 	}
 }

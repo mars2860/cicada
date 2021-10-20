@@ -36,6 +36,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/RTIMUFusion2}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/pdl}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/movingAvg}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/drivers/VL53L1X}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.cpp.sketch.input.95334001" name="CPP source files" superClass="io.sloeber.compiler.cpp.sketch.input"/>
 							</tool>
@@ -58,6 +59,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/RTIMUFusion2}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/pdl}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/movingAvg}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/drivers/VL53L1X}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.c.sketch.input.764340330" name="C Source Files" superClass="io.sloeber.compiler.c.sketch.input"/>
 							</tool>
@@ -80,6 +82,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/RTIMUFusion2}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/pdl}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/libraries/movingAvg}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Copter/drivers/VL53L1X}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.S.sketch.input.736617084" name="Assembly source files" superClass="io.sloeber.compiler.S.sketch.input"/>
 							</tool>

@@ -5,11 +5,13 @@
 int32_t pdlMinGas;
 int32_t pdlNullGas;
 int32_t pdlMaxGas;
+float pdlLidarMaxRange;
 uint32_t pdlImuReadPeriod;
 uint32_t pdlBaroReadPeriod;
 uint32_t pdlBatteryReadPeriod;
 uint32_t pdlEscaperUpdatePeriod;
 uint32_t pdlRcUpdatePeriod;
+uint32_t pdlLidarUpdatePeriod;
 
 uint32_t pdlGetDeltaTime(uint32_t cur, uint32_t last);
 void pdlCrossFrameApplyPids(pdlDroneState*);
@@ -35,6 +37,7 @@ void pdlSetup(pdlDroneState *ds)
   pdlBatteryReadPeriod = PDL_DEFAULT_BATTERY_READ_PERIOD;
   pdlEscaperUpdatePeriod = PDL_DEFAULT_ESCAPER_UPDATE_PERIOD;
   pdlRcUpdatePeriod = PDL_DEFAULT_RC_UPDATE_PERIOD;
+  pdlLidarUpdatePeriod = PDL_DEFAULT_LIDAR_UPDATE_PERIOD;
 
   pdlStopMotors(ds);
   pdlSetupEscaper(ds);
@@ -43,6 +46,7 @@ void pdlSetup(pdlDroneState *ds)
   pdlSetupMagneto(ds);
   pdlSetupBaro(ds);
   pdlSetupRc(ds);
+  pdlSetupLidar(ds);
 }
 
 void pdlUpdate(pdlDroneState *ds)
@@ -52,6 +56,10 @@ void pdlUpdate(pdlDroneState *ds)
   static uint32_t batteryLastReadTime = 0;
   static uint32_t escaperLastUpdateTime = 0;
   static uint32_t rcLastUpdateTime = 0;
+  static uint32_t lidarLastUpdateTime = 0;
+
+  float dt = 0;
+  float alt = 0;
 
   ds->timestamp = pdlMicros();
 
@@ -79,9 +87,17 @@ void pdlUpdate(pdlDroneState *ds)
 
   ds->timestamp = pdlMicros();
 
+  if(pdlGetDeltaTime(ds->timestamp, lidarLastUpdateTime) >= pdlLidarUpdatePeriod)
+  {
+    lidarLastUpdateTime = ds->timestamp;
+    pdlReadLidar(ds);
+  }
+
+  ds->timestamp = pdlMicros();
+
   if(pdlGetDeltaTime(ds->timestamp,imuLastReadTime) >= pdlImuReadPeriod)
   {
-    float dt = (float)pdlGetDeltaTime(ds->timestamp, imuLastReadTime)/1000000.f;
+    dt = (float)pdlGetDeltaTime(ds->timestamp, imuLastReadTime)/1000000.f;
     imuLastReadTime = ds->timestamp;
 
     pdlReadAccel(ds);
@@ -104,6 +120,12 @@ void pdlUpdate(pdlDroneState *ds)
         ds->rollRatePid.target = ds->rollPid.out;
       pdlUpdatePid(&ds->rollRatePid, ds->gyro.pure[PDL_X], dt);
 
+      if(ds->lidarRange > 0 && ds->lidarRange < pdlLidarMaxRange)
+        alt = ds->lidarRange;
+      else if(ds->pressure > 0)
+        alt = ds->baroAlt;
+      pdlUpdatePid(&ds->altPid, alt, dt);
+
       switch(PDL_DRONE_FRAME)
       {
       case PDL_DRONE_FRAME_CROSS:
@@ -121,6 +143,7 @@ void pdlUpdate(pdlDroneState *ds)
       pdlResetPid(&ds->rollRatePid);
       pdlResetPid(&ds->pitchPid);
       pdlResetPid(&ds->rollPid);
+      pdlResetPid(&ds->altPid);
     }
   }
 
@@ -228,6 +251,16 @@ void pdlSetEscaperUpdatePeriod(uint32_t t)
 void pdlSetRcUpdatePeriod(uint32_t t)
 {
   pdlRcUpdatePeriod = t;
+}
+
+void pdlSetLidarUpdatePeriod(uint32_t t)
+{
+  pdlLidarUpdatePeriod = t;
+}
+
+void pdlSetLidarMaxRange(float range)
+{
+  pdlLidarMaxRange = range;
 }
 
 void pdlSetMotorGas(pdlDroneState *ds, uint8_t m, int32_t gas)

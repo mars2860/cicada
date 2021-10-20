@@ -36,6 +36,7 @@ public class TextBundle extends ListResourceBundle
             {"PRESSURE_STATE","Pressure (hPa)"},
             {"TEMPERATURE_STATE","Temperature (Celsius deg)"},
             {"LOOP_TIME_STATE","One loop time of thread (us)"},
+            {"LIDAR_RANGE", "Range measured by lidar (meters)"},
             
             
             {"MOTORS", "Motors"},

@@ -32,6 +32,8 @@ extern "C" {
 #define PDL_DEFAULT_ESCAPER_UPDATE_PERIOD 0
 /// Remote control update period. Use pdlSetRcUpdatePeriod in pdlRcSetup
 #define PDL_DEFAULT_RC_UPDATE_PERIOD     0
+/// Lidar update period. Use pdlSetLidarUpdatePeriod in pdlLidarSetup
+#define PDL_DEFAULT_LIDAR_UPDATE_PERIOD 50000
 /// Drone frame PDL_DRONE_FRAME_X | PDL_DRONE_FRAME_CROSS
 #define PDL_DRONE_FRAME                 PDL_DRONE_FRAME_CROSS
 /// comment to enable symmetric motors regulation in stabilization
@@ -66,7 +68,7 @@ typedef struct s_pdlPidState
   float prevInput;
   float maxOut;
   uint32_t enabled; // not use uint8_t because it needs to align divisible by 4 bytes
-} pdlPidState;  // 32 bytes
+} pdlPidState;  // 36 bytes
 
 typedef struct s_pdlRcState
 {
@@ -115,9 +117,11 @@ typedef struct
   // hPa
   float pressure;
   // meters
-  float altitude;
+  float baroAlt;
   // hPa
   float seaLevel;
+  // Lidar range in meters (if less 0, that means there is error in lidar)
+  float lidarRange;
   // Yaw Rate PID
   pdlPidState yawRatePid;
   // Pitch Rate PID
@@ -149,10 +153,13 @@ void pdlSetBaroReadPeriod(uint32_t);
 void pdlSetBatteryReadPeriod(uint32_t);
 void pdlSetEscaperUpdatePeriod(uint32_t);
 void pdlSetRcUpdatePeriod(uint32_t);
+void pdlSetLidarUpdatePeriod(uint32_t);
 
 void pdlStopMotors(pdlDroneState*);
 void pdlSetMotorGas(pdlDroneState*, uint8_t, int32_t);
 void pdlAddMotorGas(pdlDroneState*, uint8_t, int32_t);
+
+void pdlSetLidarMaxRange(float);
 
 void pdlUpdatePid(pdlPidState*, float input, float dt);
 void pdlResetPid(pdlPidState*);
@@ -205,6 +212,7 @@ void pdlSetupGyro(pdlDroneState*);
 void pdlSetupMagneto(pdlDroneState*);
 void pdlSetupBaro(pdlDroneState*);
 void pdlSetupBattery(pdlDroneState*);
+void pdlSetupLidar(pdlDroneState*);
 
 /// @note should to take motorGas from pdlDroneState and send it to escaper
 void pdlUpdateEscaper(pdlDroneState*);
@@ -220,6 +228,8 @@ void pdlReadGyro(pdlDroneState*);
 void pdlReadMagneto(pdlDroneState*);
 /// @return result should be saved in pdlDroneState.temperature,pressure,altitude
 void pdlReadBaro(pdlDroneState*);
+/// @return result should be saved in pdlDroneState.lidarRange
+void pdlReadLidar(pdlDroneState*);
 /// @return result should be saved in pdlDroneState.yaw,pitch,roll
 void pdlTripleAxisSensorFusion(pdlDroneState*);
 

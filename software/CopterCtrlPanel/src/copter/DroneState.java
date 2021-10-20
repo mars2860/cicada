@@ -328,6 +328,7 @@ public class DroneState implements Cloneable
 	public double altitude;
 	@NoChart
 	public double seaLevel;
+	public double lidarRange;
 	// no sense variable, this is 2 bytes gap in C structure
 	protected int gap;
 	
@@ -369,6 +370,7 @@ public class DroneState implements Cloneable
 		pressure = parser.getFloat(packet);
 		altitude = parser.getFloat(packet);
 		seaLevel = parser.getFloat(packet);
+		lidarRange = parser.getFloat(packet);
 		yawRatePid.parse(parser, packet);
 		pitchRatePid.parse(parser, packet);
 		rollRatePid.parse(parser, packet);

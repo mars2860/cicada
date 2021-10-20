@@ -29,6 +29,7 @@ public class StatusGui extends JSavedFrame
 	private JLabel mlbTemperature;
 	private JLabel mlbPressure;
 	private JLabel mlbAltitude;
+	private JLabel mlbLidarRange;
 
 	private class OnTelemetryUpdate implements Observer
 	{
@@ -77,6 +78,7 @@ public class StatusGui extends JSavedFrame
 								fmt1.format(droneState.seaLevel));
 			mlbAltitude.setText(fmt1.format(droneState.altitude) + "/" +
 								fmt1.format(droneState.altPid.target));
+			mlbLidarRange.setText(fmt1.format(droneState.lidarRange));
 			
 			mlbYaw.setIcon(rotateImageIcon(ResBox.icon("YAW"), yaw));
 			mlbPitch.setIcon(rotateImageIcon(ResBox.icon("PITCH"), pitch));
@@ -131,6 +133,8 @@ public class StatusGui extends JSavedFrame
 		mlbAltitude = new JLabel();
 		//mlbAltitude.setHorizontalAlignment(JLabel.CENTER);
 		
+		mlbLidarRange = new JLabel();
+		
 		JLabel lbBattery = new JLabel(ResBox.icon("BATTERY"));
 		JLabel lbWifiLevel = new JLabel(ResBox.icon("WIFI"));
 		JLabel lbHeading = new JLabel(ResBox.icon("HEADING"));
@@ -138,6 +142,7 @@ public class StatusGui extends JSavedFrame
 		JLabel lbTemperature = new JLabel(ResBox.icon("TEMPERATURE"));
 		JLabel lbPressure = new JLabel(ResBox.icon("PRESSURE"));
 		JLabel lbLoopTime = new JLabel(ResBox.icon("CPUTIME"));
+		JLabel lbLidarRange = new JLabel(ResBox.icon("LIDAR"));
 		
 		lbBattery.setToolTipText(ResBox.text("BATTERY_STATE"));
 		lbWifiLevel.setToolTipText(ResBox.text("WIFI_STATE"));
@@ -149,6 +154,7 @@ public class StatusGui extends JSavedFrame
 		lbTemperature.setToolTipText(ResBox.text("TEMPERATURE_STATE"));
 		lbPressure.setToolTipText(ResBox.text("PRESSURE_STATE"));
 		lbLoopTime.setToolTipText(ResBox.text("LOOP_TIME_STATE"));
+		lbLidarRange.setToolTipText(ResBox.text("LIDAR_RANGE"));
 		
 		pnlStatus.add(lbBattery);
 		pnlStatus.add(mlbBattery,"grow,wrap");
@@ -164,6 +170,8 @@ public class StatusGui extends JSavedFrame
 		pnlStatus.add(mlbHeading,"grow,wrap");
 		pnlStatus.add(lbAltitude);
 		pnlStatus.add(mlbAltitude,"grow,wrap");
+		pnlStatus.add(lbLidarRange);
+		pnlStatus.add(mlbLidarRange,"grow,wrap");
 		pnlStatus.add(lbTemperature);
 		pnlStatus.add(mlbTemperature,"grow,wrap");
 		pnlStatus.add(lbPressure);

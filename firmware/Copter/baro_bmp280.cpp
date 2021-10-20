@@ -29,7 +29,7 @@ void pdlReadBaro(pdlDroneState *ds)
   baro.update(ds->seaLevel);
   //temperature = (float)(mpu.getTemperature()) / 340.f;  // require temperature offset
   ds->pressure = baro.pressure;
-  ds->altitude = baro.altitude;
+  ds->baroAlt = baro.altitude;
   ds->temperature = baro.temperature;
   //altitude = altest.getAltitude();
   //alt_estimator.update(baro.altitude);

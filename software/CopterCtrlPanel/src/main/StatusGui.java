@@ -30,6 +30,8 @@ public class StatusGui extends JSavedFrame
 	private JLabel mlbPressure;
 	private JLabel mlbAltitude;
 	private JLabel mlbLidarRange;
+	private JLabel mlbOpticalFlowX;
+	private JLabel mlbOpticalFlowY;
 
 	private class OnTelemetryUpdate implements Observer
 	{
@@ -52,6 +54,9 @@ public class StatusGui extends JSavedFrame
 			fmt1.setGroupingUsed(false);
 			DecimalFormat fmt2 = new DecimalFormat();
 			fmt2.setMaximumFractionDigits(0);
+			fmt2.setGroupingUsed(false);
+			DecimalFormat fmt3 = new DecimalFormat();
+			fmt2.setMaximumFractionDigits(3);
 			fmt2.setGroupingUsed(false);
 			
 			String batState = fmt1.format(droneState.battery.voltage) + "V/" + 
@@ -76,9 +81,11 @@ public class StatusGui extends JSavedFrame
 			mlbTemperature.setText(fmt1.format(droneState.temperature));
 			mlbPressure.setText(fmt1.format(droneState.pressure) + "/" +
 								fmt1.format(droneState.seaLevel));
-			mlbAltitude.setText(fmt1.format(droneState.altitude) + "/" +
-								fmt1.format(droneState.altPid.target));
-			mlbLidarRange.setText(fmt1.format(droneState.lidarRange));
+			mlbAltitude.setText(fmt3.format(droneState.altitude) + "/" +
+								fmt3.format(droneState.altPid.target));
+			mlbLidarRange.setText(fmt3.format(droneState.lidarRange));
+			mlbOpticalFlowX.setText(fmt2.format(droneState.opticalFlowX));
+			mlbOpticalFlowY.setText(fmt2.format(droneState.opticalFlowY));
 			
 			mlbYaw.setIcon(rotateImageIcon(ResBox.icon("YAW"), yaw));
 			mlbPitch.setIcon(rotateImageIcon(ResBox.icon("PITCH"), pitch));
@@ -134,6 +141,8 @@ public class StatusGui extends JSavedFrame
 		//mlbAltitude.setHorizontalAlignment(JLabel.CENTER);
 		
 		mlbLidarRange = new JLabel();
+		mlbOpticalFlowX = new JLabel();
+		mlbOpticalFlowY = new JLabel();
 		
 		JLabel lbBattery = new JLabel(ResBox.icon("BATTERY"));
 		JLabel lbWifiLevel = new JLabel(ResBox.icon("WIFI"));
@@ -143,6 +152,8 @@ public class StatusGui extends JSavedFrame
 		JLabel lbPressure = new JLabel(ResBox.icon("PRESSURE"));
 		JLabel lbLoopTime = new JLabel(ResBox.icon("CPUTIME"));
 		JLabel lbLidarRange = new JLabel(ResBox.icon("LIDAR"));
+		JLabel lbOpticalFlowX = new JLabel(ResBox.icon("OPTICAL_FLOW_X"));
+		JLabel lbOpticalFlowY = new JLabel(ResBox.icon("OPTICAL_FLOW_Y"));
 		
 		lbBattery.setToolTipText(ResBox.text("BATTERY_STATE"));
 		lbWifiLevel.setToolTipText(ResBox.text("WIFI_STATE"));
@@ -155,6 +166,8 @@ public class StatusGui extends JSavedFrame
 		lbPressure.setToolTipText(ResBox.text("PRESSURE_STATE"));
 		lbLoopTime.setToolTipText(ResBox.text("LOOP_TIME_STATE"));
 		lbLidarRange.setToolTipText(ResBox.text("LIDAR_RANGE"));
+		lbOpticalFlowX.setToolTipText(ResBox.text("OPTICAL_FLOW_X"));
+		lbOpticalFlowY.setToolTipText(ResBox.text("OPTICAL_FLOW_Y"));
 		
 		pnlStatus.add(lbBattery);
 		pnlStatus.add(mlbBattery,"grow,wrap");
@@ -176,6 +189,10 @@ public class StatusGui extends JSavedFrame
 		pnlStatus.add(mlbTemperature,"grow,wrap");
 		pnlStatus.add(lbPressure);
 		pnlStatus.add(mlbPressure,"grow,wrap");
+		pnlStatus.add(lbOpticalFlowX);
+		pnlStatus.add(mlbOpticalFlowX,"grow,wrap");
+		pnlStatus.add(lbOpticalFlowY);
+		pnlStatus.add(mlbOpticalFlowY,"grow,wrap");
 		pnlStatus.add(lbLoopTime);
 		pnlStatus.add(mlbLoopTime,"grow,wrap");
 

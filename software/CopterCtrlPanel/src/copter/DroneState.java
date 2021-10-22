@@ -14,6 +14,8 @@ import copter.commands.CmdCalibrateGyro;
 import copter.commands.CmdCalibrateMagnet;
 import copter.commands.CmdResetAltitude;
 import copter.commands.CmdSetAltPid;
+import copter.commands.CmdSetOpticalFlowXPid;
+import copter.commands.CmdSetOpticalFlowYPid;
 import copter.commands.CmdSetPeriods;
 import copter.commands.CmdSetPitchPid;
 import copter.commands.CmdSetPitchRatePid;
@@ -183,7 +185,7 @@ public class DroneState implements Cloneable
 
 		public double target;
 
-		@NoChart
+		
 		public double errSum;
 		@NoChart
 		public double prevInput;
@@ -312,6 +314,14 @@ public class DroneState implements Cloneable
 	@Expose
 	@SerializedName("altPid")
 	public Pid altPid = new Pid();
+	@SettingGroup(name = "OPTICAL_FLOW_X_PID")
+	@Expose
+	@SerializedName("opticalFlowXPid")
+	public Pid opticalFlowXPid = new Pid();
+	@SettingGroup(name = "OPTICAL_FLOW_Y_PID")
+	@Expose
+	@SerializedName("opticalFlowYPid")
+	public Pid opticalFlowYPid = new Pid();
 	@NoChart
 	public boolean motorsEnabled;
 	public double baseGas;
@@ -329,7 +339,10 @@ public class DroneState implements Cloneable
 	@NoChart
 	public double seaLevel;
 	public double lidarRange;
+	public double opticalFlowX;
+	public double opticalFlowY;
 	// no sense variable, this is 2 bytes gap in C structure
+	public double holdPosEnabled;
 	protected int gap;
 	
 	@Override
@@ -371,12 +384,16 @@ public class DroneState implements Cloneable
 		altitude = parser.getFloat(packet);
 		seaLevel = parser.getFloat(packet);
 		lidarRange = parser.getFloat(packet);
+		opticalFlowX = parser.getFloat(packet);
+		opticalFlowY = parser.getFloat(packet);
 		yawRatePid.parse(parser, packet);
 		pitchRatePid.parse(parser, packet);
 		rollRatePid.parse(parser, packet);
 		pitchPid.parse(parser, packet);
 		rollPid.parse(parser, packet);
 		altPid.parse(parser, packet);
+		opticalFlowXPid.parse(parser, packet);
+		opticalFlowYPid.parse(parser, packet);
 		baseGas = parser.getInt32t(packet);
 		motorGas0 = parser.getInt32t(packet);
 		motorGas1 = parser.getInt32t(packet);
@@ -384,7 +401,9 @@ public class DroneState implements Cloneable
 		motorGas3 = parser.getInt32t(packet);
 		motorsEnabled = parser.getBool(packet);
 		stabilizationEnabled = parser.getBool(packet);
-		gap = parser.getInt16t(packet);
+		holdPosEnabled = parser.getUint8t(packet);
+		gap = parser.getUint8t(packet);
+		//gap = parser.getInt16t(packet);
 		net.telemetryPeriod = (int)parser.getUint32t(packet);
 	}
 	
@@ -451,6 +470,20 @@ public class DroneState implements Cloneable
 		maxOut = ds.altPid.maxOut;
 		CmdSetAltPid cmd7 = new CmdSetAltPid(enabled,kp,ki,kd,maxOut);
 		
+		enabled = ds.opticalFlowXPid.enabled;
+		kp = ds.opticalFlowXPid.kp;
+		ki = ds.opticalFlowXPid.ki;
+		kd = ds.opticalFlowXPid.kd;
+		maxOut = ds.opticalFlowXPid.maxOut;
+		CmdSetOpticalFlowXPid cmd71 = new CmdSetOpticalFlowXPid(enabled,kp,ki,kd,maxOut);
+		
+		enabled = ds.opticalFlowYPid.enabled;
+		kp = ds.opticalFlowYPid.kp;
+		ki = ds.opticalFlowYPid.ki;
+		kd = ds.opticalFlowYPid.kd;
+		maxOut = ds.opticalFlowYPid.maxOut;
+		CmdSetOpticalFlowYPid cmd72 = new CmdSetOpticalFlowYPid(enabled,kp,ki,kd,maxOut);
+		
 		dx = ds.net.telemetryPeriod;
 		dy = 1;
 		CmdSetPeriods cmd8 = new CmdSetPeriods(dx,dy);
@@ -500,5 +533,13 @@ public class DroneState implements Cloneable
 		CopterCommander.instance().addCmd(cmd32);
 		CopterCommander.instance().addCmd(cmd32);
 		CopterCommander.instance().addCmd(cmd32);
+		
+		CopterCommander.instance().addCmd(cmd71);
+		CopterCommander.instance().addCmd(cmd71);
+		CopterCommander.instance().addCmd(cmd71);
+		
+		CopterCommander.instance().addCmd(cmd72);
+		CopterCommander.instance().addCmd(cmd72);
+		CopterCommander.instance().addCmd(cmd72);
 	}
 }

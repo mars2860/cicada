@@ -6,7 +6,7 @@ VL53L1X sensor;
 void pdlSetupLidar(pdlDroneState *ds)
 {
   pdlSetLidarMaxRange(3.f);
-  pdlSetLidarUpdatePeriod(100000);
+  pdlSetLidarReadPeriod(50000);
 
   delay(500);
 

@@ -36,10 +36,12 @@ public class RemoteControlGui extends JSavedFrame
 	private static final float LEVEL_CTRL_DELTA = 10.f;
 	private static final int MOTOR_CTRL_DELTA = 4;//2;
 	private static final float ROTATE_CTRL_DELTA = 100.f;//80.f;
+	private static final float ALT_CTRL_DELTA = 0.005f;
 	
 	private JTextField mtfYaw;
 	private JTextField mtfPitch;
 	private JTextField mtfRoll;
+	private JTextField mtfAlt;
 	private JButton btnGetUp;
 	private JButton btnGetDown;
 	private JButton btnLeft;
@@ -67,12 +69,14 @@ public class RemoteControlGui extends JSavedFrame
 				float pitch = Float.parseFloat(mtfPitch.getText());
 				msg = ResBox.text("ROLL");
 				float roll = Float.parseFloat(mtfRoll.getText());
+				msg = ResBox.text("ALTITUDE");
+				float alt = Float.parseFloat(mtfAlt.getText());
 				
 				yaw = (float)Math.toRadians(yaw);
 				pitch = (float)Math.toRadians(pitch);
 				roll = (float)Math.toRadians(roll);
 			
-				CmdSetYPR cmd = new CmdSetYPR(yaw,pitch,roll);
+				CmdSetYPR cmd = new CmdSetYPR(yaw,pitch,roll,alt);
 				CopterCommander.instance().addCmd(cmd);
 			}
 			catch(NumberFormatException ex)
@@ -95,22 +99,39 @@ public class RemoteControlGui extends JSavedFrame
 		public void run()
 		{
 			DroneState ds = CopterTelemetry.instance().getDroneState();
+			double alt = ds.altPid.target;
 			
 			// get up
 			if(btnGetUp.getModel().isPressed())
 			{
-				CmdSetBaseGas cmd = new CmdSetBaseGas((int)ds.baseGas + MOTOR_CTRL_DELTA);
-				CopterCommander.instance().addCmd(cmd);
+				if(ds.altPid.enabled == false)
+				{
+					CmdSetBaseGas cmd = new CmdSetBaseGas((int)ds.baseGas + MOTOR_CTRL_DELTA);
+					CopterCommander.instance().addCmd(cmd);
+				}
+				else
+				{
+					alt += ALT_CTRL_DELTA;
+				}
 			}
 
 			// get down
 			if(btnGetDown.getModel().isPressed())
 			{
-				CmdSetBaseGas cmd = new CmdSetBaseGas((int)ds.baseGas - MOTOR_CTRL_DELTA);
-				CopterCommander.instance().addCmd(cmd);
+				if(ds.altPid.enabled == false)
+				{
+					CmdSetBaseGas cmd = new CmdSetBaseGas((int)ds.baseGas - MOTOR_CTRL_DELTA);
+					CopterCommander.instance().addCmd(cmd);
+				}
+				else
+				{
+					alt -= ALT_CTRL_DELTA;
+					if(alt < 0)
+						alt = 0;
+				}
 			}
 			
-			CmdSetYPR cmdYpr = new CmdSetYPR(0,0,0);
+			CmdSetYPR cmdYpr = new CmdSetYPR(0,0,0,(float)alt);
 			
 			// roll left
 			if(btnLeft.getModel().isPressed())
@@ -143,15 +164,21 @@ public class RemoteControlGui extends JSavedFrame
 				cmdYpr.setYawRateDeg(ROTATE_CTRL_DELTA);
 			}
 			
-			if(cmdYpr.isNull() == false)
+			if(cmdYpr.isNull() == false || ds.altPid.target != alt)
 			{
+				if(	cmdYpr.getPitchRad() != ds.pitchPid.target ||
+					cmdYpr.getRollRad() != ds.rollPid.target ||
+					cmdYpr.getYawRad() != ds.yawRatePid.target ||
+					ds.altPid.target != alt )
+				{
+					CopterCommander.instance().addCmd(cmdYpr);
+				}
 				yprTrigger = true;
-				CopterCommander.instance().addCmd(cmdYpr);
 			}
 			else if(yprTrigger) // to stop moving after we release a key
 			{
 				yprTrigger = false;
-				cmdYpr = new CmdSetYPR(0,0,0);
+				cmdYpr = new CmdSetYPR(0,0,0,(float)alt);
 				CopterCommander.instance().addCmd(cmdYpr);
 				CopterCommander.instance().addCmd(cmdYpr);
 				CopterCommander.instance().addCmd(cmdYpr);
@@ -159,7 +186,7 @@ public class RemoteControlGui extends JSavedFrame
 			// stop
 			if(btnStop.getModel().isPressed())
 			{
-				cmdYpr = new CmdSetYPR(0,0,0);
+				cmdYpr = new CmdSetYPR(0,0,0,(float)alt);
 				CopterCommander.instance().addCmd(cmdYpr);
 			}
 		}
@@ -331,7 +358,7 @@ public class RemoteControlGui extends JSavedFrame
 	
 	private void createUI()
 	{
-		this.setLayout(new MigLayout("","[center,grow][center,grow][center,grow]"));
+		this.setLayout(new MigLayout("","[center,grow][center,grow][center,grow][center,grow]"));
 		this.setIconImage(ResBox.icon("REMOTE_CONTROL").getImage());
 
 		mtfYaw = new JTextField();
@@ -343,16 +370,21 @@ public class RemoteControlGui extends JSavedFrame
 		mtfRoll = new JTextField();
 		mtfRoll.setDocument(new NumericDocument(2,true));
 		mtfRoll.setText("0");
+		mtfAlt = new JTextField();
+		mtfAlt.setDocument(new NumericDocument(3,true));
+		mtfAlt.setText("0");
 		
 		JButton btnSendYpr = new JButton(ResBox.text("SEND"));
 		btnSendYpr.addActionListener(new OnBtnSendYpr());
 		
 		this.add(new JLabel(ResBox.text("YAW") + "(deg)"));
 		this.add(new JLabel(ResBox.text("PITCH") + "(deg)"));
-		this.add(new JLabel(ResBox.text("ROLL") + "(deg)"),"wrap");
+		this.add(new JLabel(ResBox.text("ROLL") + "(deg)"));
+		this.add(new JLabel(ResBox.text("ALTITUDE") + "(m)"),"wrap");
 		this.add(mtfYaw,"grow");
 		this.add(mtfPitch,"grow");
 		this.add(mtfRoll,"grow");
+		this.add(mtfAlt,"grow");
 		this.add(btnSendYpr,"wrap");
 		
 		btnGetUp = new JButton(ResBox.icon("ARROW_GET_UP"));
@@ -379,7 +411,7 @@ public class RemoteControlGui extends JSavedFrame
 		pnlCtrl.add(btnBck);
 		pnlCtrl.add(btnGetDown);
 		
-		this.add(pnlCtrl,"span 3,grow");
+		this.add(pnlCtrl,"span 4,grow");
 
 		this.addWindowListener(new OnWndListener());
 	}

@@ -35,12 +35,11 @@ void setup()
 {
   memset(&droneState, 0, sizeof(droneState));
 
-  Serial.begin(115200);
-
   Wire.begin();
   Wire.setClock(200000UL);  // line capacity is too high, can't run at higher frequency
 
   /* debug
+  Serial.begin(115200);
   pdlDroneState *ds = &droneState;
   Serial.print("timestamp addr = ");Serial.println((uint32_t)&ds->timestamp,HEX);
   Serial.print("battery addr = ");Serial.println((uint32_t)&ds->battery,HEX);

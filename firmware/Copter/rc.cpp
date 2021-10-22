@@ -57,6 +57,8 @@ uint32_t telemetryPeriod;
 #define CMD_SET_BASE_GAS          117
 #define CMD_SET_PITCH_RATE_PID    118
 #define CMD_SET_ROLL_RATE_PID     119
+#define CMD_SET_OPTICAL_FLOW_X_PID 120
+#define CMD_SET_OPTICAL_FLOW_Y_PID 121
 
 /// Writes data to telemetry packet at given position. Returns new position to write
 uint16_t writeTelemetryPacket(uint16_t pos, byte *packet, void *value, size_t valueSize);
@@ -143,6 +145,7 @@ void processCommand(pdlDroneState *ds)
           ds->rollRatePid.target = 0;
           ds->pitchPid.target = 0;
           ds->rollPid.target = 0;
+          ds->holdPosEnabled = 1;
         }
         break;
       case CMD_SET_BASE_GAS:
@@ -279,10 +282,37 @@ void processCommand(pdlDroneState *ds)
         ds->altPid.kd = kd;
         ds->altPid.maxOut = maxOut;
         break;
+      case CMD_SET_OPTICAL_FLOW_X_PID:
+        enabled = udpPacket[1];
+        memcpy(&kp, &udpPacket[2], sizeof(kp));
+        memcpy(&ki, &udpPacket[2 + sizeof(kp)], sizeof(ki));
+        memcpy(&kd, &udpPacket[2 + sizeof(kp) + sizeof(ki)], sizeof(kd));
+        memcpy(&maxOut, &udpPacket[2 + sizeof(kp) + sizeof(ki) + sizeof(kd)], sizeof(maxOut));
+        ds->opticalFlowXPid.enabled = enabled;
+        ds->opticalFlowXPid.kp = kp;
+        ds->opticalFlowXPid.ki = ki;
+        ds->opticalFlowXPid.kd = kd;
+        ds->opticalFlowXPid.maxOut = maxOut;
+      break;
+      case CMD_SET_OPTICAL_FLOW_Y_PID:
+        enabled = udpPacket[1];
+        memcpy(&kp, &udpPacket[2], sizeof(kp));
+        memcpy(&ki, &udpPacket[2 + sizeof(kp)], sizeof(ki));
+        memcpy(&kd, &udpPacket[2 + sizeof(kp) + sizeof(ki)], sizeof(kd));
+        memcpy(&maxOut, &udpPacket[2 + sizeof(kp) + sizeof(ki) + sizeof(kd)], sizeof(maxOut));
+        ds->opticalFlowYPid.enabled = enabled;
+        ds->opticalFlowYPid.kp = kp;
+        ds->opticalFlowYPid.ki = ki;
+        ds->opticalFlowYPid.kd = kd;
+        ds->opticalFlowYPid.maxOut = maxOut;
+      break;
       case CMD_SET_YPR:
         memcpy(&kp, &udpPacket[1], sizeof(kp));
         memcpy(&ki, &udpPacket[1 + sizeof(kp)], sizeof(ki));
         memcpy(&kd, &udpPacket[1 + sizeof(kp) + sizeof(ki)], sizeof(kd));
+        memcpy(&maxOut, &udpPacket[1 + sizeof(kp) + sizeof(ki) + sizeof(kd)], sizeof(maxOut));
+
+        ds->altPid.target = maxOut;
         ds->yawRatePid.target = kp;
 
         if(ds->pitchPid.enabled)
@@ -294,6 +324,11 @@ void processCommand(pdlDroneState *ds)
           ds->rollPid.target = kd;
         else
           ds->rollRatePid.target = kd;
+        // disable hold pos if we have user defined target
+        if(ki != 0.f || kd != 0.f)
+          ds->holdPosEnabled = 0;
+        else
+          ds->holdPosEnabled = 1;
         break;
       case CMD_SET_PERIODS:
         memcpy(&telemetryPeriod, &udpPacket[1], sizeof(telemetryPeriod));

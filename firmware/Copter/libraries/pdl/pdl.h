@@ -32,8 +32,10 @@ extern "C" {
 #define PDL_DEFAULT_ESCAPER_UPDATE_PERIOD 0
 /// Remote control update period. Use pdlSetRcUpdatePeriod in pdlRcSetup
 #define PDL_DEFAULT_RC_UPDATE_PERIOD     0
-/// Lidar update period. Use pdlSetLidarUpdatePeriod in pdlLidarSetup
-#define PDL_DEFAULT_LIDAR_UPDATE_PERIOD 50000
+/// Lidar update period. Use pdlSetLidarReadPeriod in pdlLidarSetup
+#define PDL_DEFAULT_LIDAR_READ_PERIOD 50000
+/// OpticalFlow read period. Use pdlSetOpticalFlowReadPeriod in pdlLidarSetup
+#define PDL_DEFAULT_OPTICAL_FLOW_READ_PERIOD 50000
 /// Drone frame PDL_DRONE_FRAME_X | PDL_DRONE_FRAME_CROSS
 #define PDL_DRONE_FRAME                 PDL_DRONE_FRAME_CROSS
 /// comment to enable symmetric motors regulation in stabilization
@@ -122,6 +124,10 @@ typedef struct
   float seaLevel;
   // Lidar range in meters (if less 0, that means there is error in lidar)
   float lidarRange;
+  // Optical flow x (unitless ticks)
+  float opticalFlowX;
+  // Optcal flow y (unitless ticks)
+  float opticalFlowY;
   // Yaw Rate PID
   pdlPidState yawRatePid;
   // Pitch Rate PID
@@ -134,14 +140,20 @@ typedef struct
   pdlPidState rollPid;
   // Alt PID
   pdlPidState altPid;
+  // Optical flow X PID
+  pdlPidState opticalFlowXPid;
+  // Optical flow Y PID
+  pdlPidState opticalFlowYPid;
   // Motors
   int32_t baseGas;
   int32_t motorGas[PDL_MOTOR_COUNT];
   uint8_t motorsEnabled;
   // Stabilization
   uint8_t stabilizationEnabled;
+  // Hold position
+  uint8_t holdPosEnabled;
   /// explicit struct align to divisible by 4
-  int16_t gap;
+  uint8_t gap;
 } pdlDroneState;
 
 void pdlSetup(pdlDroneState*);
@@ -153,7 +165,8 @@ void pdlSetBaroReadPeriod(uint32_t);
 void pdlSetBatteryReadPeriod(uint32_t);
 void pdlSetEscaperUpdatePeriod(uint32_t);
 void pdlSetRcUpdatePeriod(uint32_t);
-void pdlSetLidarUpdatePeriod(uint32_t);
+void pdlSetLidarReadPeriod(uint32_t);
+void pdlSetOpticalFlowReadPeriod(uint32_t);
 
 void pdlStopMotors(pdlDroneState*);
 void pdlSetMotorGas(pdlDroneState*, uint8_t, int32_t);
@@ -213,6 +226,7 @@ void pdlSetupMagneto(pdlDroneState*);
 void pdlSetupBaro(pdlDroneState*);
 void pdlSetupBattery(pdlDroneState*);
 void pdlSetupLidar(pdlDroneState*);
+void pdlSetupOpticalFlow(pdlDroneState*);
 
 /// @note should to take motorGas from pdlDroneState and send it to escaper
 void pdlUpdateEscaper(pdlDroneState*);
@@ -230,6 +244,8 @@ void pdlReadMagneto(pdlDroneState*);
 void pdlReadBaro(pdlDroneState*);
 /// @return result should be saved in pdlDroneState.lidarRange
 void pdlReadLidar(pdlDroneState*);
+/// @return result should be saved in pdlDroneState.opticalFlow
+void pdlReadOpticalFlow(pdlDroneState*);
 /// @return result should be saved in pdlDroneState.yaw,pitch,roll
 void pdlTripleAxisSensorFusion(pdlDroneState*);
 

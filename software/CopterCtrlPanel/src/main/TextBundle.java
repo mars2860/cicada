@@ -37,11 +37,14 @@ public class TextBundle extends ListResourceBundle
             {"TEMPERATURE_STATE","Temperature (Celsius deg)"},
             {"LOOP_TIME_STATE","One loop time of thread (us)"},
             {"LIDAR_RANGE", "Range measured by lidar (meters)"},
+            {"OPTICAL_FLOW_X", "Optical flow sensor delta X (tikcs)"},
+            {"OPTICAL_FLOW_Y", "Optical flow sensor delta Y (ticks)"},
             
             
             {"MOTORS", "Motors"},
             {"MOTORS_ENABLED", "Motors enabled"},
             {"STABILIZATION_ENABLED","Stabilization"},
+            {"HOLD_POS_ENABLED", "Hold position"},
             {"GAS", "Gas"},
             
             {"CONNECT", "Connect"},
@@ -107,6 +110,8 @@ public class TextBundle extends ListResourceBundle
             {"PITCH_PID", "Pitch PID"},
             {"ROLL_PID", "Roll PID"},
             {"ALT_PID", "Alt PID"},
+            {"OPTICAL_FLOW_X_PID", "OpticalFlow X PID"},
+            {"OPTICAL_FLOW_Y_PID", "OpticalFlow Y PID"},
             {"YAW","Yaw"},
             {"PITCH","Pitch"},
             {"ROLL","Roll"},

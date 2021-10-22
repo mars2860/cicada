@@ -27,6 +27,7 @@ public class MotorsGui extends JSavedFrame
 	
 	private JCheckBox mcbMotorsEnabled;
 	private JCheckBox mcbStabilizationEnabled;
+	private JCheckBox mcbHoldPosEnabled;
 	private MotorGasSlider mgas0;
 	private MotorGasSlider mgas1;
 	private MotorGasSlider mgas2;
@@ -118,7 +119,8 @@ public class MotorsGui extends JSavedFrame
 			mgasBase.setGas((int)droneState.baseGas, false);
 			
 			mcbMotorsEnabled.setSelected(droneState.motorsEnabled);
-			mcbStabilizationEnabled.setSelected(droneState.stabilizationEnabled);	
+			mcbStabilizationEnabled.setSelected(droneState.stabilizationEnabled);
+			mcbHoldPosEnabled.setSelected((droneState.holdPosEnabled > 0.f)?true:false);
 		}
 	}
 
@@ -135,13 +137,16 @@ public class MotorsGui extends JSavedFrame
 	
 	private void createUI()
 	{
-		JPanel pnlMotors = new JPanel(new MigLayout("","","[][][grow]"));
+		JPanel pnlMotors = new JPanel(new MigLayout("","","[][][][grow]"));
 		
 		mcbMotorsEnabled = new JCheckBox(ResBox.text("MOTORS_ENABLED"));
 		mcbMotorsEnabled.addActionListener(new OnMotorsEnabled());
 		
 		mcbStabilizationEnabled = new JCheckBox(ResBox.text("STABILIZATION_ENABLED"));
 		mcbStabilizationEnabled.addActionListener(new OnStabilizationEnabled());
+		
+		mcbHoldPosEnabled = new JCheckBox(ResBox.text("HOLD_POS_ENABLED"));
+		mcbHoldPosEnabled.setEnabled(false);
 
 		mgas0 = new MotorGasSlider("M1");
 		mgas1 = new MotorGasSlider("M2");
@@ -182,6 +187,7 @@ public class MotorsGui extends JSavedFrame
 		
 		pnlMotors.add(mcbMotorsEnabled,"span,wrap");
 		pnlMotors.add(mcbStabilizationEnabled,"span,wrap");
+		pnlMotors.add(mcbHoldPosEnabled,"span,wrap");
 		pnlMotors.add(mgas0,"grow");
 		pnlMotors.add(mgas1,"grow");
 		pnlMotors.add(mgas2,"grow");

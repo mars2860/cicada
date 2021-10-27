@@ -19,6 +19,7 @@ import javax.swing.JTextField;
 import copter.CopterCommander;
 import copter.CopterTelemetry;
 import copter.DroneState;
+import copter.commands.CmdSetAltitude;
 import copter.commands.CmdSetBaseGas;
 import copter.commands.CmdSetYPR;
 import copter.commands.TakeOff;
@@ -33,10 +34,10 @@ public class RemoteControlGui extends JSavedFrame
 	// и после того как отпускаем клавишу, дрон продолжает ещё принимать старые команды
 	private static final long KEYBOARD_PERIOD = 40; 	// FPS 25
 	
-	private static final float LEVEL_CTRL_DELTA = 10.f;
+	private static final float LEVEL_CTRL_DELTA = 7.f;
 	private static final int MOTOR_CTRL_DELTA = 4;//2;
 	private static final float ROTATE_CTRL_DELTA = 100.f;//80.f;
-	private static final float ALT_CTRL_DELTA = 0.005f;
+	private static final float ALT_CTRL_DELTA = 0.010f;
 	
 	private JTextField mtfYaw;
 	private JTextField mtfPitch;
@@ -76,8 +77,10 @@ public class RemoteControlGui extends JSavedFrame
 				pitch = (float)Math.toRadians(pitch);
 				roll = (float)Math.toRadians(roll);
 			
-				CmdSetYPR cmd = new CmdSetYPR(yaw,pitch,roll,alt);
+				CmdSetYPR cmd = new CmdSetYPR(yaw,pitch,roll);
+				CmdSetAltitude cmd2 = new CmdSetAltitude(alt);
 				CopterCommander.instance().addCmd(cmd);
+				CopterCommander.instance().addCmd(cmd2);
 			}
 			catch(NumberFormatException ex)
 			{
@@ -99,7 +102,6 @@ public class RemoteControlGui extends JSavedFrame
 		public void run()
 		{
 			DroneState ds = CopterTelemetry.instance().getDroneState();
-			double alt = ds.altPid.target;
 			
 			// get up
 			if(btnGetUp.getModel().isPressed())
@@ -111,7 +113,8 @@ public class RemoteControlGui extends JSavedFrame
 				}
 				else
 				{
-					alt += ALT_CTRL_DELTA;
+					CmdSetAltitude cmd = new CmdSetAltitude((float)(ds.altPid.target + ALT_CTRL_DELTA));
+					CopterCommander.instance().addCmd(cmd);
 				}
 			}
 
@@ -125,13 +128,12 @@ public class RemoteControlGui extends JSavedFrame
 				}
 				else
 				{
-					alt -= ALT_CTRL_DELTA;
-					if(alt < 0)
-						alt = 0;
+					CmdSetAltitude cmd = new CmdSetAltitude((float)(ds.altPid.target - ALT_CTRL_DELTA));
+					CopterCommander.instance().addCmd(cmd);
 				}
 			}
 			
-			CmdSetYPR cmdYpr = new CmdSetYPR(0,0,0,(float)alt);
+			CmdSetYPR cmdYpr = new CmdSetYPR(0,0,0);
 			
 			// roll left
 			if(btnLeft.getModel().isPressed())
@@ -164,12 +166,11 @@ public class RemoteControlGui extends JSavedFrame
 				cmdYpr.setYawRateDeg(ROTATE_CTRL_DELTA);
 			}
 			
-			if(cmdYpr.isNull() == false || ds.altPid.target != alt)
+			if(cmdYpr.isNull() == false)
 			{
 				if(	cmdYpr.getPitchRad() != ds.pitchPid.target ||
 					cmdYpr.getRollRad() != ds.rollPid.target ||
-					cmdYpr.getYawRad() != ds.yawRatePid.target ||
-					ds.altPid.target != alt )
+					cmdYpr.getYawRad() != ds.yawRatePid.target )
 				{
 					CopterCommander.instance().addCmd(cmdYpr);
 				}
@@ -178,7 +179,7 @@ public class RemoteControlGui extends JSavedFrame
 			else if(yprTrigger) // to stop moving after we release a key
 			{
 				yprTrigger = false;
-				cmdYpr = new CmdSetYPR(0,0,0,(float)alt);
+				cmdYpr = new CmdSetYPR(0,0,0);
 				CopterCommander.instance().addCmd(cmdYpr);
 				CopterCommander.instance().addCmd(cmdYpr);
 				CopterCommander.instance().addCmd(cmdYpr);
@@ -186,7 +187,7 @@ public class RemoteControlGui extends JSavedFrame
 			// stop
 			if(btnStop.getModel().isPressed())
 			{
-				cmdYpr = new CmdSetYPR(0,0,0,(float)alt);
+				cmdYpr = new CmdSetYPR(0,0,0);
 				CopterCommander.instance().addCmd(cmdYpr);
 			}
 		}

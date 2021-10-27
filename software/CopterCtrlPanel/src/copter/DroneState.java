@@ -108,10 +108,6 @@ public class DroneState implements Cloneable
 		public double rawX;
 		public double rawY;
 		public double rawZ;
-		// values after digital filter
-		public double filteredX;
-		public double filteredY;
-		public double filteredZ;
 		// values after digital filter and scaled to real units
 		public double pureX;
 		public double pureY;
@@ -128,8 +124,6 @@ public class DroneState implements Cloneable
 		@Setting
 		@Expose
 		public int offsetZ;
-		// no sense variable, this is 2 bytes gap in C structure
-		protected int gap;
 		
 		protected void parse(BinaryParser parser, DatagramPacket packet)
 		{
@@ -140,17 +134,10 @@ public class DroneState implements Cloneable
 			rawX = parser.getInt16t(packet);
 			rawY = parser.getInt16t(packet);
 			rawZ = parser.getInt16t(packet);
-			
-			filteredX = parser.getInt16t(packet);
-			filteredY = parser.getInt16t(packet);
-			filteredZ = parser.getInt16t(packet);
 
 			offsetX = parser.getInt16t(packet);
 			offsetY = parser.getInt16t(packet);
 			offsetZ = parser.getInt16t(packet);
-			
-			// read gap
-			gap = parser.getInt16t(packet);
 		}
 		
 		@Override
@@ -182,13 +169,14 @@ public class DroneState implements Cloneable
 		@Setting
 		@Expose
 		public float maxOut;
+		@NoChart
+		@Setting
+		@Expose
+		public float maxErrSum;
 
 		public double target;
-
-		
 		public double errSum;
-		@NoChart
-		public double prevInput;
+		public double input;
 		
 		public double out;
 		
@@ -200,8 +188,9 @@ public class DroneState implements Cloneable
 			target = parser.getFloat(packet);
 			out = parser.getFloat(packet);
 			errSum = parser.getFloat(packet);
-			prevInput = parser.getFloat(packet);
+			input = parser.getFloat(packet);
 			maxOut = parser.getFloat(packet);
+			maxErrSum = parser.getFloat(packet);
 			enabled = (parser.getUint32t(packet) > 0)?true:false;
 		}
 		
@@ -339,8 +328,9 @@ public class DroneState implements Cloneable
 	@NoChart
 	public double seaLevel;
 	public double lidarRange;
-	public double opticalFlowX;
-	public double opticalFlowY;
+	
+	public OpticalFlow opticalFlow = new OpticalFlow();
+	
 	// no sense variable, this is 2 bytes gap in C structure
 	public double holdPosEnabled;
 	protected int gap;
@@ -384,8 +374,7 @@ public class DroneState implements Cloneable
 		altitude = parser.getFloat(packet);
 		seaLevel = parser.getFloat(packet);
 		lidarRange = parser.getFloat(packet);
-		opticalFlowX = parser.getFloat(packet);
-		opticalFlowY = parser.getFloat(packet);
+		opticalFlow.parse(parser, packet);;
 		yawRatePid.parse(parser, packet);
 		pitchRatePid.parse(parser, packet);
 		rollRatePid.parse(parser, packet);
@@ -405,6 +394,28 @@ public class DroneState implements Cloneable
 		gap = parser.getUint8t(packet);
 		//gap = parser.getInt16t(packet);
 		net.telemetryPeriod = (int)parser.getUint32t(packet);
+	}
+	
+	public static class OpticalFlow implements Cloneable
+	{
+		public double rawX;
+		public double rawY;
+		public double vx;
+		public double vy;
+		
+		private void parse(BinaryParser parser, DatagramPacket packet)
+		{
+			rawX = parser.getInt16t(packet);
+			rawY = parser.getInt16t(packet);
+			vx = parser.getFloat(packet);
+			vy = parser.getFloat(packet);
+		}
+		
+		@Override
+		public Object clone() throws CloneNotSupportedException
+		{
+			return super.clone();
+		}
 	}
 	
 	public void sendSettingsToDrone()
@@ -428,61 +439,61 @@ public class DroneState implements Cloneable
 		
 		CmdCalibrateMagnet cmd3 = new CmdCalibrateMagnet(dx,dy,dz,1.f,1.f,1.f);
 		
-		boolean enabled = ds.yawRatePid.enabled;
-		float kp = ds.yawRatePid.kp;
-		float ki = ds.yawRatePid.ki;
-		float kd = ds.yawRatePid.kd;
-		float maxOut = ds.yawRatePid.maxOut;
-		CmdSetYawRatePid cmd4 = new CmdSetYawRatePid(enabled,kp,ki,kd,maxOut);
+		CmdSetYawRatePid cmd4 = new CmdSetYawRatePid(	ds.yawRatePid.enabled,
+														ds.yawRatePid.kp,
+														ds.yawRatePid.ki,
+														ds.yawRatePid.kd,
+														ds.yawRatePid.maxOut,
+														ds.yawRatePid.maxErrSum);
 		
-		enabled = ds.pitchRatePid.enabled;
-		kp = ds.pitchRatePid.kp;
-		ki = ds.pitchRatePid.ki;
-		kd = ds.pitchRatePid.kd;
-		maxOut = ds.pitchRatePid.maxOut;
-		CmdSetPitchRatePid cmd31 = new CmdSetPitchRatePid(enabled,kp,ki,kd,maxOut);
+		CmdSetPitchRatePid cmd31 = new CmdSetPitchRatePid(	ds.pitchRatePid.enabled,
+															ds.pitchRatePid.kp,
+															ds.pitchRatePid.ki,
+															ds.pitchRatePid.kd,
+															ds.pitchRatePid.maxOut,
+															ds.pitchRatePid.maxErrSum);
 		
-		enabled = ds.rollRatePid.enabled;
-		kp = ds.rollRatePid.kp;
-		ki = ds.rollRatePid.ki;
-		kd = ds.rollRatePid.kd;
-		maxOut = ds.rollRatePid.maxOut;
-		CmdSetRollRatePid cmd32 = new CmdSetRollRatePid(enabled,kp,ki,kd,maxOut);
+		CmdSetRollRatePid cmd32 = new CmdSetRollRatePid(	ds.rollRatePid.enabled,
+															ds.rollRatePid.kp,
+															ds.rollRatePid.ki,
+															ds.rollRatePid.kd,
+															ds.rollRatePid.maxOut,
+															ds.rollRatePid.maxErrSum);
 		
-		enabled = ds.pitchPid.enabled;
-		kp = ds.pitchPid.kp;
-		ki = ds.pitchPid.ki;
-		kd = ds.pitchPid.kd;
-		maxOut = ds.pitchPid.maxOut;
-		CmdSetPitchPid cmd5 = new CmdSetPitchPid(enabled,kp,ki,kd,maxOut);
+		CmdSetPitchPid cmd5 = new CmdSetPitchPid(	ds.pitchPid.enabled,
+													ds.pitchPid.kp,
+													ds.pitchPid.ki,
+													ds.pitchPid.kd,
+													ds.pitchPid.maxOut,
+													ds.pitchPid.maxErrSum);
 		
-		enabled = ds.rollPid.enabled;
-		kp = ds.rollPid.kp;
-		ki = ds.rollPid.ki;
-		kd = ds.rollPid.kd;
-		maxOut = ds.rollPid.maxOut;
-		CmdSetRollPid cmd6 = new CmdSetRollPid(enabled,kp,ki,kd,maxOut);
+		CmdSetRollPid cmd6 = new CmdSetRollPid(		ds.rollPid.enabled,
+													ds.rollPid.kp,
+													ds.rollPid.ki,
+													ds.rollPid.kd,
+													ds.rollPid.maxOut,
+													ds.rollPid.maxErrSum);
+
+		CmdSetAltPid cmd7 = new CmdSetAltPid(		ds.altPid.enabled,
+													ds.altPid.kp,
+													ds.altPid.ki,
+													ds.altPid.kd,
+													ds.altPid.maxOut,
+													ds.altPid.maxErrSum);
 		
-		enabled = ds.altPid.enabled;
-		kp = ds.altPid.kp;
-		ki = ds.altPid.ki;
-		kd = ds.altPid.kd;
-		maxOut = ds.altPid.maxOut;
-		CmdSetAltPid cmd7 = new CmdSetAltPid(enabled,kp,ki,kd,maxOut);
+		CmdSetOpticalFlowXPid cmd71 = new CmdSetOpticalFlowXPid(	ds.opticalFlowXPid.enabled,
+																	ds.opticalFlowXPid.kp,
+																	ds.opticalFlowXPid.ki,
+																	ds.opticalFlowXPid.kd,
+																	ds.opticalFlowXPid.maxOut,
+																	ds.opticalFlowXPid.maxErrSum);
 		
-		enabled = ds.opticalFlowXPid.enabled;
-		kp = ds.opticalFlowXPid.kp;
-		ki = ds.opticalFlowXPid.ki;
-		kd = ds.opticalFlowXPid.kd;
-		maxOut = ds.opticalFlowXPid.maxOut;
-		CmdSetOpticalFlowXPid cmd71 = new CmdSetOpticalFlowXPid(enabled,kp,ki,kd,maxOut);
-		
-		enabled = ds.opticalFlowYPid.enabled;
-		kp = ds.opticalFlowYPid.kp;
-		ki = ds.opticalFlowYPid.ki;
-		kd = ds.opticalFlowYPid.kd;
-		maxOut = ds.opticalFlowYPid.maxOut;
-		CmdSetOpticalFlowYPid cmd72 = new CmdSetOpticalFlowYPid(enabled,kp,ki,kd,maxOut);
+		CmdSetOpticalFlowYPid cmd72 = new CmdSetOpticalFlowYPid(	ds.opticalFlowYPid.enabled,
+																	ds.opticalFlowYPid.kp,
+																	ds.opticalFlowYPid.ki,
+																	ds.opticalFlowYPid.kd,
+																	ds.opticalFlowYPid.maxOut,
+																	ds.opticalFlowYPid.maxErrSum);
 		
 		dx = ds.net.telemetryPeriod;
 		dy = 1;

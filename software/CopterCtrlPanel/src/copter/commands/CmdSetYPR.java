@@ -5,17 +5,15 @@ public class CmdSetYPR extends AbstractCopterCmd
 	private float mYaw = 0.f;
 	private float mPitch = 0.f;
 	private float mRoll = 0.f;
-	private float mAlt = 0.f;
 	
 	/** Angles should be in radians */
-	public CmdSetYPR(float yawRad, float pitchRad, float rollRad, float alt)
+	public CmdSetYPR(float yawRad, float pitchRad, float rollRad)
 	{
 		super(111);
 		
 		mYaw = yawRad;
 		mPitch = pitchRad;
 		mRoll = rollRad;
-		mAlt = alt;
 	}
 
 	@Override
@@ -28,7 +26,6 @@ public class CmdSetYPR extends AbstractCopterCmd
 		pos = writeFloat(pos,data,mYaw);
 		pos = writeFloat(pos,data,mPitch);
 		pos = writeFloat(pos,data,mRoll);
-		pos = writeFloat(pos,data,mAlt);
 		
 		return data;
 	}

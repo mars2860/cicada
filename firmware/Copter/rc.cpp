@@ -64,6 +64,8 @@ uint32_t telemetryPeriod;
 uint16_t writeTelemetryPacket(uint16_t pos, byte *packet, void *value, size_t valueSize);
 void processCommand(pdlDroneState*);
 void processTelemetry(pdlDroneState*);
+void parsePidConfigPacket(pdlPidState*, byte*);
+void parseTripleAxisSensorConfigPacket(pdlTripleAxisSensorState*, byte*);
 
 extern void imuCalibrateAccel(pdlDroneState *ds);
 extern void imuCalibrateGyro(pdlDroneState *ds);
@@ -129,10 +131,7 @@ void processCommand(pdlDroneState *ds)
     udp.read(udpPacket, sizeof(udpPacket));
     host = udp.remoteIP();
     uint8_t cmd = udpPacket[0];
-    int16_t dx,dy,dz;
     int32_t t0,t1,t2,t3;
-    float kp,ki,kd,maxOut;
-    uint8_t enabled;
     switch(cmd)
     {
       case CMD_SWITCH_MOTORS:
@@ -145,7 +144,7 @@ void processCommand(pdlDroneState *ds)
           ds->rollRatePid.target = 0;
           ds->pitchPid.target = 0;
           ds->rollPid.target = 0;
-          ds->holdPosEnabled = 1;
+          ds->holdPosEnabled = PDL_HOLDPOS_BOTH_XY;
         }
         break;
       case CMD_SET_BASE_GAS:
@@ -172,36 +171,15 @@ void processCommand(pdlDroneState *ds)
 
         break;
       case CMD_SET_ACCEL_OFFSET:
-        memcpy(&dx, &udpPacket[1], sizeof(int16_t));
-        memcpy(&dy, &udpPacket[3], sizeof(int16_t));
-        memcpy(&dz, &udpPacket[5], sizeof(int16_t));
-
-        ds->accel.offset[PDL_X] = dx;
-        ds->accel.offset[PDL_Y] = dy;
-        ds->accel.offset[PDL_Z] = dz;
-
+        parseTripleAxisSensorConfigPacket(&ds->accel, udpPacket);
         pdlSetupAccel(ds);
         break;
       case CMD_SET_GYRO_OFFSET:
-        memcpy(&dx, &udpPacket[1], sizeof(int16_t));
-        memcpy(&dy, &udpPacket[3], sizeof(int16_t));
-        memcpy(&dz, &udpPacket[5], sizeof(int16_t));
-
-        ds->gyro.offset[PDL_X] = dx;
-        ds->gyro.offset[PDL_Y] = dy;
-        ds->gyro.offset[PDL_Z] = dz;
-
+        parseTripleAxisSensorConfigPacket(&ds->gyro, udpPacket);
         pdlSetupGyro(ds);
         break;
       case CMD_SET_MAGNET_OFFSET:
-        memcpy(&dx, &udpPacket[1], sizeof(int16_t));
-        memcpy(&dy, &udpPacket[3], sizeof(int16_t));
-        memcpy(&dz, &udpPacket[5], sizeof(int16_t));
-
-        ds->magneto.offset[PDL_X] = dx;
-        ds->magneto.offset[PDL_Y] = dy;
-        ds->magneto.offset[PDL_Z] = dz;
-
+        parseTripleAxisSensorConfigPacket(&ds->magneto, udpPacket);
         pdlSetupMagneto(ds);
         break;
       case CMD_SELF_CALIB_ACCEL:
@@ -211,136 +189,64 @@ void processCommand(pdlDroneState *ds)
         imuCalibrateGyro(ds);
         break;
       case CMD_SET_YAW_RATE_PID:
-        enabled = udpPacket[1];
-        memcpy(&kp, &udpPacket[2], sizeof(kp));
-        memcpy(&ki, &udpPacket[2 + sizeof(kp)], sizeof(ki));
-        memcpy(&kd, &udpPacket[2 + sizeof(kp) + sizeof(ki)], sizeof(kd));
-        memcpy(&maxOut, &udpPacket[2 + sizeof(kp) + sizeof(ki) + sizeof(kd)], sizeof(maxOut));
-        ds->yawRatePid.enabled = enabled;
-        ds->yawRatePid.kp = kp;
-        ds->yawRatePid.ki = ki;
-        ds->yawRatePid.kd = kd;
-        ds->yawRatePid.maxOut = maxOut;
+        parsePidConfigPacket(&ds->yawRatePid, udpPacket);
         break;
       case CMD_SET_PITCH_RATE_PID:
-        enabled = udpPacket[1];
-        memcpy(&kp, &udpPacket[2], sizeof(kp));
-        memcpy(&ki, &udpPacket[2 + sizeof(kp)], sizeof(ki));
-        memcpy(&kd, &udpPacket[2 + sizeof(kp) + sizeof(ki)], sizeof(kd));
-        memcpy(&maxOut, &udpPacket[2 + sizeof(kp) + sizeof(ki) + sizeof(kd)], sizeof(maxOut));
-        ds->pitchRatePid.enabled = enabled;
-        ds->pitchRatePid.kp = kp;
-        ds->pitchRatePid.ki = ki;
-        ds->pitchRatePid.kd = kd;
-        ds->pitchRatePid.maxOut = maxOut;
+        parsePidConfigPacket(&ds->pitchRatePid, udpPacket);
         break;
       case CMD_SET_ROLL_RATE_PID:
-         enabled = udpPacket[1];
-         memcpy(&kp, &udpPacket[2], sizeof(kp));
-         memcpy(&ki, &udpPacket[2 + sizeof(kp)], sizeof(ki));
-         memcpy(&kd, &udpPacket[2 + sizeof(kp) + sizeof(ki)], sizeof(kd));
-         memcpy(&maxOut, &udpPacket[2 + sizeof(kp) + sizeof(ki) + sizeof(kd)], sizeof(maxOut));
-         ds->rollRatePid.enabled = enabled;
-         ds->rollRatePid.kp = kp;
-         ds->rollRatePid.ki = ki;
-         ds->rollRatePid.kd = kd;
-         ds->rollRatePid.maxOut = maxOut;
-         break;
+        parsePidConfigPacket(&ds->rollRatePid, udpPacket);
+        break;
       case CMD_SET_PITCH_PID:
-        enabled = udpPacket[1];
-        memcpy(&kp, &udpPacket[2], sizeof(kp));
-        memcpy(&ki, &udpPacket[2 + sizeof(kp)], sizeof(ki));
-        memcpy(&kd, &udpPacket[2 + sizeof(kp) + sizeof(ki)], sizeof(kd));
-        memcpy(&maxOut, &udpPacket[2 + sizeof(kp) + sizeof(ki) + sizeof(kd)], sizeof(maxOut));
-        ds->pitchPid.enabled = enabled;
-        ds->pitchPid.kp = kp;
-        ds->pitchPid.ki = ki;
-        ds->pitchPid.kd = kd;
-        ds->pitchPid.maxOut = maxOut;
+        parsePidConfigPacket(&ds->pitchPid, udpPacket);
         break;
       case CMD_SET_ROLL_PID:
-        enabled = udpPacket[1];
-        memcpy(&kp, &udpPacket[2], sizeof(kp));
-        memcpy(&ki, &udpPacket[2 + sizeof(kp)], sizeof(ki));
-        memcpy(&kd, &udpPacket[2 + sizeof(kp) + sizeof(ki)], sizeof(kd));
-        memcpy(&maxOut, &udpPacket[2 + sizeof(kp) + sizeof(ki) + sizeof(kd)], sizeof(maxOut));
-        ds->rollPid.enabled = enabled;
-        ds->rollPid.kp = kp;
-        ds->rollPid.ki = ki;
-        ds->rollPid.kd = kd;
-        ds->rollPid.maxOut = maxOut;
+        parsePidConfigPacket(&ds->rollPid, udpPacket);
         break;
       case CMD_SET_ALT_PID:
-        enabled = udpPacket[1];
-        memcpy(&kp, &udpPacket[2], sizeof(kp));
-        memcpy(&ki, &udpPacket[2 + sizeof(kp)], sizeof(ki));
-        memcpy(&kd, &udpPacket[2 + sizeof(kp) + sizeof(ki)], sizeof(kd));
-        memcpy(&maxOut, &udpPacket[2 + sizeof(kp) + sizeof(ki) + sizeof(kd)], sizeof(maxOut));
-        ds->altPid.enabled = enabled;
-        ds->altPid.kp = kp;
-        ds->altPid.ki = ki;
-        ds->altPid.kd = kd;
-        ds->altPid.maxOut = maxOut;
+        parsePidConfigPacket(&ds->altPid, udpPacket);
         break;
       case CMD_SET_OPTICAL_FLOW_X_PID:
-        enabled = udpPacket[1];
-        memcpy(&kp, &udpPacket[2], sizeof(kp));
-        memcpy(&ki, &udpPacket[2 + sizeof(kp)], sizeof(ki));
-        memcpy(&kd, &udpPacket[2 + sizeof(kp) + sizeof(ki)], sizeof(kd));
-        memcpy(&maxOut, &udpPacket[2 + sizeof(kp) + sizeof(ki) + sizeof(kd)], sizeof(maxOut));
-        ds->opticalFlowXPid.enabled = enabled;
-        ds->opticalFlowXPid.kp = kp;
-        ds->opticalFlowXPid.ki = ki;
-        ds->opticalFlowXPid.kd = kd;
-        ds->opticalFlowXPid.maxOut = maxOut;
-      break;
+        parsePidConfigPacket(&ds->opticalFlowXPid, udpPacket);
+        break;
       case CMD_SET_OPTICAL_FLOW_Y_PID:
-        enabled = udpPacket[1];
-        memcpy(&kp, &udpPacket[2], sizeof(kp));
-        memcpy(&ki, &udpPacket[2 + sizeof(kp)], sizeof(ki));
-        memcpy(&kd, &udpPacket[2 + sizeof(kp) + sizeof(ki)], sizeof(kd));
-        memcpy(&maxOut, &udpPacket[2 + sizeof(kp) + sizeof(ki) + sizeof(kd)], sizeof(maxOut));
-        ds->opticalFlowYPid.enabled = enabled;
-        ds->opticalFlowYPid.kp = kp;
-        ds->opticalFlowYPid.ki = ki;
-        ds->opticalFlowYPid.kd = kd;
-        ds->opticalFlowYPid.maxOut = maxOut;
+        parsePidConfigPacket(&ds->opticalFlowYPid, udpPacket);
       break;
       case CMD_SET_YPR:
-        memcpy(&kp, &udpPacket[1], sizeof(kp));
-        memcpy(&ki, &udpPacket[1 + sizeof(kp)], sizeof(ki));
-        memcpy(&kd, &udpPacket[1 + sizeof(kp) + sizeof(ki)], sizeof(kd));
-        memcpy(&maxOut, &udpPacket[1 + sizeof(kp) + sizeof(ki) + sizeof(kd)], sizeof(maxOut));
+        float yaw,pitch,roll;
+        memcpy(&yaw, &udpPacket[1], sizeof(yaw));
+        memcpy(&pitch, &udpPacket[1 + sizeof(pitch)], sizeof(pitch));
+        memcpy(&roll, &udpPacket[1 + sizeof(yaw) + sizeof(pitch)], sizeof(roll));
 
-        ds->altPid.target = maxOut;
-        ds->yawRatePid.target = kp;
+        ds->yawRatePid.target = yaw;
 
         if(ds->pitchPid.enabled)
-          ds->pitchPid.target = ki;
+          ds->pitchPid.target = pitch;
         else
-          ds->pitchRatePid.target = ki;
+          ds->pitchRatePid.target = pitch;
 
         if(ds->rollPid.enabled)
-          ds->rollPid.target = kd;
+          ds->rollPid.target = roll;
         else
-          ds->rollRatePid.target = kd;
+          ds->rollRatePid.target = roll;
         // disable hold pos if we have user defined target
-        if(ki != 0.f || kd != 0.f)
-          ds->holdPosEnabled = 0;
+        ds->holdPosEnabled = PDL_HOLDPOS_BOTH_XY;
+        if(roll != 0.f && pitch != 0.f)
+          ds->holdPosEnabled = PDL_HOLDPOS_DISABLED;
+        else if(pitch != 0.f)
+          ds->holdPosEnabled = PDL_HOLDPOS_X;
+        else if(roll != 0.f)
+          ds->holdPosEnabled = PDL_HOLDPOS_Y;
+        /*if(pitch != 0.f || roll != 0.f)
+          ds->holdPosEnabled = PDL_HOLDPOS_DISABLED;
         else
-          ds->holdPosEnabled = 1;
+          ds->holdPosEnabled = PDL_HOLDPOS_BOTH_XY;
+          */
         break;
       case CMD_SET_PERIODS:
         memcpy(&telemetryPeriod, &udpPacket[1], sizeof(telemetryPeriod));
-        //memcpy(&pidPeriod, &udpPacket[1 + sizeof(telemetryPeriod)], sizeof(pidPeriod));
         if(telemetryPeriod < 1)
           telemetryPeriod = 1;
-        //if(pidPeriod < 1)
-        //  pidPeriod = 1;
-        //yawRatePid.setTimeStep(pidPeriod);
-        //pitchPid.setTimeStep(pidPeriod);
-        //rollPid.setTimeStep(pidPeriod);
-        //altPid.setTimeStep(pidPeriod);
         break;
       case CMD_ENABLE_STABILIZATION:
         ds->stabilizationEnabled = udpPacket[1];
@@ -380,4 +286,35 @@ void processTelemetry(pdlDroneState *ds)
   udp.beginPacket(host, telemetryPort);
   udp.write(udpPacket, pos);
   udp.endPacket();
+}
+
+void parseTripleAxisSensorConfigPacket(pdlTripleAxisSensorState *ps, byte *packet)
+{
+  int16_t dx,dy,dz;
+
+  memcpy(&dx, &packet[1], sizeof(int16_t));
+  memcpy(&dy, &packet[3], sizeof(int16_t));
+  memcpy(&dz, &packet[5], sizeof(int16_t));
+
+  ps->offset[PDL_X] = dx;
+  ps->offset[PDL_Y] = dy;
+  ps->offset[PDL_Z] = dz;
+}
+
+void parsePidConfigPacket(pdlPidState *pid, byte *packet)
+{
+  float kp,ki,kd,maxOut,maxErrSum;
+  uint8_t enabled = packet[1];
+  memcpy(&kp, &packet[2], sizeof(kp));
+  memcpy(&ki, &packet[2 + sizeof(kp)], sizeof(ki));
+  memcpy(&kd, &packet[2 + sizeof(kp) + sizeof(ki)], sizeof(kd));
+  memcpy(&maxOut, &packet[2 + sizeof(kp) + sizeof(ki) + sizeof(kd)], sizeof(maxOut));
+  memcpy(&maxErrSum, &packet[2 + sizeof(kp) + sizeof(ki) + sizeof(kd) + sizeof(maxErrSum)], sizeof(maxErrSum));
+
+  pid->enabled = enabled;
+  pid->kp = kp;
+  pid->ki = ki;
+  pid->kd = kd;
+  pid->maxOut = maxOut;
+  pid->maxErrSum = maxErrSum;
 }

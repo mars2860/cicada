@@ -1,5 +1,4 @@
 #include "pdl.h"
-
 #include <Math.h>
 
 #include "I2Cdev.h"
@@ -80,7 +79,8 @@ void pdlReadAccel(pdlDroneState *ds)
   // disadvantage of this method is no temperature compensation for gyro and accel
   // and result is not so clean as in DMP, there are more fluctuations.
   // values are invalid when motors run high speed. it is very sensetive to vibrations
-  // advantage of this method is fast execute. it takes 5ms to execute
+  // advantage of this method is fast execute. it takes 5ms to execute to read all data
+  // read DMP results takes more time
 
   mpu.getMotion6( &ds->accel.raw[PDL_X],
                   &ds->accel.raw[PDL_Y],
@@ -91,11 +91,8 @@ void pdlReadAccel(pdlDroneState *ds)
 
   for(uint8_t i = 0; i < 3; i++)
   {
-    ds->accel.filtered[i] = ds->accel.raw[i];
-    ds->accel.pure[i] = (float)(ds->accel.filtered[i]) / 8192.f;
-
-    ds->gyro.filtered[i] = ds->gyro.raw[i];
-    ds->gyro.pure[i] = (float)(ds->gyro.filtered[i]) / 16.4f;
+    ds->accel.pure[i] = (float)(ds->accel.raw[i]) / 8192.f;
+    ds->gyro.pure[i] = (float)(ds->gyro.raw[i]) / 16.4f;
     ds->gyro.pure[i] *= 3.1415926535f / 180.f;
     /*SampleFilter_put(&axFilter, accel[0]);
     SampleFilter_put(&ayFilter, accel[1]);

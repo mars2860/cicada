@@ -107,7 +107,7 @@ void pdlSetupMagneto(pdlDroneState*)
   // заглушка
 }
 
-void pdlReadMagneto(pdlDroneState *ds)
+void pdlReadMagneto(pdlDroneState*)
 {
   // заглушка
 }

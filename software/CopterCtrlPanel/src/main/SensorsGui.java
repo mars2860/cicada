@@ -56,32 +56,32 @@ public class SensorsGui extends JSavedFrame
 			
 			DroneState droneState = CopterTelemetry.instance().getDroneState();
 			
-			text = ": " + Integer.toString((int)droneState.accel.filteredX) + "/" +
+			text = ": " + Integer.toString((int)droneState.accel.rawX) + "/" +
 							Integer.toString((int)droneState.accel.offsetX);
 			mlbAx.setText(text);
 			mlbAx.setToolTipText(text);
 			
-			text = ": " + Integer.toString((int)droneState.accel.filteredY) + "/" +
+			text = ": " + Integer.toString((int)droneState.accel.rawY) + "/" +
 					Integer.toString((int)droneState.accel.offsetY);
 			mlbAy.setText(text);
 			mlbAy.setToolTipText(text);
 	
-			text = ": " + Integer.toString((int)droneState.accel.filteredZ) + "/" +
+			text = ": " + Integer.toString((int)droneState.accel.rawZ) + "/" +
 					Integer.toString((int)droneState.accel.offsetZ);
 			mlbAz.setText(text);
 			mlbAz.setToolTipText(text);
 			
-			text = ": " + Integer.toString((int)droneState.gyro.filteredX) + "/" +
+			text = ": " + Integer.toString((int)droneState.gyro.rawX) + "/" +
 					Integer.toString((int)droneState.gyro.offsetX);
 			mlbGx.setText(text);
 			mlbGx.setToolTipText(text);
 			
-			text = ": " + Integer.toString((int)droneState.gyro.filteredY) + "/" +
+			text = ": " + Integer.toString((int)droneState.gyro.rawY) + "/" +
 					Integer.toString((int)droneState.gyro.offsetY);
 			mlbGy.setText(text);
 			mlbGy.setToolTipText(text);
 			
-			text = ": " + Integer.toString((int)droneState.gyro.filteredZ) + "/" +
+			text = ": " + Integer.toString((int)droneState.gyro.rawZ) + "/" +
 					Integer.toString((int)droneState.gyro.offsetZ);
 			mlbGz.setText(text);
 			mlbGz.setToolTipText(text);
@@ -109,17 +109,17 @@ public class SensorsGui extends JSavedFrame
 			mlbDataCount.setText(fmt1.format(heading));
 			*/
 			
-			text = ": " + Integer.toString((int)droneState.magneto.filteredX) + "/" +
+			text = ": " + Integer.toString((int)droneState.magneto.rawX) + "/" +
 					Integer.toString((int)droneState.magneto.offsetX);
 			mlbMx.setText(text);
 			mlbMx.setToolTipText(text);
 			
-			text = ": " + Integer.toString((int)droneState.magneto.filteredY) + "/" +
+			text = ": " + Integer.toString((int)droneState.magneto.rawY) + "/" +
 					Integer.toString((int)droneState.magneto.offsetY);
 			mlbMy.setText(text);
 			mlbMy.setToolTipText(text);
 			
-			text = ": " + Integer.toString((int)droneState.magneto.filteredZ) + "/" +
+			text = ": " + Integer.toString((int)droneState.magneto.rawZ) + "/" +
 					Integer.toString((int)droneState.magneto.offsetZ);
 			mlbMz.setText(text);
 			mlbMz.setToolTipText(text);
@@ -128,17 +128,17 @@ public class SensorsGui extends JSavedFrame
 			{
 				if(mDataCount < MAX_DATA_COUNT)
 				{
-					mAccelX[mDataCount] = droneState.accel.filteredX;
-					mAccelY[mDataCount] = droneState.accel.filteredY;
-					mAccelZ[mDataCount] = droneState.accel.filteredZ;
+					mAccelX[mDataCount] = droneState.accel.rawX;
+					mAccelY[mDataCount] = droneState.accel.rawY;
+					mAccelZ[mDataCount] = droneState.accel.rawZ;
 					
-					mGyroX[mDataCount] = droneState.gyro.filteredX;
-					mGyroY[mDataCount] = droneState.gyro.filteredY;
-					mGyroZ[mDataCount] = droneState.gyro.filteredZ;
+					mGyroX[mDataCount] = droneState.gyro.rawX;
+					mGyroY[mDataCount] = droneState.gyro.rawY;
+					mGyroZ[mDataCount] = droneState.gyro.rawZ;
 				
-					mMagnetX[mDataCount] = droneState.magneto.filteredX;
-					mMagnetY[mDataCount] = droneState.magneto.filteredY;
-					mMagnetZ[mDataCount] = droneState.magneto.filteredZ;
+					mMagnetX[mDataCount] = droneState.magneto.rawX;
+					mMagnetY[mDataCount] = droneState.magneto.rawY;
+					mMagnetZ[mDataCount] = droneState.magneto.rawZ;
 				}
 				
 				mDataCount++;

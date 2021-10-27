@@ -36,6 +36,12 @@ extern "C" {
 #define PDL_DEFAULT_LIDAR_READ_PERIOD 50000
 /// OpticalFlow read period. Use pdlSetOpticalFlowReadPeriod in pdlLidarSetup
 #define PDL_DEFAULT_OPTICAL_FLOW_READ_PERIOD 50000
+/// Desire time for one loop
+#define PDL_DESIRE_UPDATE_TIME 5000
+/// Max wait time for task to be executed
+#define PDL_TASK_MAX_WAIT_TIME 10000
+/// Maximum lidar range in meters
+#define PDL_LIDAR_MAX_RANGE 3.f
 /// Drone frame PDL_DRONE_FRAME_X | PDL_DRONE_FRAME_CROSS
 #define PDL_DRONE_FRAME                 PDL_DRONE_FRAME_CROSS
 /// comment to enable symmetric motors regulation in stabilization
@@ -46,6 +52,11 @@ extern "C" {
 #define PDL_X     0
 #define PDL_Y     1
 #define PDL_Z     2
+
+#define PDL_HOLDPOS_DISABLED 0
+#define PDL_HOLDPOS_X        1
+#define PDL_HOLDPOS_Y        2
+#define PDL_HOLDPOS_BOTH_XY  3
 
 typedef enum
 {
@@ -67,15 +78,25 @@ typedef struct s_pdlPidState
   float target;
   float out;
   float errSum;
-  float prevInput;
+  float input;
   float maxOut;
-  uint32_t enabled; // not use uint8_t because it needs to align divisible by 4 bytes
-} pdlPidState;  // 36 bytes
+  float maxErrSum;
+  uint32_t enabled; // not use uint8_t because it needs to align to be divisible by 4 bytes
+} pdlPidState;  // 40 bytes
 
 typedef struct s_pdlRcState
 {
   int32_t rssi;
 } pdlRcState;
+
+typedef struct s_pdlOpticalFlowSate
+{
+  int16_t rawX;
+  int16_t rawY;
+  // velocities
+  float vx;
+  float vy;
+} pdlOpticalFlowState;
 
 typedef struct s_pdlDroneState
 {
@@ -83,13 +104,9 @@ typedef struct s_pdlDroneState
   float pure[3];
   /// raw values
   int16_t raw[3];
-  /// values after digital filters
-  int16_t filtered[3];
   /// calibration offsets
   int16_t offset[3];
-  /// explicit struct align to divisible by 4
-  int16_t gap;
-} pdlTripleAxisSensorState; // 32 bytes
+} pdlTripleAxisSensorState; // 24 bytes
 
 typedef struct
 {
@@ -124,10 +141,8 @@ typedef struct
   float seaLevel;
   // Lidar range in meters (if less 0, that means there is error in lidar)
   float lidarRange;
-  // Optical flow x (unitless ticks)
-  float opticalFlowX;
-  // Optcal flow y (unitless ticks)
-  float opticalFlowY;
+  // OpticalFlow
+  pdlOpticalFlowState opticalFlow;
   // Yaw Rate PID
   pdlPidState yawRatePid;
   // Pitch Rate PID
@@ -150,7 +165,7 @@ typedef struct
   uint8_t motorsEnabled;
   // Stabilization
   uint8_t stabilizationEnabled;
-  // Hold position
+  // Hold position (one of macro PDL_HOLDPOS_)
   uint8_t holdPosEnabled;
   /// explicit struct align to divisible by 4
   uint8_t gap;
@@ -158,6 +173,8 @@ typedef struct
 
 void pdlSetup(pdlDroneState*);
 void pdlUpdate(pdlDroneState*);
+
+uint32_t pdlGetDeltaTime(uint32_t cur, uint32_t last);
 
 void pdlSetMotorGasLimits(int32_t min, int32_t nul, int32_t max);
 void pdlSetImuReadPeriod(uint32_t);
@@ -173,7 +190,9 @@ void pdlSetMotorGas(pdlDroneState*, uint8_t, int32_t);
 void pdlAddMotorGas(pdlDroneState*, uint8_t, int32_t);
 
 void pdlSetLidarMaxRange(float);
+float pdlGetLidarMaxRange();
 
+/** @param dt delta time in microseconds */
 void pdlUpdatePid(pdlPidState*, float input, float dt);
 void pdlResetPid(pdlPidState*);
 

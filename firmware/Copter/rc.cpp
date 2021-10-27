@@ -57,8 +57,10 @@ uint32_t telemetryPeriod;
 #define CMD_SET_BASE_GAS          117
 #define CMD_SET_PITCH_RATE_PID    118
 #define CMD_SET_ROLL_RATE_PID     119
-#define CMD_SET_OPTICAL_FLOW_X_PID 120
-#define CMD_SET_OPTICAL_FLOW_Y_PID 121
+#define CMD_SET_VELOCITY_X_PID    120
+#define CMD_SET_VELOCITY_Y_PID    121
+#define CMD_SET_VELOCITY_Z_PID    122
+#define CMD_SET_VELOCITY_Z        123
 
 /// Writes data to telemetry packet at given position. Returns new position to write
 uint16_t writeTelemetryPacket(uint16_t pos, byte *packet, void *value, size_t valueSize);
@@ -144,6 +146,9 @@ void processCommand(pdlDroneState *ds)
           ds->rollRatePid.target = 0;
           ds->pitchPid.target = 0;
           ds->rollPid.target = 0;
+          ds->velocityXPid.target = 0;
+          ds->velocityYPid.target = 0;
+          ds->velocityZPid.target = 0;
           ds->holdPosEnabled = PDL_HOLDPOS_BOTH_XY;
         }
         break;
@@ -206,12 +211,15 @@ void processCommand(pdlDroneState *ds)
       case CMD_SET_ALT_PID:
         parsePidConfigPacket(&ds->altPid, udpPacket);
         break;
-      case CMD_SET_OPTICAL_FLOW_X_PID:
-        parsePidConfigPacket(&ds->opticalFlowXPid, udpPacket);
+      case CMD_SET_VELOCITY_X_PID:
+        parsePidConfigPacket(&ds->velocityXPid, udpPacket);
         break;
-      case CMD_SET_OPTICAL_FLOW_Y_PID:
-        parsePidConfigPacket(&ds->opticalFlowYPid, udpPacket);
+      case CMD_SET_VELOCITY_Y_PID:
+        parsePidConfigPacket(&ds->velocityYPid, udpPacket);
       break;
+      case CMD_SET_VELOCITY_Z_PID:
+        parsePidConfigPacket(&ds->velocityZPid, udpPacket);
+        break;
       case CMD_SET_YPR:
         float yaw,pitch,roll;
         memcpy(&yaw, &udpPacket[1], sizeof(yaw));
@@ -253,13 +261,16 @@ void processCommand(pdlDroneState *ds)
         break;
       case CMD_RESET_ALTITUDE:
         //vz = 0;
-        ds->seaLevel = ds->pressure;
+        ds->baro.seaLevelPressure = ds->baro.pressure;
         break;
       case CMD_SET_SEA_LEVEL:
-        memcpy(&ds->seaLevel, &udpPacket[1], sizeof(ds->seaLevel));
+        memcpy(&ds->baro.seaLevelPressure, &udpPacket[1], sizeof(ds->baro.seaLevelPressure));
         break;
       case CMD_SET_ALTITUDE:
         memcpy(&ds->altPid.target, &udpPacket[1], sizeof(ds->altPid.target));
+        break;
+      case CMD_SET_VELOCITY_Z:
+        memcpy(&ds->velocityZPid.target, &udpPacket[1], sizeof(ds->velocityZPid.target));
         break;
     }
   }
@@ -316,5 +327,5 @@ void parsePidConfigPacket(pdlPidState *pid, byte *packet)
   pid->ki = ki;
   pid->kd = kd;
   pid->maxOut = maxOut;
-  pid->maxErrSum = maxErrSum;
+  //pid->maxErrSum = maxErrSum;
 }

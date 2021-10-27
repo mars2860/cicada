@@ -80,9 +80,9 @@ typedef struct s_pdlPidState
   float errSum;
   float input;
   float maxOut;
-  float maxErrSum;
+  //float maxErrSum;
   uint32_t enabled; // not use uint8_t because it needs to align to be divisible by 4 bytes
-} pdlPidState;  // 40 bytes
+} pdlPidState;  // 36 bytes
 
 typedef struct s_pdlRcState
 {
@@ -93,10 +93,17 @@ typedef struct s_pdlOpticalFlowSate
 {
   int16_t rawX;
   int16_t rawY;
-  // velocities
-  float vx;
-  float vy;
 } pdlOpticalFlowState;
+
+typedef struct s_pdlBaroState
+{
+  // hPa
+  float pressure;
+  // meters
+  float altitude;
+  // hPa
+  float seaLevelPressure;
+} pdlBaroState;
 
 typedef struct s_pdlDroneState
 {
@@ -127,20 +134,20 @@ typedef struct
   float roll;
   // radians
   float heading;
+  // meters (can be lidarRange or baroAlt or fused, this value used by altPid)
+  float altitude;
+  // velocities in m/s along drone axis and related to ground
+  float velocity[3];
   // Averaging time of executing one loop in microseconds
   uint32_t avgLoopTime;
   // Max time of executing one loop in microseconds
   uint32_t maxLoopTime;
   // degree
   float temperature;
-  // hPa
-  float pressure;
-  // meters
-  float baroAlt;
-  // hPa
-  float seaLevel;
   // Lidar range in meters (if less 0, that means there is error in lidar)
   float lidarRange;
+  // baro
+  pdlBaroState baro;
   // OpticalFlow
   pdlOpticalFlowState opticalFlow;
   // Yaw Rate PID
@@ -155,10 +162,12 @@ typedef struct
   pdlPidState rollPid;
   // Alt PID
   pdlPidState altPid;
-  // Optical flow X PID
-  pdlPidState opticalFlowXPid;
-  // Optical flow Y PID
-  pdlPidState opticalFlowYPid;
+  // VelocityX PID
+  pdlPidState velocityXPid;
+  // VelocityY PID
+  pdlPidState velocityYPid;
+  // VelocityZ PID
+  pdlPidState velocityZPid;
   // Motors
   int32_t baseGas;
   int32_t motorGas[PDL_MOTOR_COUNT];
@@ -259,10 +268,18 @@ void pdlReadAccel(pdlDroneState*);
 void pdlReadGyro(pdlDroneState*);
 /// @return result should be saved in pdlDroneState.magneto
 void pdlReadMagneto(pdlDroneState*);
-/// @return result should be saved in pdlDroneState.temperature,pressure,altitude
-void pdlReadBaro(pdlDroneState*);
-/// @return result should be saved in pdlDroneState.lidarRange
-void pdlReadLidar(pdlDroneState*);
+/**
+ * @note result should be saved in pdlDroneState.temperature,pressure,altitude
+ *
+ * @return 1 if to need update altPid
+ */
+uint8_t pdlReadBaro(pdlDroneState*);
+/**
+ * @note result should be saved in pdlDroneState.lidarRange
+ *
+ * @return 1 if to need update altPid
+ */
+uint8_t pdlReadLidar(pdlDroneState*);
 /// @return result should be saved in pdlDroneState.opticalFlow
 void pdlReadOpticalFlow(pdlDroneState*);
 /// @return result should be saved in pdlDroneState.yaw,pitch,roll

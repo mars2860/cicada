@@ -21,6 +21,7 @@ import copter.CopterTelemetry;
 import copter.DroneState;
 import copter.commands.CmdSetAltitude;
 import copter.commands.CmdSetBaseGas;
+import copter.commands.CmdSetVelocityZ;
 import copter.commands.CmdSetYPR;
 import copter.commands.TakeOff;
 import helper.NumericDocument;
@@ -103,6 +104,9 @@ public class RemoteControlGui extends JSavedFrame
 		{
 			DroneState ds = CopterTelemetry.instance().getDroneState();
 			
+			CmdSetYPR cmdYpr = new CmdSetYPR(0,0,0);
+			//CmdSetVelocityZ cmdVz = null;
+			
 			// get up
 			if(btnGetUp.getModel().isPressed())
 			{
@@ -115,6 +119,7 @@ public class RemoteControlGui extends JSavedFrame
 				{
 					CmdSetAltitude cmd = new CmdSetAltitude((float)(ds.altPid.target + ALT_CTRL_DELTA));
 					CopterCommander.instance().addCmd(cmd);
+					//cmdVz = new CmdSetVelocityZ(0.05f);
 				}
 			}
 
@@ -130,10 +135,9 @@ public class RemoteControlGui extends JSavedFrame
 				{
 					CmdSetAltitude cmd = new CmdSetAltitude((float)(ds.altPid.target - ALT_CTRL_DELTA));
 					CopterCommander.instance().addCmd(cmd);
+					//cmdVz = new CmdSetVelocityZ(-0.05f);
 				}
 			}
-			
-			CmdSetYPR cmdYpr = new CmdSetYPR(0,0,0);
 			
 			// roll left
 			if(btnLeft.getModel().isPressed())
@@ -184,11 +188,25 @@ public class RemoteControlGui extends JSavedFrame
 				CopterCommander.instance().addCmd(cmdYpr);
 				CopterCommander.instance().addCmd(cmdYpr);
 			}
+			
+			/*if(cmdVz != null)
+			{
+				if(ds.velocityZPid.target != cmdVz.getVelocity())
+					CopterCommander.instance().addCmd(cmdVz);
+			}
+			else
+			{
+				cmdVz = new CmdSetVelocityZ(0);
+				CopterCommander.instance().addCmd(cmdVz);
+			}*/
+			
 			// stop
 			if(btnStop.getModel().isPressed())
 			{
 				cmdYpr = new CmdSetYPR(0,0,0);
 				CopterCommander.instance().addCmd(cmdYpr);
+				CmdSetVelocityZ cmd = new CmdSetVelocityZ(0);
+				CopterCommander.instance().addCmd(cmd);
 			}
 		}
 	}

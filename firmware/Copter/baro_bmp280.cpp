@@ -24,15 +24,24 @@ void pdlSetupBaro(pdlDroneState*)
   pdlSetBaroReadPeriod(50000);
 }
 
-void pdlReadBaro(pdlDroneState *ds)
+uint8_t pdlReadBaro(pdlDroneState *ds)
 {
-  baro.update(ds->seaLevel);
+  baro.update(ds->baro.seaLevelPressure);
   //temperature = (float)(mpu.getTemperature()) / 340.f;  // require temperature offset
-  ds->pressure = baro.pressure;
-  ds->baroAlt = baro.altitude;
+  ds->baro.pressure = baro.pressure;
+  ds->baro.altitude = baro.altitude;
   ds->temperature = baro.temperature;
+
   //altitude = altest.getAltitude();
   //alt_estimator.update(baro.altitude);
   //altitude = alt_estimator.h;
   //temperature = altest.getVerticalVelocity();//alt_estimator.v;//vz;////baro.temperature;
+
+  if(ds->lidarRange < 0 || ds->lidarRange > pdlGetLidarMaxRange())
+  {
+    ds->altitude = ds->baro.altitude;
+    //return 1;
+  }
+
+  return 0;
 }

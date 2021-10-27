@@ -29,7 +29,7 @@ uint32_t pdlUpdateStartTime;
 void pdlCrossFrameApplyPids(pdlDroneState*);
 void pdlXFrameApplyPids(pdlDroneState*);
 
-void pdlUpdateAltPid(pdlDroneState*,float);
+void pdlUpdateAltPid(pdlDroneState*);
 void pdlUpdateLevelsPid(pdlDroneState*);
 
 uint8_t pdlCanTaskRun(pdlTaskState*);
@@ -164,13 +164,17 @@ void pdlImuTask(pdlDroneState *ds)
   pdlUpdateLevelsPid(ds);
 }
 
-void pdlUpdateAltPid(pdlDroneState *ds, float alt)
+void pdlUpdateAltPid(pdlDroneState *ds)
 {
   static uint32_t altPidLastUpdateTime = 0;
   float dt;
   dt = pdlGetDeltaTime(pdlMicros(), altPidLastUpdateTime);
   altPidLastUpdateTime = pdlMicros();
-  pdlUpdatePid(&ds->altPid, alt, dt);
+  pdlUpdatePid(&ds->altPid, ds->altitude, dt);
+  // apply alt pid to velocityZPid
+  /*if(ds->altPid.enabled)
+    ds->velocityZPid.target = ds->altPid.out;
+  pdlUpdatePid(&ds->velocityZPid, ds->velocity[PDL_Z], dt);*/
 }
 
 void pdlBaroTask(pdlDroneState *ds)
@@ -178,10 +182,8 @@ void pdlBaroTask(pdlDroneState *ds)
   if(!pdlCanTaskRun(&pdlBaroTS))
     return;
 
-  pdlReadBaro(ds);
-
-  if( (ds->lidarRange < 0 || ds->lidarRange > pdlLidarMaxRange) && ds->pressure > 0)
-    pdlUpdateAltPid(ds, ds->baroAlt);
+  if(pdlReadBaro(ds))
+    pdlUpdateAltPid(ds);
 }
 
 void pdlLidarTask(pdlDroneState *ds)
@@ -189,10 +191,8 @@ void pdlLidarTask(pdlDroneState *ds)
   if(!pdlCanTaskRun(&pdlLidarTS))
     return;
 
-  pdlReadLidar(ds);
-
-  if( ds->lidarRange > -0.1f && ds->lidarRange <= pdlLidarMaxRange )
-    pdlUpdateAltPid(ds, ds->lidarRange);
+  if(pdlReadLidar(ds))
+    pdlUpdateAltPid(ds);
 }
 
 void pdlOpticalFlowTask(pdlDroneState* ds)
@@ -209,51 +209,54 @@ void pdlOpticalFlowTask(pdlDroneState* ds)
   // update optical flow pids
   dt = pdlGetDeltaTime(pdlMicros(), opticalFlowPidsLastUpdateTime);
   opticalFlowPidsLastUpdateTime = pdlMicros();
-  pdlUpdatePid(&ds->opticalFlowXPid,ds->opticalFlow.vx,dt);
-  pdlUpdatePid(&ds->opticalFlowYPid,ds->opticalFlow.vy,dt);
+  pdlUpdatePid(&ds->velocityXPid,ds->velocity[PDL_X],dt);
+  pdlUpdatePid(&ds->velocityYPid,ds->velocity[PDL_Y],dt);
   // apply optical flow pids to levels pids
-  if(ds->holdPosEnabled)
+  /*
+  if(ds->holdPosEnabled == PDL_HOLDPOS_BOTH_XY)
   {
-    if(ds->opticalFlowYPid.enabled)
-      ds->pitchPid.target = ds->opticalFlowYPid.out;
+    if(ds->velocityYPid.enabled)
+      ds->pitchPid.target = ds->velocityYPid.out;
 
-    if(ds->opticalFlowXPid.enabled)
-      ds->rollPid.target = ds->opticalFlowXPid.out;
+    if(ds->velocityXPid.enabled)
+      ds->rollPid.target = ds->velocityXPid.out;
 
-    if(ds->opticalFlowXPid.enabled || ds->opticalFlowYPid.enabled)
+    if(ds->velocityXPid.enabled || ds->velocityYPid.enabled)
       pdlUpdateLevelsPid(ds);
-    /*
-     if( ds->opticalFlowYPid.enabled &&
-        (ds->holdPosEnabled == PDL_HOLDPOS_Y || ds->holdPosEnabled == PDL_HOLDPOS_BOTH_XY) )
-    {
-      ds->pitchPid.target = ds->opticalFlowYPid.out;
-    }
-    else
-    {
-      pdlResetPid(&ds->opticalFlowYPid);
-    }
-
-    if( ds->opticalFlowXPid.enabled &&
-        (ds->holdPosEnabled == PDL_HOLDPOS_X || ds->holdPosEnabled == PDL_HOLDPOS_BOTH_XY) )
-    {
-      ds->rollPid.target = ds->opticalFlowXPid.out;
-    }
-    else
-    {
-      pdlResetPid(&ds->opticalFlowXPid);
-    }
-
-    if(ds->opticalFlowXPid.enabled || ds->opticalFlowYPid.enabled)
-      pdlUpdateLevelsPid(ds);
-    */
   }
   else
   {
-    // Если не сбрасывать ПИДы, то будет переполняться интегратор
-    // и при упарвлении влево/вправо после остановки дрон будет
-    // стараться вернуться обратно, где был до управления
-    pdlResetPid(&ds->opticalFlowXPid);
-    pdlResetPid(&ds->opticalFlowYPid);
+    pdlResetPid(&ds->velocityXPid);
+    pdlResetPid(&ds->velocityYPid);
+  }
+  */
+
+  if(ds->holdPosEnabled)
+  {
+    if( ds->velocityYPid.enabled &&
+        (ds->holdPosEnabled == PDL_HOLDPOS_Y || ds->holdPosEnabled == PDL_HOLDPOS_BOTH_XY) )
+    {
+      ds->pitchPid.target = ds->velocityYPid.out;
+    }
+    else
+    {
+      pdlResetPid(&ds->velocityYPid);
+    }
+
+    if( ds->velocityXPid.enabled &&
+        (ds->holdPosEnabled == PDL_HOLDPOS_X || ds->holdPosEnabled == PDL_HOLDPOS_BOTH_XY) )
+    {
+      ds->rollPid.target = ds->velocityXPid.out;
+    }
+    else
+    {
+      pdlResetPid(&ds->velocityXPid);
+    }
+  }
+  else
+  {
+    pdlResetPid(&ds->velocityXPid);
+    pdlResetPid(&ds->velocityYPid);
   }
 }
 
@@ -306,11 +309,10 @@ void pdlUpdate(pdlDroneState *ds)
     {
       pdlPidModifiedFlag = 0;
       // apply alt pid
-      //if(ds->holdPosEnabled && ds->altPid.enabled)
       if(ds->altPid.enabled)
-      {
         ds->baseGas = ds->altPid.out;
-      }
+      /*if(ds->velocityZPid.enabled)
+        ds->baseGas = ds->velocityZPid.out;*/
       // apply level pids result to motors
       switch(PDL_DRONE_FRAME)
       {
@@ -331,8 +333,9 @@ void pdlUpdate(pdlDroneState *ds)
     pdlResetPid(&ds->pitchPid);
     pdlResetPid(&ds->rollPid);
     pdlResetPid(&ds->altPid);
-    pdlResetPid(&ds->opticalFlowXPid);
-    pdlResetPid(&ds->opticalFlowYPid);
+    pdlResetPid(&ds->velocityXPid);
+    pdlResetPid(&ds->velocityYPid);
+    pdlResetPid(&ds->velocityZPid);
   }
 
   if(!ds->motorsEnabled)
@@ -489,15 +492,15 @@ void pdlUpdatePid(pdlPidState *pid, float input, float dt)
 
   //output = Un1 + (kp + kd/dt)*En + (-kp - 2.f*kd/dt)*En1 + kd/dt*En2;
   //output = Un1 + kp*(En - En1) + ki_d*En + kd_d*(En - 2.f*En1 + En2);
-  pid->errSum += dt*(err + prevErr)/2.f;
-
-  if(fabsf(pid->errSum) > fabsf(pid->maxErrSum))
+  if(fabsf(pid->errSum) * pid->ki < pid->maxOut)
+    pid->errSum += dt*(err + prevErr)/2.f;
+  /*if(fabsf(pid->errSum) > fabsf(pid->maxErrSum))
   {
     if(pid->errSum > 0)
       pid->errSum = pid->maxErrSum;
     else
       pid->errSum = -pid->maxErrSum;
-  }
+  }*/
 
   pid->out = pid->kp*err + pid->ki*pid->errSum + pid->kd*(err - prevErr)/dt;
   pid->input = input;

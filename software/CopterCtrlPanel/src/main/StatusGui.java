@@ -79,13 +79,13 @@ public class StatusGui extends JSavedFrame
 			mlbHeading.setText(fmt2.format(heading));
 			mlbLoopTime.setText(fmt2.format(droneState.avgLoopTime));
 			mlbTemperature.setText(fmt1.format(droneState.temperature));
-			mlbPressure.setText(fmt1.format(droneState.pressure) + "/" +
-								fmt1.format(droneState.seaLevel));
+			mlbPressure.setText(fmt1.format(droneState.baro.pressure) + "/" +
+								fmt1.format(droneState.baro.seaLevelPressure));
 			mlbAltitude.setText(fmt3.format(droneState.altitude) + "/" +
 								fmt3.format(droneState.altPid.target));
 			mlbLidarRange.setText(fmt3.format(droneState.lidarRange));
-			mlbOpticalFlowX.setText(fmt2.format(droneState.opticalFlow.vx));
-			mlbOpticalFlowY.setText(fmt2.format(droneState.opticalFlow.vy));
+			mlbOpticalFlowX.setText(fmt2.format(droneState.opticalFlow.rawX));
+			mlbOpticalFlowY.setText(fmt2.format(droneState.opticalFlow.rawY));
 			
 			mlbYaw.setIcon(rotateImageIcon(ResBox.icon("YAW"), yaw));
 			mlbPitch.setIcon(rotateImageIcon(ResBox.icon("PITCH"), pitch));

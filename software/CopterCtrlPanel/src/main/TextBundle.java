@@ -39,7 +39,9 @@ public class TextBundle extends ListResourceBundle
             {"LIDAR_RANGE", "Range measured by lidar (meters)"},
             {"OPTICAL_FLOW_X", "Optical flow sensor delta X (tikcs)"},
             {"OPTICAL_FLOW_Y", "Optical flow sensor delta Y (ticks)"},
-            
+            {"VELOCITY_X", "Velocity X (m/s)"},
+            {"VELOCITY_Y", "Velocity Y (m/s)"},
+            {"VELOCITY_Z", "Velocity Z (m/s)"},
             
             {"MOTORS", "Motors"},
             {"MOTORS_ENABLED", "Motors enabled"},
@@ -110,8 +112,9 @@ public class TextBundle extends ListResourceBundle
             {"PITCH_PID", "Pitch PID"},
             {"ROLL_PID", "Roll PID"},
             {"ALT_PID", "Alt PID"},
-            {"OPTICAL_FLOW_X_PID", "OpticalFlow X PID"},
-            {"OPTICAL_FLOW_Y_PID", "OpticalFlow Y PID"},
+            {"VELOCITY_X_PID", "Velocity-X PID"},
+            {"VELOCITY_Y_PID", "Velocity-Y PID"},
+            {"VELOCITY_Z_PID", "Velocity-Z PID"},
             {"YAW","Yaw"},
             {"PITCH","Pitch"},
             {"ROLL","Roll"},

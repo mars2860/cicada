@@ -14,8 +14,9 @@ import copter.commands.CmdCalibrateGyro;
 import copter.commands.CmdCalibrateMagnet;
 import copter.commands.CmdResetAltitude;
 import copter.commands.CmdSetAltPid;
-import copter.commands.CmdSetOpticalFlowXPid;
-import copter.commands.CmdSetOpticalFlowYPid;
+import copter.commands.CmdSetVelocityXPid;
+import copter.commands.CmdSetVelocityYPid;
+import copter.commands.CmdSetVelocityZPid;
 import copter.commands.CmdSetPeriods;
 import copter.commands.CmdSetPitchPid;
 import copter.commands.CmdSetPitchRatePid;
@@ -169,10 +170,11 @@ public class DroneState implements Cloneable
 		@Setting
 		@Expose
 		public float maxOut;
-		@NoChart
+		
+		/*@NoChart
 		@Setting
 		@Expose
-		public float maxErrSum;
+		public float maxErrSum;*/
 
 		public double target;
 		public double errSum;
@@ -190,7 +192,7 @@ public class DroneState implements Cloneable
 			errSum = parser.getFloat(packet);
 			input = parser.getFloat(packet);
 			maxOut = parser.getFloat(packet);
-			maxErrSum = parser.getFloat(packet);
+			//maxErrSum = parser.getFloat(packet);
 			enabled = (parser.getUint32t(packet) > 0)?true:false;
 		}
 		
@@ -279,6 +281,10 @@ public class DroneState implements Cloneable
 	public double rollDeg;
 	public double headingRad;
 	public double headingDeg;
+	public double altitude;
+	public double velocityX;
+	public double velocityY;
+	public double velocityZ;
 	@SettingGroup(name = "YAW_RATE_PID")
 	@Expose
 	@SerializedName("yawRatePid")
@@ -303,14 +309,18 @@ public class DroneState implements Cloneable
 	@Expose
 	@SerializedName("altPid")
 	public Pid altPid = new Pid();
-	@SettingGroup(name = "OPTICAL_FLOW_X_PID")
+	@SettingGroup(name = "VELOCITY_X_PID")
 	@Expose
-	@SerializedName("opticalFlowXPid")
-	public Pid opticalFlowXPid = new Pid();
-	@SettingGroup(name = "OPTICAL_FLOW_Y_PID")
+	@SerializedName("velocityXPid")
+	public Pid velocityXPid = new Pid();
+	@SettingGroup(name = "VELOCITY_Y_PID")
 	@Expose
-	@SerializedName("opticalFlowYPid")
-	public Pid opticalFlowYPid = new Pid();
+	@SerializedName("velocityYPid")
+	public Pid velocityYPid = new Pid();
+	@SettingGroup(name = "VELOCITY_Z_PID")
+	@Expose
+	@SerializedName("velocityZPid")
+	public Pid velocityZPid = new Pid();
 	@NoChart
 	public boolean motorsEnabled;
 	public double baseGas;
@@ -323,13 +333,10 @@ public class DroneState implements Cloneable
 	public double avgLoopTime;
 	public double maxLoopTime;
 	public double temperature;
-	public double pressure;
-	public double altitude;
-	@NoChart
-	public double seaLevel;
 	public double lidarRange;
 	
 	public OpticalFlow opticalFlow = new OpticalFlow();
+	public Baro baro = new Baro();
 	
 	// no sense variable, this is 2 bytes gap in C structure
 	public double holdPosEnabled;
@@ -367,13 +374,15 @@ public class DroneState implements Cloneable
 		rollDeg = Math.toDegrees(rollRad);
 		headingRad = parser.getFloat(packet);
 		headingDeg = Math.toDegrees(headingRad);
+		altitude = parser.getFloat(packet);
+		velocityX = parser.getFloat(packet);
+		velocityY = parser.getFloat(packet);
+		velocityZ = parser.getFloat(packet);
 		avgLoopTime = parser.getInt32t(packet);
 		maxLoopTime = parser.getInt32t(packet);
 		temperature = parser.getFloat(packet);
-		pressure = parser.getFloat(packet);
-		altitude = parser.getFloat(packet);
-		seaLevel = parser.getFloat(packet);
 		lidarRange = parser.getFloat(packet);
+		baro.parse(parser, packet);;
 		opticalFlow.parse(parser, packet);;
 		yawRatePid.parse(parser, packet);
 		pitchRatePid.parse(parser, packet);
@@ -381,8 +390,9 @@ public class DroneState implements Cloneable
 		pitchPid.parse(parser, packet);
 		rollPid.parse(parser, packet);
 		altPid.parse(parser, packet);
-		opticalFlowXPid.parse(parser, packet);
-		opticalFlowYPid.parse(parser, packet);
+		velocityXPid.parse(parser, packet);
+		velocityYPid.parse(parser, packet);
+		velocityZPid.parse(parser, packet);
 		baseGas = parser.getInt32t(packet);
 		motorGas0 = parser.getInt32t(packet);
 		motorGas1 = parser.getInt32t(packet);
@@ -400,15 +410,32 @@ public class DroneState implements Cloneable
 	{
 		public double rawX;
 		public double rawY;
-		public double vx;
-		public double vy;
 		
 		private void parse(BinaryParser parser, DatagramPacket packet)
 		{
 			rawX = parser.getInt16t(packet);
 			rawY = parser.getInt16t(packet);
-			vx = parser.getFloat(packet);
-			vy = parser.getFloat(packet);
+		}
+		
+		@Override
+		public Object clone() throws CloneNotSupportedException
+		{
+			return super.clone();
+		}
+	}
+	
+	public static class Baro implements Cloneable
+	{
+		public double pressure;
+		public double altitude;
+		@NoChart
+		public double seaLevelPressure;
+		
+		private void parse(BinaryParser parser, DatagramPacket packet)
+		{
+			pressure = parser.getFloat(packet);
+			altitude = parser.getFloat(packet);
+			seaLevelPressure = parser.getFloat(packet);
 		}
 		
 		@Override
@@ -444,56 +471,63 @@ public class DroneState implements Cloneable
 														ds.yawRatePid.ki,
 														ds.yawRatePid.kd,
 														ds.yawRatePid.maxOut,
-														ds.yawRatePid.maxErrSum);
+														1000000.f);//ds.yawRatePid.maxErrSum);
 		
 		CmdSetPitchRatePid cmd31 = new CmdSetPitchRatePid(	ds.pitchRatePid.enabled,
 															ds.pitchRatePid.kp,
 															ds.pitchRatePid.ki,
 															ds.pitchRatePid.kd,
 															ds.pitchRatePid.maxOut,
-															ds.pitchRatePid.maxErrSum);
+															1000000.f);//ds.pitchRatePid.maxErrSum);
 		
 		CmdSetRollRatePid cmd32 = new CmdSetRollRatePid(	ds.rollRatePid.enabled,
 															ds.rollRatePid.kp,
 															ds.rollRatePid.ki,
 															ds.rollRatePid.kd,
 															ds.rollRatePid.maxOut,
-															ds.rollRatePid.maxErrSum);
+															1000000.f);//ds.rollRatePid.maxErrSum);
 		
 		CmdSetPitchPid cmd5 = new CmdSetPitchPid(	ds.pitchPid.enabled,
 													ds.pitchPid.kp,
 													ds.pitchPid.ki,
 													ds.pitchPid.kd,
 													ds.pitchPid.maxOut,
-													ds.pitchPid.maxErrSum);
+													1000000.f);//ds.pitchPid.maxErrSum);
 		
 		CmdSetRollPid cmd6 = new CmdSetRollPid(		ds.rollPid.enabled,
 													ds.rollPid.kp,
 													ds.rollPid.ki,
 													ds.rollPid.kd,
 													ds.rollPid.maxOut,
-													ds.rollPid.maxErrSum);
+													1000000.f);//ds.rollPid.maxErrSum);
 
 		CmdSetAltPid cmd7 = new CmdSetAltPid(		ds.altPid.enabled,
 													ds.altPid.kp,
 													ds.altPid.ki,
 													ds.altPid.kd,
 													ds.altPid.maxOut,
-													ds.altPid.maxErrSum);
+													1000000.f);//ds.altPid.maxErrSum);
 		
-		CmdSetOpticalFlowXPid cmd71 = new CmdSetOpticalFlowXPid(	ds.opticalFlowXPid.enabled,
-																	ds.opticalFlowXPid.kp,
-																	ds.opticalFlowXPid.ki,
-																	ds.opticalFlowXPid.kd,
-																	ds.opticalFlowXPid.maxOut,
-																	ds.opticalFlowXPid.maxErrSum);
+		CmdSetVelocityXPid cmd71 = new CmdSetVelocityXPid(	ds.velocityXPid.enabled,
+																	ds.velocityXPid.kp,
+																	ds.velocityXPid.ki,
+																	ds.velocityXPid.kd,
+																	ds.velocityXPid.maxOut,
+																	1000000.f);//ds.opticalFlowXPid.maxErrSum);
 		
-		CmdSetOpticalFlowYPid cmd72 = new CmdSetOpticalFlowYPid(	ds.opticalFlowYPid.enabled,
-																	ds.opticalFlowYPid.kp,
-																	ds.opticalFlowYPid.ki,
-																	ds.opticalFlowYPid.kd,
-																	ds.opticalFlowYPid.maxOut,
-																	ds.opticalFlowYPid.maxErrSum);
+		CmdSetVelocityYPid cmd72 = new CmdSetVelocityYPid(	ds.velocityYPid.enabled,
+																	ds.velocityYPid.kp,
+																	ds.velocityYPid.ki,
+																	ds.velocityYPid.kd,
+																	ds.velocityYPid.maxOut,
+																	1000000.f);//ds.opticalFlowYPid.maxErrSum);
+		
+		CmdSetVelocityZPid cmd73 = new CmdSetVelocityZPid(	ds.velocityZPid.enabled,
+															ds.velocityZPid.kp,
+															ds.velocityZPid.ki,
+															ds.velocityZPid.kd,
+															ds.velocityZPid.maxOut,
+															1000000.f);//ds.opticalFlowYPid.maxErrSum);
 		
 		dx = ds.net.telemetryPeriod;
 		dy = 1;
@@ -552,5 +586,9 @@ public class DroneState implements Cloneable
 		CopterCommander.instance().addCmd(cmd72);
 		CopterCommander.instance().addCmd(cmd72);
 		CopterCommander.instance().addCmd(cmd72);
+		
+		CopterCommander.instance().addCmd(cmd73);
+		CopterCommander.instance().addCmd(cmd73);
+		CopterCommander.instance().addCmd(cmd73);
 	}
 }

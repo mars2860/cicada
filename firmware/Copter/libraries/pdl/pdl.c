@@ -1,6 +1,7 @@
 #include "pdl.h"
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 
 int32_t pdlMinGas;
 int32_t pdlNullGas;
@@ -21,6 +22,7 @@ pdlTaskState pdlOpticalFlowTS;
 pdlTaskState pdlLidarTS;
 pdlTaskState pdlBaroTS;
 pdlTaskState pdlUpdateEscaperTS;
+pdlTaskState pdlTelemetryTS;
 
 /// set true if some pid has been modified
 uint8_t pdlPidModifiedFlag;
@@ -41,6 +43,10 @@ void pdlBaroTask(pdlDroneState*);
 void pdlLidarTask(pdlDroneState*);
 void pdlOpticalFlowTask(pdlDroneState*);
 void pdlUpdateEscaperTask(pdlDroneState*);
+void pdlTelemetryTask(pdlDroneState*);
+
+void parsePidConfigPacket(pdlPidState *pid, uint8_t *packet);
+void parseTripleAxisSensorConfigPacket(pdlTripleAxisSensorState *ps, uint8_t *packet);
 
 //-----------------------------------------------------------------------------
 
@@ -54,7 +60,6 @@ uint32_t pdlGetDeltaTime(uint32_t cur, uint32_t last)
 
 void pdlSetup(pdlDroneState *ds)
 {
-
   pdlMinGas = PDL_DEFAULT_MIN_MOTOR_GAS;
   pdlNullGas = PDL_DEFAULT_NULL_MOTOR_GAS;
   pdlMaxGas = PDL_DEFAULT_MAX_MOTOR_GAS;
@@ -80,6 +85,9 @@ void pdlSetup(pdlDroneState *ds)
   pdlOpticalFlowTS.lastUpdateTime = 0;
   pdlOpticalFlowTS.period = PDL_DEFAULT_OPTICAL_FLOW_READ_PERIOD;
 
+  pdlTelemetryTS.lastUpdateTime = 0;
+  pdlTelemetryTS.period = PDL_DEFAULT_TELEMETRY_PERIOD;
+
   pdlPidModifiedFlag = 0;
   pdlUpdateStartTime = 0;
   pdlLidarMaxRange = PDL_LIDAR_MAX_RANGE;
@@ -93,6 +101,7 @@ void pdlSetup(pdlDroneState *ds)
   pdlSetupRc(ds);
   pdlSetupLidar(ds);
   pdlSetupOpticalFlow(ds);
+  pdlSetupTelemetry(ds);
 }
 
 uint8_t pdlCanTaskRun(pdlTaskState *ts)
@@ -119,6 +128,14 @@ void pdlRcTask(pdlDroneState *ds)
     return;
 
   pdlRemoteControl(ds);
+}
+
+void pdlTelemetryTask(pdlDroneState *ds)
+{
+  if(!pdlCanTaskRun(&pdlTelemetryTS))
+    return;
+
+  pdlUpdateTelemetry(ds);
 }
 
 void pdlBatteryTask(pdlDroneState *ds)
@@ -297,10 +314,11 @@ void pdlUpdate(pdlDroneState *ds)
 
   pdlUpdateEscaperTask(ds);
   pdlImuTask(ds);
-  pdlOpticalFlowTask(ds);
   pdlLidarTask(ds);
+  pdlOpticalFlowTask(ds);
   pdlRcTask(ds);
   pdlBaroTask(ds);
+  pdlTelemetryTask(ds);
   pdlBatteryTask(ds);
 
   if(ds->stabilizationEnabled && ds->motorsEnabled)
@@ -436,6 +454,16 @@ void pdlSetRcUpdatePeriod(uint32_t t)
   pdlRcTS.period = t;
 }
 
+void pdlSetTelemetryPeriod(uint32_t t)
+{
+  pdlTelemetryTS.period = t;
+}
+
+uint32_t pdlGetTelemetryPeriod()
+{
+  return pdlTelemetryTS.period;
+}
+
 void pdlSetLidarReadPeriod(uint32_t t)
 {
   pdlLidarTS.period = t;
@@ -559,4 +587,180 @@ void pdlComplFilterTripleAxisFusion(pdlDroneState *ds, float alpha, float dt)
   (void)ds;
   (void)alpha;
   (void)dt;
+}
+
+void pdlParseCommand(pdlDroneState *ds, uint8_t *packet)
+{
+  int32_t t0,t1,t2,t3;
+  float yaw,pitch,roll;
+  uint8_t cmd = packet[0];
+  switch(cmd)
+  {
+    case CMD_SWITCH_MOTORS:
+      pdlStopMotors(ds);
+      ds->motorsEnabled = packet[1];
+      if(ds->motorsEnabled)
+      {
+        ds->yawRatePid.target = 0;
+        ds->pitchRatePid.target = 0;
+        ds->rollRatePid.target = 0;
+        ds->pitchPid.target = 0;
+        ds->rollPid.target = 0;
+        ds->velocityXPid.target = 0;
+        ds->velocityYPid.target = 0;
+        ds->velocityZPid.target = 0;
+        ds->holdPosEnabled = PDL_HOLDPOS_BOTH_XY;
+      }
+      break;
+    case CMD_SET_BASE_GAS:
+      memcpy(&t0, &packet[1], sizeof(int32_t));
+      ds->baseGas = t0;
+      if(!ds->stabilizationEnabled)
+      {
+        pdlSetMotorGas(ds,0,ds->baseGas);
+        pdlSetMotorGas(ds,1,ds->baseGas);
+        pdlSetMotorGas(ds,2,ds->baseGas);
+        pdlSetMotorGas(ds,3,ds->baseGas);
+      }
+      break;
+    case CMD_SET_MOTORS_GAS:
+      memcpy(&t0, &packet[1], sizeof(int32_t));
+      memcpy(&t1, &packet[5], sizeof(int32_t));
+      memcpy(&t2, &packet[9], sizeof(int32_t));
+      memcpy(&t3, &packet[13], sizeof(int32_t));
+
+      pdlSetMotorGas(ds,0,t0);
+      pdlSetMotorGas(ds,1,t1);
+      pdlSetMotorGas(ds,2,t2);
+      pdlSetMotorGas(ds,3,t3);
+
+      break;
+    case CMD_SET_ACCEL:
+      parseTripleAxisSensorConfigPacket(&ds->accel, packet);
+      pdlSetupAccel(ds);
+      break;
+    case CMD_SET_GYRO:
+      parseTripleAxisSensorConfigPacket(&ds->gyro, packet);
+      pdlSetupGyro(ds);
+      break;
+    case CMD_SET_MAGNETO:
+      parseTripleAxisSensorConfigPacket(&ds->magneto, packet);
+      pdlSetupMagneto(ds);
+      break;
+    case CMD_SELF_CALIB_ACCEL:
+      pdlCalibrateAccel(ds);
+      break;
+    case CMD_SELF_CALIB_GYRO:
+      pdlCalibrateGyro(ds);
+      break;
+    case CMD_SET_YAW_RATE_PID:
+      parsePidConfigPacket(&ds->yawRatePid, packet);
+      break;
+    case CMD_SET_PITCH_RATE_PID:
+      parsePidConfigPacket(&ds->pitchRatePid, packet);
+      break;
+    case CMD_SET_ROLL_RATE_PID:
+      parsePidConfigPacket(&ds->rollRatePid, packet);
+      break;
+    case CMD_SET_PITCH_PID:
+      parsePidConfigPacket(&ds->pitchPid, packet);
+      break;
+    case CMD_SET_ROLL_PID:
+      parsePidConfigPacket(&ds->rollPid, packet);
+      break;
+    case CMD_SET_ALT_PID:
+      parsePidConfigPacket(&ds->altPid, packet);
+      break;
+    case CMD_SET_VELOCITY_X_PID:
+      parsePidConfigPacket(&ds->velocityXPid, packet);
+      break;
+    case CMD_SET_VELOCITY_Y_PID:
+      parsePidConfigPacket(&ds->velocityYPid, packet);
+      break;
+    case CMD_SET_VELOCITY_Z_PID:
+      parsePidConfigPacket(&ds->velocityZPid, packet);
+      break;
+    case CMD_SET_YPR:
+      memcpy(&yaw, &packet[1], sizeof(yaw));
+      memcpy(&pitch, &packet[1 + sizeof(pitch)], sizeof(pitch));
+      memcpy(&roll, &packet[1 + sizeof(yaw) + sizeof(pitch)], sizeof(roll));
+
+      ds->yawRatePid.target = yaw;
+
+      if(ds->pitchPid.enabled)
+        ds->pitchPid.target = pitch;
+      else
+        ds->pitchRatePid.target = pitch;
+
+      if(ds->rollPid.enabled)
+        ds->rollPid.target = roll;
+      else
+        ds->rollRatePid.target = roll;
+      // disable hold pos if we have user defined target
+      ds->holdPosEnabled = PDL_HOLDPOS_BOTH_XY;
+      if(roll != 0.f && pitch != 0.f)
+        ds->holdPosEnabled = PDL_HOLDPOS_DISABLED;
+      else if(pitch != 0.f)
+        ds->holdPosEnabled = PDL_HOLDPOS_X;
+      else if(roll != 0.f)
+        ds->holdPosEnabled = PDL_HOLDPOS_Y;
+      /*if(pitch != 0.f || roll != 0.f)
+        ds->holdPosEnabled = PDL_HOLDPOS_DISABLED;
+      else
+        ds->holdPosEnabled = PDL_HOLDPOS_BOTH_XY;
+        */
+      break;
+    case CMD_SET_PERIODS:
+      memcpy(&pdlTelemetryTS.period, &packet[1], sizeof(pdlTelemetryTS.period));
+      if(pdlTelemetryTS.period < 1)
+        pdlTelemetryTS.period = 1;
+      break;
+    case CMD_ENABLE_STABILIZATION:
+      ds->stabilizationEnabled = packet[1];
+      break;
+    case CMD_RESET_ALTITUDE:
+      //vz = 0;
+      ds->baro.seaLevelPressure = ds->baro.pressure;
+      break;
+    case CMD_SET_SEA_LEVEL:
+      memcpy(&ds->baro.seaLevelPressure, &packet[1], sizeof(ds->baro.seaLevelPressure));
+      break;
+    case CMD_SET_ALTITUDE:
+      memcpy(&ds->altPid.target, &packet[1], sizeof(ds->altPid.target));
+      break;
+    case CMD_SET_VELOCITY_Z:
+      memcpy(&ds->velocityZPid.target, &packet[1], sizeof(ds->velocityZPid.target));
+      break;
+  }
+}
+
+void parseTripleAxisSensorConfigPacket(pdlTripleAxisSensorState *ps, uint8_t *packet)
+{
+  int16_t dx,dy,dz;
+
+  memcpy(&dx, &packet[1], sizeof(int16_t));
+  memcpy(&dy, &packet[3], sizeof(int16_t));
+  memcpy(&dz, &packet[5], sizeof(int16_t));
+
+  ps->offset[PDL_X] = dx;
+  ps->offset[PDL_Y] = dy;
+  ps->offset[PDL_Z] = dz;
+}
+
+void parsePidConfigPacket(pdlPidState *pid, uint8_t *packet)
+{
+  float kp,ki,kd,maxOut,maxErrSum;
+  uint8_t enabled = packet[1];
+  memcpy(&kp, &packet[2], sizeof(kp));
+  memcpy(&ki, &packet[2 + sizeof(kp)], sizeof(ki));
+  memcpy(&kd, &packet[2 + sizeof(kp) + sizeof(ki)], sizeof(kd));
+  memcpy(&maxOut, &packet[2 + sizeof(kp) + sizeof(ki) + sizeof(kd)], sizeof(maxOut));
+  memcpy(&maxErrSum, &packet[2 + sizeof(kp) + sizeof(ki) + sizeof(kd) + sizeof(maxErrSum)], sizeof(maxErrSum));
+
+  pid->enabled = enabled;
+  pid->kp = kp;
+  pid->ki = ki;
+  pid->kd = kd;
+  pid->maxOut = maxOut;
+  //pid->maxErrSum = maxErrSum;
 }

@@ -73,6 +73,7 @@ public class TextBundle extends ListResourceBundle
             {"ACCEL", "Accelerometer"},
             {"GYRO", "Gyroscope"},
             {"MAGNETO", "Magnetometer"},
+            {"BARO", "Barometer"},
             {"OTHER", "Other"},
             
             {"REALTIME","Realtime"},

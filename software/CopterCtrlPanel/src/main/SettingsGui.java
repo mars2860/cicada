@@ -11,6 +11,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
 
+import copter.CopterCommander;
 import copter.CopterTelemetry;
 import copter.DroneState;
 import copter.DroneState.SettingGroup;
@@ -199,7 +200,7 @@ public class SettingsGui extends JSavedFrame
 				return;
 			}
 			
-			ds.sendSettingsToDrone();
+			CopterCommander.instance().sendSettingsToDrone(ds);
 			
 			JOptionPane.showMessageDialog(
 					SettingsGui.this,

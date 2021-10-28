@@ -25,9 +25,9 @@ import ChartDirector.XYChart;
 import copter.CopterCommander;
 import copter.CopterTelemetry;
 import copter.DroneState;
-import copter.commands.CmdCalibrateAccel;
-import copter.commands.CmdCalibrateGyro;
-import copter.commands.CmdCalibrateMagnet;
+import copter.commands.CmdSetAccel;
+import copter.commands.CmdSetGyro;
+import copter.commands.CmdSetMagneto;
 import copter.commands.CmdSelfCalibrateAccel;
 import copter.commands.CmdSelfCalibrateGyro;
 import helper.ArrayHelper;
@@ -295,13 +295,17 @@ public class SensorsGui extends JSavedFrame
 			else
 				dz -= 0.5;
 			
+			DroneState.TripleAxisSensor sens = new DroneState.TripleAxisSensor();
+			
+			sens.offsetX = (int)dx;
+			sens.offsetY = (int)dy;
+			sens.offsetZ = (int)dz;
+			
 			CopterCommander.instance().addCmd(
-					new CmdCalibrateMagnet( (int)(dx),
-											(int)(dy),
-											(int)(dz),
-											(float)sx,
-											(float)sy,
-											(float)sz ));
+					new CmdSetMagneto(	sens,
+										(float)sx,
+										(float)sy,
+										(float)sz ));
 			
 			mModified = true;
 		}
@@ -312,9 +316,10 @@ public class SensorsGui extends JSavedFrame
 		@Override
 		public void actionPerformed(ActionEvent e)
 		{
-			CopterCommander.instance().addCmd(new CmdCalibrateAccel(0,0,0));
-			CopterCommander.instance().addCmd(new CmdCalibrateGyro(0,0,0));
-			CopterCommander.instance().addCmd(new CmdCalibrateMagnet(0,0,0,1.f,1.f,1.f));
+			DroneState.TripleAxisSensor sens = new DroneState.TripleAxisSensor();
+			CopterCommander.instance().addCmd(new CmdSetAccel(sens));
+			CopterCommander.instance().addCmd(new CmdSetGyro(sens));
+			CopterCommander.instance().addCmd(new CmdSetMagneto(sens,1.f,1.f,1.f));
 			
 			mModified = true;
 		}
@@ -325,7 +330,8 @@ public class SensorsGui extends JSavedFrame
 		@Override
 		public void actionPerformed(ActionEvent e)
 		{
-			CopterCommander.instance().addCmd(new CmdCalibrateMagnet(0,0,0,1.f,1.f,1.f));
+			DroneState.TripleAxisSensor sens = new DroneState.TripleAxisSensor();
+			CopterCommander.instance().addCmd(new CmdSetMagneto(sens,1.f,1.f,1.f));
 			
 			mModified = true;
 		}

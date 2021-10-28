@@ -1,6 +1,8 @@
 package copter.commands;
 
-public class CmdSetSeaLevelPressure extends AbstractCopterCmd
+import copter.DroneState;
+
+public class CmdSetSeaLevelPressure extends CmdSetup
 {
 	private float mPressure;
 	
@@ -18,6 +20,12 @@ public class CmdSetSeaLevelPressure extends AbstractCopterCmd
 		pos = this.writeUint8(pos, data, getCode());
 		pos = this.writeFloat(pos, data, mPressure);
 		return data;
+	}
+
+	@Override
+	public boolean settingsEquals(DroneState ds)
+	{
+		return (mPressure == ds.baro.seaLevelPressure)?true:false;
 	}
 
 }

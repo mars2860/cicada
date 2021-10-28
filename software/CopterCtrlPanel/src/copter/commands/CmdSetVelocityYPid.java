@@ -1,10 +1,18 @@
 package copter.commands;
 
-public class CmdSetVelocityYPid extends CmdSetYawRatePid
+import copter.DroneState;
+import copter.DroneState.Pid;
+
+public class CmdSetVelocityYPid extends CmdSetupPid
 {
-	public CmdSetVelocityYPid(boolean enabled, float kp, float ki, float kd, float maxOut, float maxErrSum)
+	public CmdSetVelocityYPid(Pid pid)
 	{
-		super(enabled,kp,ki,kd,maxOut,maxErrSum);
-		mCmdCode = 121;
+		super(pid, 121);
+	}
+	
+	@Override
+	public boolean settingsEquals(DroneState ds)
+	{
+		return mPid.settingsEquals(ds.velocityYPid);
 	}
 }

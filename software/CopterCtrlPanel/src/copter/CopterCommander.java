@@ -10,9 +10,26 @@ import java.util.ArrayList;
 import java.util.concurrent.Semaphore;
 
 import copter.commands.AbstractCopterCmd;
+import copter.commands.CmdSetMagneto;
+import copter.commands.CmdSetAltPid;
+import copter.commands.CmdSetPeriods;
+import copter.commands.CmdSetPitchPid;
+import copter.commands.CmdSetPitchRatePid;
+import copter.commands.CmdSetRollPid;
+import copter.commands.CmdSetRollRatePid;
+import copter.commands.CmdSetSeaLevelPressure;
+import copter.commands.CmdSetVelocityXPid;
+import copter.commands.CmdSetVelocityYPid;
+import copter.commands.CmdSetVelocityZPid;
+import copter.commands.CmdSetYawRatePid;
+import copter.commands.CmdSetup;
+import copter.commands.CmdSetAccel;
+import copter.commands.CmdSetGyro;
 
 public class CopterCommander implements Runnable
 {
+	public static final int SETUP_ATTEMPTS_COUNT = 10;
+	
 	private static CopterCommander mSingleton;
 
 	public static CopterCommander instance()
@@ -187,5 +204,94 @@ public class CopterCommander implements Runnable
 			//System.out.println("Notify commander thread is stopped");
 			objSenderSync.notify();
 		}
+	}
+	
+	private void sendSetupCmd(CmdSetup cmd)
+	{
+		int attempt = 0;
+		while(attempt < SETUP_ATTEMPTS_COUNT)
+		{
+			CopterCommander.instance().addCmd(cmd);
+			// wait for command execution
+			try
+			{
+				Thread.sleep(50);
+			}
+			catch(Exception e)
+			{
+				e.printStackTrace();
+			}
+			// check command execution
+			DroneState ds = CopterTelemetry.instance().getDroneState();
+			if(cmd.settingsEquals(ds))
+				break;
+			attempt++;
+		}
+		
+		if(attempt >= SETUP_ATTEMPTS_COUNT)
+		{
+			AlarmCenter.instance().setAlarm(Alarm.COPTER_SEND_ERROR);
+			System.out.println("Number of attempts exceeded for " + cmd.toString());
+		}
+	}
+	
+	public void sendSettingsToDrone(DroneState ds)
+	{
+		CmdSetup cmd;
+		// setup accel
+		cmd = new CmdSetAccel(ds.accel);
+		sendSetupCmd(cmd);
+		
+		// setup gyro
+		cmd = new CmdSetGyro(ds.gyro);
+		sendSetupCmd(cmd);
+		
+		// setup magneto
+		cmd = new CmdSetMagneto(ds.magneto,1.f,1.f,1.f);
+		sendSetupCmd(cmd);
+		
+		// setup yawRatePid
+		cmd = new CmdSetYawRatePid(ds.yawRatePid);
+		sendSetupCmd(cmd);
+		
+		// setup pitchRatePid
+		cmd = new CmdSetPitchRatePid(ds.pitchRatePid);
+		sendSetupCmd(cmd);
+		
+		// setup rollRatePid
+		cmd = new CmdSetRollRatePid(ds.rollRatePid);
+		sendSetupCmd(cmd);
+		
+		// setup pitchPid
+		cmd = new CmdSetPitchPid(ds.pitchPid);
+		sendSetupCmd(cmd);
+		
+		// setup rollPid
+		cmd = new CmdSetRollPid(ds.rollPid);
+		sendSetupCmd(cmd);
+		
+		// setup altPid
+		cmd = new CmdSetAltPid(ds.altPid);
+		sendSetupCmd(cmd);
+		
+		// setup velocityXPid
+		cmd = new CmdSetVelocityXPid(ds.velocityXPid);
+		sendSetupCmd(cmd);
+		
+		// setup velocityYPid
+		cmd = new CmdSetVelocityYPid(ds.velocityYPid);
+		sendSetupCmd(cmd);
+		
+		// setup velocityZPid
+		cmd = new CmdSetVelocityZPid(ds.velocityZPid);
+		sendSetupCmd(cmd);
+		
+		// setup telemetry period
+		cmd = new CmdSetPeriods(ds.net.telemetryPeriod,0);
+		sendSetupCmd(cmd);
+		
+		// setup barometer
+		cmd = new CmdSetSeaLevelPressure((float)ds.baro.seaLevelPressure);
+		sendSetupCmd(cmd);
 	}
 }

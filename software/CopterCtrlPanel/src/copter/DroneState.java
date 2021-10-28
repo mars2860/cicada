@@ -9,22 +9,7 @@ import java.net.DatagramPacket;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-import copter.commands.CmdCalibrateAccel;
-import copter.commands.CmdCalibrateGyro;
-import copter.commands.CmdCalibrateMagnet;
-import copter.commands.CmdResetAltitude;
-import copter.commands.CmdSetAltPid;
-import copter.commands.CmdSetVelocityXPid;
-import copter.commands.CmdSetVelocityYPid;
-import copter.commands.CmdSetVelocityZPid;
-import copter.commands.CmdSetPeriods;
-import copter.commands.CmdSetPitchPid;
-import copter.commands.CmdSetPitchRatePid;
-import copter.commands.CmdSetRollPid;
-import copter.commands.CmdSetRollRatePid;
-import copter.commands.CmdSetYawRatePid;
-
-/** @note all types are double for fast processing charts */
+/** @note all types are double for fast processing in charts */
 public class DroneState implements Cloneable
 {	
 	@Retention(RetentionPolicy.RUNTIME)
@@ -146,6 +131,16 @@ public class DroneState implements Cloneable
 		{
 			return super.clone();
 		}
+		
+		public boolean settingsEquals(TripleAxisSensor s)
+		{
+			if(	offsetX == s.offsetX &&
+				offsetY == s.offsetY &&
+				offsetZ == s.offsetZ)
+				return true;
+				
+			return false;
+		}
 	}
 	
 	public static class Pid implements Cloneable
@@ -174,7 +169,9 @@ public class DroneState implements Cloneable
 		/*@NoChart
 		@Setting
 		@Expose
-		public float maxErrSum;*/
+		not used any more*/
+		@NoChart
+		public float maxErrSum;
 
 		public double target;
 		public double errSum;
@@ -194,6 +191,19 @@ public class DroneState implements Cloneable
 			maxOut = parser.getFloat(packet);
 			//maxErrSum = parser.getFloat(packet);
 			enabled = (parser.getUint32t(packet) > 0)?true:false;
+		}
+		
+		public boolean settingsEquals(Pid pid)
+		{
+			if(	this.enabled == pid.enabled &&
+				this.kp == pid.kp &&
+				this.ki == pid.ki &&
+				this.kd == pid.kd &&
+				this.maxOut == pid.maxOut)
+				//this.maxErrSum == pid.maxErrSum 
+				return true;
+			
+			return false;
 		}
 		
 		@Override
@@ -336,6 +346,10 @@ public class DroneState implements Cloneable
 	public double lidarRange;
 	
 	public OpticalFlow opticalFlow = new OpticalFlow();
+	
+	@SettingGroup(name = "BARO")
+	@Expose
+	@SerializedName("baro")
 	public Baro baro = new Baro();
 	
 	// no sense variable, this is 2 bytes gap in C structure
@@ -429,6 +443,8 @@ public class DroneState implements Cloneable
 		public double pressure;
 		public double altitude;
 		@NoChart
+		@Expose
+		@Setting
 		public double seaLevelPressure;
 		
 		private void parse(BinaryParser parser, DatagramPacket packet)
@@ -443,152 +459,5 @@ public class DroneState implements Cloneable
 		{
 			return super.clone();
 		}
-	}
-	
-	public void sendSettingsToDrone()
-	{
-		DroneState ds = this;
-		int dx = ds.accel.offsetX;
-		int dy = ds.accel.offsetY;
-		int dz = ds.accel.offsetZ;
-		
-		CmdCalibrateAccel cmd1 = new CmdCalibrateAccel(dx,dy,dz);
-		
-		dx = ds.gyro.offsetX;
-		dy = ds.gyro.offsetY;
-		dz = ds.gyro.offsetZ;
-		
-		CmdCalibrateGyro cmd2 = new CmdCalibrateGyro(dx,dy,dz);
-		
-		dx = ds.magneto.offsetX;
-		dy = ds.magneto.offsetY;
-		dz = ds.magneto.offsetZ;
-		
-		CmdCalibrateMagnet cmd3 = new CmdCalibrateMagnet(dx,dy,dz,1.f,1.f,1.f);
-		
-		CmdSetYawRatePid cmd4 = new CmdSetYawRatePid(	ds.yawRatePid.enabled,
-														ds.yawRatePid.kp,
-														ds.yawRatePid.ki,
-														ds.yawRatePid.kd,
-														ds.yawRatePid.maxOut,
-														1000000.f);//ds.yawRatePid.maxErrSum);
-		
-		CmdSetPitchRatePid cmd31 = new CmdSetPitchRatePid(	ds.pitchRatePid.enabled,
-															ds.pitchRatePid.kp,
-															ds.pitchRatePid.ki,
-															ds.pitchRatePid.kd,
-															ds.pitchRatePid.maxOut,
-															1000000.f);//ds.pitchRatePid.maxErrSum);
-		
-		CmdSetRollRatePid cmd32 = new CmdSetRollRatePid(	ds.rollRatePid.enabled,
-															ds.rollRatePid.kp,
-															ds.rollRatePid.ki,
-															ds.rollRatePid.kd,
-															ds.rollRatePid.maxOut,
-															1000000.f);//ds.rollRatePid.maxErrSum);
-		
-		CmdSetPitchPid cmd5 = new CmdSetPitchPid(	ds.pitchPid.enabled,
-													ds.pitchPid.kp,
-													ds.pitchPid.ki,
-													ds.pitchPid.kd,
-													ds.pitchPid.maxOut,
-													1000000.f);//ds.pitchPid.maxErrSum);
-		
-		CmdSetRollPid cmd6 = new CmdSetRollPid(		ds.rollPid.enabled,
-													ds.rollPid.kp,
-													ds.rollPid.ki,
-													ds.rollPid.kd,
-													ds.rollPid.maxOut,
-													1000000.f);//ds.rollPid.maxErrSum);
-
-		CmdSetAltPid cmd7 = new CmdSetAltPid(		ds.altPid.enabled,
-													ds.altPid.kp,
-													ds.altPid.ki,
-													ds.altPid.kd,
-													ds.altPid.maxOut,
-													1000000.f);//ds.altPid.maxErrSum);
-		
-		CmdSetVelocityXPid cmd71 = new CmdSetVelocityXPid(	ds.velocityXPid.enabled,
-																	ds.velocityXPid.kp,
-																	ds.velocityXPid.ki,
-																	ds.velocityXPid.kd,
-																	ds.velocityXPid.maxOut,
-																	1000000.f);//ds.opticalFlowXPid.maxErrSum);
-		
-		CmdSetVelocityYPid cmd72 = new CmdSetVelocityYPid(	ds.velocityYPid.enabled,
-																	ds.velocityYPid.kp,
-																	ds.velocityYPid.ki,
-																	ds.velocityYPid.kd,
-																	ds.velocityYPid.maxOut,
-																	1000000.f);//ds.opticalFlowYPid.maxErrSum);
-		
-		CmdSetVelocityZPid cmd73 = new CmdSetVelocityZPid(	ds.velocityZPid.enabled,
-															ds.velocityZPid.kp,
-															ds.velocityZPid.ki,
-															ds.velocityZPid.kd,
-															ds.velocityZPid.maxOut,
-															1000000.f);//ds.opticalFlowYPid.maxErrSum);
-		
-		dx = ds.net.telemetryPeriod;
-		dy = 1;
-		CmdSetPeriods cmd8 = new CmdSetPeriods(dx,dy);
-		
-		CmdResetAltitude cmd9 = new CmdResetAltitude();
-		
-		CopterCommander.instance().addCmd(cmd1);
-		CopterCommander.instance().addCmd(cmd1);
-		CopterCommander.instance().addCmd(cmd1);
-		
-		CopterCommander.instance().addCmd(cmd2);
-		CopterCommander.instance().addCmd(cmd2);
-		CopterCommander.instance().addCmd(cmd2);
-		
-		CopterCommander.instance().addCmd(cmd3);
-		CopterCommander.instance().addCmd(cmd3);
-		CopterCommander.instance().addCmd(cmd3);
-		
-		CopterCommander.instance().addCmd(cmd4);
-		CopterCommander.instance().addCmd(cmd4);
-		CopterCommander.instance().addCmd(cmd4);
-		
-		CopterCommander.instance().addCmd(cmd5);
-		CopterCommander.instance().addCmd(cmd5);
-		CopterCommander.instance().addCmd(cmd5);
-		
-		CopterCommander.instance().addCmd(cmd6);
-		CopterCommander.instance().addCmd(cmd6);
-		CopterCommander.instance().addCmd(cmd6);
-		
-		CopterCommander.instance().addCmd(cmd7);
-		CopterCommander.instance().addCmd(cmd7);
-		CopterCommander.instance().addCmd(cmd7);
-		
-		CopterCommander.instance().addCmd(cmd8);
-		CopterCommander.instance().addCmd(cmd8);
-		CopterCommander.instance().addCmd(cmd8);
-		
-		CopterCommander.instance().addCmd(cmd9);
-		CopterCommander.instance().addCmd(cmd9);
-		CopterCommander.instance().addCmd(cmd9);
-		
-		CopterCommander.instance().addCmd(cmd31);
-		CopterCommander.instance().addCmd(cmd31);
-		CopterCommander.instance().addCmd(cmd31);
-		
-		CopterCommander.instance().addCmd(cmd32);
-		CopterCommander.instance().addCmd(cmd32);
-		CopterCommander.instance().addCmd(cmd32);
-		
-		CopterCommander.instance().addCmd(cmd71);
-		CopterCommander.instance().addCmd(cmd71);
-		CopterCommander.instance().addCmd(cmd71);
-		
-		CopterCommander.instance().addCmd(cmd72);
-		CopterCommander.instance().addCmd(cmd72);
-		CopterCommander.instance().addCmd(cmd72);
-		
-		CopterCommander.instance().addCmd(cmd73);
-		CopterCommander.instance().addCmd(cmd73);
-		CopterCommander.instance().addCmd(cmd73);
 	}
 }

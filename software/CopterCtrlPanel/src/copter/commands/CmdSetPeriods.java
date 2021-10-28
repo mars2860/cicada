@@ -1,6 +1,8 @@
 package copter.commands;
 
-public class CmdSetPeriods extends AbstractCopterCmd
+import copter.DroneState;
+
+public class CmdSetPeriods extends CmdSetup
 {
 	private int mTelemetryPeriod;
 	private int mPidPeriod;
@@ -22,5 +24,11 @@ public class CmdSetPeriods extends AbstractCopterCmd
 		pos = this.writeInt32(pos, data, mTelemetryPeriod);
 		pos = this.writeInt32(pos, data, mPidPeriod);
 		return data;
+	}
+
+	@Override
+	public boolean settingsEquals(DroneState ds)
+	{
+		return (mTelemetryPeriod == ds.net.telemetryPeriod)?true:false;
 	}
 }

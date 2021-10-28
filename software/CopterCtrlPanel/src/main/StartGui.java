@@ -14,7 +14,9 @@ import javax.swing.border.TitledBorder;
 
 import copter.Alarm;
 import copter.AlarmCenter;
+import copter.CopterCommander;
 import copter.DroneState;
+import copter.commands.CmdResetAltitude;
 import main.Settings.WndState;
 import net.miginfocom.swing.MigLayout;
 
@@ -127,7 +129,12 @@ public class StartGui extends JSavedFrame
 		public void actionPerformed(ActionEvent e)
 		{
 			DroneState ds = Settings.instance().getDroneSettings();
-			ds.sendSettingsToDrone();
+			CopterCommander.instance().sendSettingsToDrone(ds);
+			CmdResetAltitude cmd = new CmdResetAltitude();
+			// we can lose udp packet so send it three times
+			CopterCommander.instance().addCmd(cmd);
+			CopterCommander.instance().addCmd(cmd);
+			CopterCommander.instance().addCmd(cmd);
 		}
 	}
 

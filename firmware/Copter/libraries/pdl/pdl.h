@@ -36,6 +36,8 @@ extern "C" {
 #define PDL_DEFAULT_LIDAR_READ_PERIOD 50000
 /// OpticalFlow read period. Use pdlSetOpticalFlowReadPeriod in pdlLidarSetup
 #define PDL_DEFAULT_OPTICAL_FLOW_READ_PERIOD 50000
+/// Telemetry update period
+#define PDL_DEFAULT_TELEMETRY_PERIOD 50000
 /// Desire time for one loop
 #define PDL_DESIRE_UPDATE_TIME 5000
 /// Max wait time for task to be executed
@@ -57,6 +59,36 @@ extern "C" {
 #define PDL_HOLDPOS_X        1
 #define PDL_HOLDPOS_Y        2
 #define PDL_HOLDPOS_BOTH_XY  3
+
+//---------------------------------------------------------------
+// COMMANDS
+
+#define CMD_SWITCH_MOTORS         100
+#define CMD_SET_MOTORS_GAS        101
+#define CMD_SET_ACCEL             102
+#define CMD_SET_GYRO              103
+#define CMD_SET_MAGNETO           104
+#define CMD_SELF_CALIB_ACCEL      105
+#define CMD_SELF_CALIB_GYRO       106
+#define CMD_SET_YAW_RATE_PID      107
+#define CMD_SET_PITCH_PID         108
+#define CMD_SET_ROLL_PID          109
+#define CMD_SET_ALT_PID           110
+#define CMD_SET_YPR               111
+#define CMD_SET_PERIODS           112
+#define CMD_ENABLE_STABILIZATION  113
+#define CMD_RESET_ALTITUDE        114
+#define CMD_SET_SEA_LEVEL         115
+#define CMD_SET_ALTITUDE          116
+#define CMD_SET_BASE_GAS          117
+#define CMD_SET_PITCH_RATE_PID    118
+#define CMD_SET_ROLL_RATE_PID     119
+#define CMD_SET_VELOCITY_X_PID    120
+#define CMD_SET_VELOCITY_Y_PID    121
+#define CMD_SET_VELOCITY_Z_PID    122
+#define CMD_SET_VELOCITY_Z        123
+
+//-----------------------------------------------------------------------------
 
 typedef enum
 {
@@ -194,6 +226,9 @@ void pdlSetRcUpdatePeriod(uint32_t);
 void pdlSetLidarReadPeriod(uint32_t);
 void pdlSetOpticalFlowReadPeriod(uint32_t);
 
+void pdlSetTelemetryPeriod(uint32_t);
+uint32_t pdlGetTelemetryPeriod();
+
 void pdlStopMotors(pdlDroneState*);
 void pdlSetMotorGas(pdlDroneState*, uint8_t, int32_t);
 void pdlAddMotorGas(pdlDroneState*, uint8_t, int32_t);
@@ -204,6 +239,9 @@ float pdlGetLidarMaxRange();
 /** @param dt delta time in microseconds */
 void pdlUpdatePid(pdlPidState*, float input, float dt);
 void pdlResetPid(pdlPidState*);
+
+/// Parses binary packet with command from remote control and applies result to drone state
+void pdlParseCommand(pdlDroneState*,uint8_t*);
 
 /**
  *  Calcs heading with tilt compensation. Accel/Gyro/Magneto axes should be sorted out as in MPU9250
@@ -242,7 +280,7 @@ float pdlComplementaryFilter(float alpha, float rate, float value, float newValu
 void pdlComplFilterTripleAxisFusion(pdlDroneState *ds, float alpha, float dt);
 
 //-----------------------------------------------------------------------------
-// IMPLEMENT THESE FUNCTION IN YOUR SYSTEM
+// IMPLEMENT THESE FUNCTIONS IN YOUR SYSTEM
 
 uint32_t pdlMicros(void);
 
@@ -255,6 +293,10 @@ void pdlSetupBaro(pdlDroneState*);
 void pdlSetupBattery(pdlDroneState*);
 void pdlSetupLidar(pdlDroneState*);
 void pdlSetupOpticalFlow(pdlDroneState*);
+void pdlSetupTelemetry(pdlDroneState*);
+
+void pdlCalibrateAccel(pdlDroneState*);
+void pdlCalibrateGyro(pdlDroneState*);
 
 /// @note should to take motorGas from pdlDroneState and send it to escaper
 void pdlUpdateEscaper(pdlDroneState*);
@@ -268,6 +310,8 @@ void pdlReadAccel(pdlDroneState*);
 void pdlReadGyro(pdlDroneState*);
 /// @return result should be saved in pdlDroneState.magneto
 void pdlReadMagneto(pdlDroneState*);
+/// implements your telemetry in/out
+void pdlUpdateTelemetry(pdlDroneState*);
 /**
  * @note result should be saved in pdlDroneState.temperature,pressure,altitude
  *

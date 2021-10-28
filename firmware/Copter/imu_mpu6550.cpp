@@ -60,14 +60,14 @@ void imuReadGyroOffset(pdlDroneState *ds)
   ds->gyro.offset[PDL_Z] = mpu.getZGyroOffset();
 }
 
-void imuCalibrateAccel(pdlDroneState *ds)
+void pdlCalibrateAccel(pdlDroneState *ds)
 {
   mpu.CalibrateAccel(25);
 
   imuReadAccelOffset(ds);
 }
 
-void imuCalibrateGyro(pdlDroneState *ds)
+void pdlCalibrateGyro(pdlDroneState *ds)
 {
   mpu.CalibrateGyro(25);
 

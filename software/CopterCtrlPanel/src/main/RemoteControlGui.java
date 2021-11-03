@@ -31,8 +31,7 @@ import net.miginfocom.swing.MigLayout;
 public class RemoteControlGui extends JSavedFrame
 {
 	private static final long serialVersionUID = 8512049441078339808L;
-	// FIXME из-за слишком малого периода опроса в стеке CopterCommander скапливается много команд
-	// и после того как отпускаем клавишу, дрон продолжает ещё принимать старые команды
+
 	private static final long KEYBOARD_PERIOD = 40; 	// FPS 25
 	
 	private static final float LEVEL_CTRL_DELTA = 7.f;

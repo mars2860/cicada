@@ -5,9 +5,6 @@ VL53L1X sensor;
 
 void pdlSetupLidar(pdlDroneState *ds)
 {
-  pdlSetLidarMaxRange(3.f);
-  pdlSetLidarReadPeriod(50000);
-
   delay(500);
 
   if(sensor.init())
@@ -43,7 +40,7 @@ uint8_t pdlReadLidar(pdlDroneState *ds)
       ds->velocity[PDL_Z] = (ds->lidarRange - oldRange) / dt;
       oldRange = ds->lidarRange;
 
-      if(ds->lidarRange > -0.1f && ds->lidarRange < pdlGetLidarMaxRange())
+      if(ds->lidarRange > -0.1f && ds->lidarRange < PDL_LIDAR_MAX_RANGE)
       {
         ds->altitude = ds->lidarRange;
         return 1;

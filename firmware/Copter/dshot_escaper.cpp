@@ -3,10 +3,10 @@
 #include <ESP8266WiFi.h>
 #include "dshot.h"
 
-#define M1_PIN              16
-#define M2_PIN              0
-#define M3_PIN              15
-#define M4_PIN              2
+#define M1_PIN              15
+#define M2_PIN              2
+#define M3_PIN              16
+#define M4_PIN              0
 
 void pdlSetupEscaper(pdlDroneState*)
 {
@@ -21,7 +21,7 @@ void pdlSetupEscaper(pdlDroneState*)
   digitalWrite(M4_PIN, LOW);
 
   dshotSetup(M1_PIN,M2_PIN,M3_PIN,M4_PIN,1000);
-  pdlSetMotorGasLimits(0,0,1999);
+
   /*
     dshotEnable(0);
 

@@ -3,7 +3,7 @@
 
 void pdlSetupBattery(pdlDroneState*)
 {
-  pdlSetBatteryReadPeriod(100000);
+  // nothing
 }
 
 void pdlReadBattery(pdlDroneState *ds)

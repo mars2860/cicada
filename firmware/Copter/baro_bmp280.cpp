@@ -21,7 +21,6 @@ void pdlSetupBaro(pdlDroneState*)
                    Adafruit_BMP280::FILTER_X16,      /* Filtering. */
                    Adafruit_BMP280::STANDBY_MS_1);   /* Standby time. */
   baro.readCoefficients();
-  pdlSetBaroReadPeriod(50000);
 }
 
 uint8_t pdlReadBaro(pdlDroneState *ds)
@@ -37,7 +36,7 @@ uint8_t pdlReadBaro(pdlDroneState *ds)
   //altitude = alt_estimator.h;
   //temperature = altest.getVerticalVelocity();//alt_estimator.v;//vz;////baro.temperature;
 
-  if(ds->lidarRange < 0 || ds->lidarRange > pdlGetLidarMaxRange())
+  if(ds->lidarRange < 0 || ds->lidarRange > PDL_LIDAR_MAX_RANGE)
   {
     ds->altitude = ds->baro.altitude;
     //return 1;

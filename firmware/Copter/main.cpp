@@ -30,7 +30,6 @@ uint32_t pdlMicros()
 
 //--------------------------------------------------------------
 
-
 void setup()
 {
   memset(&droneState, 0, sizeof(droneState));
@@ -104,12 +103,12 @@ void loop()
 
 void pdlSetupMagneto(pdlDroneState*)
 {
-  // заглушка
+  // nothing
 }
 
 void pdlReadMagneto(pdlDroneState*)
 {
-  // заглушка
+  // nothing
 }
 
 void pdlTripleAxisSensorFusion(pdlDroneState *ds)
@@ -120,9 +119,11 @@ void pdlTripleAxisSensorFusion(pdlDroneState *ds)
   fusionData.fusionQPoseValid = false;
   fusionData.timestamp = ds->timestamp;
 
-  fusionData.gyro = RTVector3(ds->gyro.pure[PDL_X], -ds->gyro.pure[PDL_Y], -ds->gyro.pure[PDL_Z]);
+  //fusionData.gyro = RTVector3(ds->gyro.pure[PDL_X], -ds->gyro.pure[PDL_Y], -ds->gyro.pure[PDL_Z]);
+  fusionData.gyro = RTVector3(ds->gyro.pure[PDL_X], ds->gyro.pure[PDL_Y], ds->gyro.pure[PDL_Z]);
   fusionData.accelValid = true;
-  fusionData.accel = RTVector3(-ds->accel.pure[PDL_X], ds->accel.pure[PDL_Y], ds->accel.pure[PDL_Z]);
+  //fusionData.accel = RTVector3(-ds->accel.pure[PDL_X], ds->accel.pure[PDL_Y], ds->accel.pure[PDL_Z]);
+  fusionData.accel = RTVector3(ds->accel.pure[PDL_X], ds->accel.pure[PDL_Y], ds->accel.pure[PDL_Z]);
   fusionData.compassValid = false;
   fusionData.compass = RTVector3(ds->magneto.pure[PDL_X], ds->magneto.pure[PDL_Y], -ds->magneto.pure[PDL_Z]);
   fusionData.pressureValid = false;
@@ -131,15 +132,14 @@ void pdlTripleAxisSensorFusion(pdlDroneState *ds)
   imuFusion->newIMUData(fusionData, 0);
   const RTVector3 &pose = fusionData.fusionPose;
   ds->yaw = pose.z();
-  ds->pitch = -pose.y();
+  //ds->pitch = -pose.y();
+  ds->pitch = pose.y();
   ds->roll = pose.x();
 
   if(fusionData.compassValid)
   {
     if(imuFusion->getCompassEnable())
       ds->heading = pose.z() + RTMATH_PI;
-    else
-      ds->heading = pdlCalcHeading(ds);
   }
   else
   {

@@ -71,6 +71,8 @@ void pdlRemoteControl(pdlDroneState *ds)
       if(!host.isSet())
         host = udp.remoteIP();
       pdlParseCommand(ds,udpPacket);
+      // immediately send back telemetry packet to confirm command execution
+      pdlUpdateTelemetry(ds);
     }
   }
 
@@ -102,7 +104,7 @@ void pdlUpdateTelemetry(pdlDroneState *ds)
     return;
 
   uint16_t pos = 0;
-  uint32_t telemetryPeriod = pdlGetTelemetryPeriod();
+  uint32_t telemetryPeriod = pdlGetTelemetryUpdatePeriod();
   size_t sz = sizeof(pdlDroneState);
 
   ds->timestamp = pdlMicros();

@@ -19,7 +19,6 @@ void pdlSetupOpticalFlow(pdlDroneState*)
   delay(500);
 
   sensorValid = flow.begin();
-  pdlSetOpticalFlowReadPeriod(100000);  // as in ArduCopter
 }
 
 void pdlReadOpticalFlow(pdlDroneState *ds)
@@ -30,8 +29,10 @@ void pdlReadOpticalFlow(pdlDroneState *ds)
 
   if(sensorValid)
   {
-    flow.readMotionCount(&ds->opticalFlow.rawX, &ds->opticalFlow.rawY);
+    flow.readMotionCount(&ds->opticalFlow.rawY, &ds->opticalFlow.rawX);
 
+    ds->opticalFlow.rawY = -ds->opticalFlow.rawY;
+    ds->opticalFlow.rawX = -ds->opticalFlow.rawX;
     // LP filter measurements (this code snippet is from ESP-drone project
     /*
      #define LP_CONSTANT 0.8f
@@ -42,30 +43,31 @@ void pdlReadOpticalFlow(pdlDroneState *ds)
     */
 
     /*
-     * Optical flow raw data should be compensated corresponding pitch-roll angles and height
-     * read https://ardupilot.org/copter/docs/common-mouse-based-optical-flow-sensor-adns3080.html
+     * Optical flow raw data should be compensated corresponding pitch-roll angles and height.
+     * Read for more information https://ardupilot.org/copter/docs/common-mouse-based-optical-flow-sensor-adns3080.html
      */
 
     float h = ds->lidarRange;
 
-    if(h > 0.08 && h < pdlGetLidarMaxRange()) // pmw3901 works above 80mm
+    if(h > 0.08f && h < PDL_LIDAR_MAX_RANGE) // pmw3901 works above 80mm
     {
       float dt = (float)pdlGetDeltaTime(pdlMicros(),lastUpdate) / 1000000.f;
       lastUpdate = pdlMicros();
       // tilt compensation
-      float ex = (ds->roll - old_roll) * k2;
-      float ey = (ds->pitch - old_pitch) * k2;
+      float ey = (ds->roll - old_roll) * k2;
+      float ex = (ds->pitch - old_pitch) * k2;
       old_roll = ds->roll;
       old_pitch = ds->pitch;
 
       float x = ds->opticalFlow.rawX;
       float y = ds->opticalFlow.rawY;
 
-      x = ( ((x + ex) * h) / k1 ) * k3; // +ex caused by roll sign
+      x = ( ((x + ex) * h) / k1 ) * k3;
       y = ( ((y - ey) * h) / k1 ) * k3;
 
+      // changes axes to corresponding drone axes
       ds->velocity[PDL_X] = x / dt;
-      ds->velocity[PDL_Y] = -y / dt;   //-y caused by pitch sign
+      ds->velocity[PDL_Y] = y / dt;
     }
     else
     {

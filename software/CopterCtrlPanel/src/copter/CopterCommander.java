@@ -228,7 +228,7 @@ public class CopterCommander implements Runnable
 			attempt++;
 		}
 		
-		if(attempt >= SETUP_ATTEMPTS_COUNT)
+		if(attempt >= (SETUP_ATTEMPTS_COUNT - 1) )
 		{
 			AlarmCenter.instance().setAlarm(Alarm.COPTER_SEND_ERROR);
 			System.out.println("Number of attempts exceeded for " + cmd.toString());
@@ -237,6 +237,8 @@ public class CopterCommander implements Runnable
 	
 	public void sendSettingsToDrone(DroneState ds)
 	{
+		AlarmCenter.instance().clearAlarm(Alarm.COPTER_SEND_ERROR);
+		
 		CmdSetup cmd;
 		// setup accel
 		cmd = new CmdSetAccel(ds.accel);

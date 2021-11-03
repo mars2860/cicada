@@ -1,0 +1,910 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="480mm"
+   height="135mm"
+   viewBox="0 0 480 135"
+   version="1.1"
+   id="svg6841"
+   inkscape:version="0.92.4 (5da689c313, 2019-01-14)"
+   sodipodi:docname="chain_of_pids.svg">
+  <defs
+     id="defs6835">
+    <marker
+       style="overflow:visible"
+       refY="0"
+       refX="0"
+       orient="auto"
+       id="DistanceX">
+      <path
+         id="path6845"
+         style="stroke:#000000;stroke-width:0.5"
+         d="M 3,-3 -3,3 M 0,-5 V 5"
+         inkscape:connector-curvature="0" />
+    </marker>
+    <pattern
+       y="0"
+       x="0"
+       width="8"
+       patternUnits="userSpaceOnUse"
+       id="Hatch"
+       height="8">
+      <path
+         id="path6848"
+         stroke-width="0.25"
+         stroke="#000000"
+         linecap="square"
+         d="M8 4 l-4,4" />
+      <path
+         id="path6850"
+         stroke-width="0.25"
+         stroke="#000000"
+         linecap="square"
+         d="M6 2 l-4,4" />
+      <path
+         id="path6852"
+         stroke-width="0.25"
+         stroke="#000000"
+         linecap="square"
+         d="M4 0 l-4,4" />
+    </pattern>
+    <symbol
+       id="*Model_Space" />
+    <symbol
+       id="*Paper_Space" />
+    <symbol
+       id="*Paper_Space0" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.49497475"
+     inkscape:cx="381.16725"
+     inkscape:cy="219.50633"
+     inkscape:document-units="mm"
+     inkscape:current-layer="layer1"
+     showgrid="true"
+     inkscape:window-width="1600"
+     inkscape:window-height="838"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1">
+    <inkscape:grid
+       type="xygrid"
+       id="grid7223"
+       units="mm"
+       spacingx="1"
+       spacingy="1" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata6838">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-162)">
+    <path
+       inkscape:connector-curvature="0"
+       d="m 430,236.99999 h -60.00001 v -20 H 430 Z"
+       style="fill:none;stroke:#000000;stroke-width:0.79374999"
+       id="path6860" />
+    <text
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#000000;stroke-width:0.26458332"
+       x="399.93164"
+       y="225.16893"
+       id="text6864">
+      <tspan
+         y="225.16893"
+         x="399.93164"
+         sodipodi:role="line"
+         id="tspan6862"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;writing-mode:lr-tb;text-anchor:middle;stroke-width:0.26458332">pdlCrossFrameApplyPids</tspan>
+      <tspan
+         y="231.41893"
+         x="399.93164"
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;writing-mode:lr-tb;text-anchor:middle;stroke-width:0.26458332"
+         id="tspan7340">pdlXFrameApplyPids</tspan>
+    </text>
+    <path
+       inkscape:connector-curvature="0"
+       d="m 430,226.99999 h 36"
+       style="fill:none;stroke:#000000;stroke-width:0.23763451"
+       id="path6866" />
+    <text
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;stroke-width:0.26458332"
+       x="431.4881"
+       y="225.43301"
+       id="text6870">
+      <tspan
+         y="225.43301"
+         x="431.4881"
+         sodipodi:role="line"
+         id="tspan6868"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332">pdlDroneState.motorGas</tspan>
+    </text>
+    <path
+       inkscape:connector-curvature="0"
+       d="M 350.00001,221.99999 H 310 v -20 h 40.00001 z"
+       style="fill:none;stroke:#000000;stroke-width:0.79374999"
+       id="path6872" />
+    <text
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;stroke-width:0.26458332"
+       x="313.54004"
+       y="213.76024"
+       id="text6876">
+      <tspan
+         y="213.76024"
+         x="313.54004"
+         sodipodi:role="line"
+         id="tspan6874"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332">Pitch Rate PID</tspan>
+    </text>
+    <path
+       inkscape:connector-curvature="0"
+       d="M 350.00001,191.99999 H 310 V 172 h 40.00001 z"
+       style="fill:none;stroke:#000000;stroke-width:0.79374999"
+       id="path6878" />
+    <text
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;stroke-width:0.26458332"
+       x="314.60449"
+       y="183.76025"
+       id="text6882">
+      <tspan
+         y="183.76025"
+         x="314.60449"
+         sodipodi:role="line"
+         id="tspan6880"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332">Yaw Rate PID</tspan>
+    </text>
+    <path
+       inkscape:connector-curvature="0"
+       d="M 350.00001,251.99999 H 310 v -20 h 40.00001 z"
+       style="fill:none;stroke:#000000;stroke-width:0.79374999"
+       id="path6884" />
+    <text
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;stroke-width:0.26458332"
+       x="314.78638"
+       y="243.76024"
+       id="text6888">
+      <tspan
+         y="243.76024"
+         x="314.78638"
+         sodipodi:role="line"
+         id="tspan6886"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332">Roll Rate PID</tspan>
+    </text>
+    <path
+       inkscape:connector-curvature="0"
+       d="m 310,172 v 4.99999"
+       style="fill:none;stroke:#000000;stroke-width:0.26458332"
+       id="path6890" />
+    <path
+       inkscape:connector-curvature="0"
+       d="M 310,176.99999 H 265"
+       style="fill:none;stroke:#000000;stroke-width:0.22695804"
+       id="path6892" />
+    <path
+       inkscape:connector-curvature="0"
+       d="m 310,191.99999 v -5"
+       style="fill:none;stroke:#000000;stroke-width:0.26458332"
+       id="path6894" />
+    <path
+       inkscape:connector-curvature="0"
+       d="M 310,186.99999 H 265"
+       style="fill:none;stroke:#000000;stroke-width:0.22695804"
+       id="path6896" />
+    <text
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;stroke-width:0.26458332"
+       x="265.39963"
+       y="185.46545"
+       id="text6900">
+      <tspan
+         y="185.46545"
+         x="265.39963"
+         sodipodi:role="line"
+         id="tspan6898"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332">pdlDroneState.gyro.pure[PDL_Z]</tspan>
+    </text>
+    <path
+       inkscape:connector-curvature="0"
+       d="M 310,216.99999 H 265"
+       style="fill:none;stroke:#000000;stroke-width:0.22850727"
+       id="path6902" />
+    <text
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;stroke-width:0.26458332"
+       x="265.19693"
+       y="215.46544"
+       id="text6906">
+      <tspan
+         y="215.46544"
+         x="265.19693"
+         sodipodi:role="line"
+         id="tspan6904"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332">pdlDroneState.gyro.pure[PDL_Y]</tspan>
+    </text>
+    <path
+       inkscape:connector-curvature="0"
+       d="M 310,246.99999 H 265"
+       style="fill:none;stroke:#000000;stroke-width:0.22850727"
+       id="path6908" />
+    <text
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;stroke-width:0.26458332"
+       x="265.06329"
+       y="245.59909"
+       id="text6912">
+      <tspan
+         y="245.59909"
+         x="265.06329"
+         sodipodi:role="line"
+         id="tspan6910"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332">pdlDroneState.gyro.pure[PDL_X]</tspan>
+    </text>
+    <text
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;stroke-width:0.26458332"
+       x="265.53326"
+       y="175.73273"
+       id="text6916">
+      <tspan
+         y="175.73273"
+         x="265.53326"
+         sodipodi:role="line"
+         id="tspan6914"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332">yaw rate from remote control</tspan>
+    </text>
+    <path
+       inkscape:connector-curvature="0"
+       d="m 350.00001,181.99999 h 9.99998"
+       style="fill:none;stroke:#000000;stroke-width:0.29104167"
+       id="path6918" />
+    <path
+       inkscape:connector-curvature="0"
+       d="m 359.99999,181.99999 v 60"
+       style="fill:none;stroke:#000000;stroke-width:0.29104167"
+       id="path6920" />
+    <path
+       inkscape:connector-curvature="0"
+       d="m 359.99999,241.99999 h -9.99998"
+       style="fill:none;stroke:#000000;stroke-width:0.29104167"
+       id="path6922" />
+    <path
+       inkscape:connector-curvature="0"
+       d="m 350.00001,211.99999 h 9.99998"
+       style="fill:none;stroke:#000000;stroke-width:0.29104167"
+       id="path6924" />
+    <path
+       inkscape:connector-curvature="0"
+       d="m 359.99999,226.99999 h 10"
+       style="fill:none;stroke:#000000;stroke-width:0.29104167"
+       id="path6926" />
+    <path
+       inkscape:connector-curvature="0"
+       d="m 205,221.99999 h -40 v -20 h 40 z"
+       style="fill:none;stroke:#000000;stroke-width:0.79374999"
+       id="path6928" />
+    <text
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;stroke-width:0.26458332"
+       x="174.5166"
+       y="213.76024"
+       id="text6932">
+      <tspan
+         y="213.76024"
+         x="174.5166"
+         sodipodi:role="line"
+         id="tspan6930"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332">Pitch PID</tspan>
+    </text>
+    <path
+       inkscape:connector-curvature="0"
+       d="M 165,216.99999 H 137"
+       style="fill:none;stroke:#000000;stroke-width:0.22228675"
+       id="path6934" />
+    <text
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;stroke-width:0.26458332"
+       x="137.04521"
+       y="215.59908"
+       id="text6938">
+      <tspan
+         y="215.59908"
+         x="137.04521"
+         sodipodi:role="line"
+         id="tspan6936"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332">pdlDroneState.pitch</tspan>
+    </text>
+    <path
+       inkscape:connector-curvature="0"
+       d="m 205,211.99999 h 10"
+       style="fill:none;stroke:#000000;stroke-width:0.29104167"
+       id="path6940" />
+    <path
+       inkscape:connector-curvature="0"
+       d="m 205,251.99999 h -40 v -20 h 40 z"
+       style="fill:none;stroke:#000000;stroke-width:0.79374999"
+       id="path6946" />
+    <text
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;stroke-width:0.26458332"
+       x="175.76294"
+       y="243.76024"
+       id="text6950">
+      <tspan
+         y="243.76024"
+         x="175.76294"
+         sodipodi:role="line"
+         id="tspan6948"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332">Roll PID</tspan>
+    </text>
+    <path
+       inkscape:connector-curvature="0"
+       d="M 165,246.99999 H 139"
+       style="fill:none;stroke:#000000;stroke-width:0.21420087"
+       id="path6952" />
+    <text
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;stroke-width:0.26458332"
+       x="139.38382"
+       y="245.66591"
+       id="text6956">
+      <tspan
+         y="245.66591"
+         x="139.38382"
+         sodipodi:role="line"
+         id="tspan6954"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332">pdlDroneState.roll</tspan>
+    </text>
+    <path
+       inkscape:connector-curvature="0"
+       d="m 205,241.99999 h 10"
+       style="fill:none;stroke:#000000;stroke-width:0.29104167"
+       id="path6958" />
+    <path
+       inkscape:connector-curvature="0"
+       d="m 215,241.99999 v -10"
+       style="fill:none;stroke:#000000;stroke-width:0.30000001;stroke-miterlimit:4;stroke-dasharray:none"
+       id="path6960" />
+    <path
+       inkscape:connector-curvature="0"
+       d="M 94.999999,221.99999 H 55 v -20 h 39.999999 z"
+       style="fill:none;stroke:#000000;stroke-width:0.79374999"
+       id="path6964" />
+    <text
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;stroke-width:0.26458332"
+       x="59.967041"
+       y="213.26341"
+       id="text6968">
+      <tspan
+         y="213.26341"
+         x="59.967041"
+         sodipodi:role="line"
+         id="tspan6966"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332">VelocityX PID</tspan>
+    </text>
+    <path
+       inkscape:connector-curvature="0"
+       d="M 55,216.99999 H 12.999998"
+       style="fill:none;stroke:#000000;stroke-width:0.22873119"
+       id="path6970" />
+    <text
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;stroke-width:0.26458332"
+       x="12.796873"
+       y="215.62201"
+       id="text6974">
+      <tspan
+         y="215.62201"
+         x="12.796873"
+         sodipodi:role="line"
+         id="tspan6972"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332">pdlDroneState.velocity[PDL_X]</tspan>
+    </text>
+    <path
+       inkscape:connector-curvature="0"
+       d="M 94.999999,251.99999 H 55 v -20 h 39.999999 z"
+       style="fill:none;stroke:#000000;stroke-width:0.79374999"
+       id="path6976" />
+    <text
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;stroke-width:0.26458332"
+       x="60.010986"
+       y="243.26341"
+       id="text6980">
+      <tspan
+         y="243.26341"
+         x="60.010986"
+         sodipodi:role="line"
+         id="tspan6978"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332">VelocityY PID</tspan>
+    </text>
+    <path
+       inkscape:connector-curvature="0"
+       d="M 55,246.99999 H 12.999998"
+       style="fill:none;stroke:#000000;stroke-width:0.22873119"
+       id="path6982" />
+    <text
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;stroke-width:0.26458332"
+       x="12.985861"
+       y="245.43303"
+       id="text6986">
+      <tspan
+         y="245.43303"
+         x="12.985861"
+         sodipodi:role="line"
+         id="tspan6984"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332">pdlDroneState.velocity[PDL_Y]</tspan>
+    </text>
+    <path
+       inkscape:connector-curvature="0"
+       d="M 55,206.99999 H 12.999998"
+       style="fill:none;stroke:#000000;stroke-width:0.22873119"
+       id="path7024" />
+    <text
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;stroke-width:0.26458332"
+       x="50.122021"
+       y="205.99998"
+       id="text7028">
+      <tspan
+         y="205.99998"
+         x="50.122021"
+         sodipodi:role="line"
+         id="tspan7026"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332">0</tspan>
+    </text>
+    <path
+       inkscape:connector-curvature="0"
+       d="M 55,236.99999 H 12.999998"
+       style="fill:none;stroke:#000000;stroke-width:0.22873119"
+       id="path7030" />
+    <text
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;stroke-width:0.26458332"
+       x="49.933033"
+       y="236.09448"
+       id="text7034">
+      <tspan
+         y="236.09448"
+         x="49.933033"
+         sodipodi:role="line"
+         id="tspan7032"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332">0</tspan>
+    </text>
+    <path
+       inkscape:connector-curvature="0"
+       d="M 350.00001,281.99999 H 310 V 262 h 40.00001 z"
+       style="fill:none;stroke:#000000;stroke-width:0.79374999"
+       id="path7036" />
+    <text
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;stroke-width:0.26458332"
+       x="313.93945"
+       y="272.79395"
+       id="text7040">
+      <tspan
+         y="272.79395"
+         x="313.93945"
+         sodipodi:role="line"
+         id="tspan7038"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332">pdlDroneState.baseGas</tspan>
+    </text>
+    <path
+       inkscape:connector-curvature="0"
+       d="m 359.99999,271.99998 h -9.99998"
+       style="fill:none;stroke:#000000;stroke-width:0.29104167"
+       id="path7042" />
+    <path
+       inkscape:connector-curvature="0"
+       d="M 359.99999,271.99998 V 241.99999"
+       style="fill:none;stroke:#000000;stroke-width:0.29104167"
+       id="path7044" />
+    <path
+       inkscape:connector-curvature="0"
+       d="M 95,287 H 55.000001 V 266.99999 H 95 Z"
+       style="fill:none;stroke:#000000;stroke-width:0.79374999"
+       id="path7054" />
+    <text
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;stroke-width:0.26458332"
+       x="60.108643"
+       y="278.26343"
+       id="text7058">
+      <tspan
+         y="278.26343"
+         x="60.108643"
+         sodipodi:role="line"
+         id="tspan7056"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332">VelocityZ PID</tspan>
+    </text>
+    <path
+       inkscape:connector-curvature="0"
+       d="M 55.000001,281.99999 H 12.999999"
+       style="fill:none;stroke:#000000;stroke-width:0.22873119"
+       id="path7060" />
+    <text
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;stroke-width:0.26458332"
+       x="12.925143"
+       y="280.86636"
+       id="text7064">
+      <tspan
+         y="280.86636"
+         x="12.925143"
+         sodipodi:role="line"
+         id="tspan7062"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332">pdlDroneState.velocity[PDL_Z]</tspan>
+    </text>
+    <path
+       inkscape:connector-curvature="0"
+       d="M 55.000001,272.00001 H 12.999999"
+       style="fill:none;stroke:#000000;stroke-width:0.22873119"
+       id="path7066" />
+    <text
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;stroke-width:0.26458332"
+       x="13.17485"
+       y="271.09451"
+       id="text7070">
+      <tspan
+         y="271.09451"
+         x="13.17485"
+         sodipodi:role="line"
+         id="tspan7068"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332">velocity from remote control</tspan>
+    </text>
+    <text
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;stroke-width:0.26458332"
+       x="100.37202"
+       y="200.77231"
+       id="text7076">
+      <tspan
+         y="200.77231"
+         x="100.37202"
+         sodipodi:role="line"
+         id="tspan7074"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332">pitch from RC</tspan>
+    </text>
+    <text
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;stroke-width:0.26458332"
+       x="100.08854"
+       y="230.74701"
+       id="text7082">
+      <tspan
+         y="230.74701"
+         x="100.08854"
+         sodipodi:role="line"
+         id="tspan7080"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332">roll from RC</tspan>
+    </text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.80000001;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 290.00008,261.99987 v 19.99982 L 300,276.99999 v -9.9999 z"
+       id="path7344"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.19322434px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 295,278.99999 v 8"
+       id="path7349"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 299.99999,271.99999 H 310"
+       id="path7351"
+       inkscape:connector-curvature="0" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+       x="284.29449"
+       y="289.6889"
+       id="text7355"><tspan
+         sodipodi:role="line"
+         id="tspan7353"
+         x="284.29449"
+         y="289.6889"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332">altPid.enabled</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+       x="244.23425"
+       y="275.58099"
+       id="text7355-3"><tspan
+         sodipodi:role="line"
+         id="tspan7353-7"
+         x="244.23425"
+         y="275.58099"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332">base gas from remote control</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 244,276.99999 h 45.99999"
+       id="path7375"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.80000001;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 250.00008,196.99977 v 19.99982 L 260,211.99989 v -9.9999 z"
+       id="path7344-1"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.19322555px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 255,213.99989 v 8.0001"
+       id="path7349-8"
+       inkscape:connector-curvature="0" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+       x="242.79112"
+       y="224.88927"
+       id="text7355-5"><tspan
+         sodipodi:role="line"
+         id="tspan7353-5"
+         x="242.79112"
+         y="224.88927"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332">pitchPid.enabled</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 260,206.99999 h 50"
+       id="path7401"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.80000001;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 250.00008,226.99977 v 19.99982 L 260,241.99989 v -9.9999 z"
+       id="path7344-1-1"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.19322555px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 255,243.99989 v 8.0001"
+       id="path7349-8-4"
+       inkscape:connector-curvature="0" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+       x="242.79112"
+       y="254.88927"
+       id="text7355-5-1"><tspan
+         sodipodi:role="line"
+         id="tspan7353-5-7"
+         x="242.79112"
+         y="254.88927"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332">rollPid.enabled</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 260,236.99999 h 50"
+       id="path7427"
+       inkscape:connector-curvature="0" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+       x="221.64392"
+       y="210.5381"
+       id="text7355-5-18"><tspan
+         sodipodi:role="line"
+         id="tspan7353-5-76"
+         x="221.64392"
+         y="210.5381"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332">pitchRate from RC</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 250,211.99999 H 221"
+       id="path7447"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 250,241.99999 H 221"
+       id="path7449"
+       inkscape:connector-curvature="0" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+       x="221.0457"
+       y="240.53885"
+       id="text7355-5-18-8"><tspan
+         sodipodi:role="line"
+         id="tspan7353-5-76-5"
+         x="221.0457"
+         y="240.53885"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332">rollRate from RC</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 215,231.99999 h 35"
+       id="path7469"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 215,201.99999 h 35"
+       id="path7471"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 215,211.99999 v -10"
+       id="path7473"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.80000001;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 120.00008,196.99987 v 19.99982 L 130,211.99999 v -9.9999 z"
+       id="path7344-1-7"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.19322555px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 125,191.99999 v 8.0001"
+       id="path7349-8-2"
+       inkscape:connector-curvature="0" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+       x="124.45187"
+       y="186.07526"
+       id="text7355-5-0"><tspan
+         sodipodi:role="line"
+         id="tspan7353-5-8"
+         x="124.45187"
+         y="186.07526"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;writing-mode:lr-tb;text-anchor:middle;stroke-width:0.26458332">pdlDroneState.holdPosEnabled</tspan><tspan
+         sodipodi:role="line"
+         x="124.45187"
+         y="189.82526"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;writing-mode:lr-tb;text-anchor:middle;stroke-width:0.26458332"
+         id="tspan7529">velocityXPid.enabled</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 130,206.99999 h 35"
+       id="path7507"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 99.999998,201.99999 H 120"
+       id="path7509"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.80000001;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 120.00008,226.99977 v 19.99982 L 130,241.99989 v -9.9999 z"
+       id="path7344-1-0"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.19322555px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 125,243.99989 v 8.0001"
+       id="path7349-8-8"
+       inkscape:connector-curvature="0" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+       x="124.85394"
+       y="255.62271"
+       id="text7355-5-4"><tspan
+         sodipodi:role="line"
+         id="tspan7353-5-6"
+         x="124.85394"
+         y="255.62271"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;writing-mode:lr-tb;text-anchor:middle;stroke-width:0.26458332">pdlDroneState.holdPosEnabled</tspan><tspan
+         sodipodi:role="line"
+         x="124.85394"
+         y="259.37271"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;writing-mode:lr-tb;text-anchor:middle;stroke-width:0.26458332"
+         id="tspan7531">velocityYPid.enabled</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 120,231.99999 H 99.999998"
+       id="path7523"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 95,211.99999 h 25"
+       id="path7525"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 95,241.99999 h 25"
+       id="path7527"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 130,236.99999 h 35"
+       id="path7533"
+       inkscape:connector-curvature="0" />
+    <path
+       inkscape:connector-curvature="0"
+       d="m 205,286.99999 h -40 v -20 h 40 z"
+       style="fill:none;stroke:#000000;stroke-width:0.79374999"
+       id="path6946-5" />
+    <text
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;stroke-width:0.26458332"
+       x="177.35474"
+       y="278.77246"
+       id="text6950-6">
+      <tspan
+         y="278.77246"
+         x="177.35474"
+         sodipodi:role="line"
+         id="tspan6948-0"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332">Alt PID</tspan>
+    </text>
+    <path
+       inkscape:connector-curvature="0"
+       d="M 165,281.99999 H 135"
+       style="fill:none;stroke:#000000;stroke-width:0.23008867"
+       id="path6952-5" />
+    <text
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;stroke-width:0.26458332"
+       x="134.17206"
+       y="280.39865"
+       id="text6956-7">
+      <tspan
+         y="280.39865"
+         x="134.17206"
+         sodipodi:role="line"
+         id="tspan6954-9"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332">pdlDroneState.altitude</tspan>
+    </text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 130,271.99999 h 35"
+       id="path7533-8"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 205,276.99999 h 30"
+       id="path7571"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 235,266.99999 h 54.99999"
+       id="path7573"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 235,276.99999 v -10"
+       id="path7575"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.80000001;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 120.00008,261.99977 v 19.99982 L 130,276.99989 v -9.9999 z"
+       id="path7344-1-0-9"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.19322555px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 125,278.99989 v 8.0001"
+       id="path7349-8-8-6"
+       inkscape:connector-curvature="0" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+       x="125.444"
+       y="290.73376"
+       id="text7355-5-4-2"><tspan
+         sodipodi:role="line"
+         x="125.444"
+         y="290.73376"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;writing-mode:lr-tb;text-anchor:middle;stroke-width:0.26458332"
+         id="tspan7531-7">velocityZPid.enabled</tspan></text>
+    <text
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;stroke-width:0.26458332"
+       x="100.08854"
+       y="265.74701"
+       id="text7082-8">
+      <tspan
+         y="265.74701"
+         x="100.08854"
+         sodipodi:role="line"
+         id="tspan7080-8"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332">alt from RC</tspan>
+    </text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 120,266.99999 H 99.999999"
+       id="path7523-2"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 95,276.99999 h 25"
+       id="path7639"
+       inkscape:connector-curvature="0" />
+  </g>
+</svg>

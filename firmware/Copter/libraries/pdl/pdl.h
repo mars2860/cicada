@@ -64,7 +64,7 @@
 /**
  * @page chain_of_pids Chain of PIDs
  *
- * @image html chain_of_pids.png "Chain of PIDs" width=100%
+ * @image html chain_of_pids.svg "Chain of PIDs" width=100%
  */
 
 #ifndef PDL_H

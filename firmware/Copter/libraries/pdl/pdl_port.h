@@ -34,7 +34,7 @@
  * PDL uses right-handed coordinate system. You have to be according to this coordinate system when store in pdlDroneState
  * results from your sensors.
  *
- * @image html pdl_coordinate_system.png "PDL coordinate system" width=100%
+ * @image html pdl_coordinate_system.svg "PDL coordinate system" width=100%
  *
  * @defgroup pdlPortableInterface Portable functions
  * @{

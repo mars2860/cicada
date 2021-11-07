@@ -1,0 +1,1 @@
+Cicada project is a quadcopter based on ESP8266 Wifi module. As a part of this project there is PDL library (Portable drone logic). You can use this library to build firmware for your own flight controller. Documentation is available in firmware/cicadafw/libraries/pdl

@@ -14,7 +14,7 @@
 #define DEFAULT_CMD_PORT                4210
 #define DEFAULT_TELEMETRY_PORT          4211
 
-// max packet size may be 512, this size is resctricted by esp8266 platform
+// max packet size may be 512, this size is restricted by esp8266 platform
 #define TELEMETRY_MAX_PACKET_SIZE       512
 
 IPAddress ip;

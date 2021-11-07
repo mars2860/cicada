@@ -37,7 +37,8 @@ public class RemoteControlGui extends JSavedFrame
 	private static final float LEVEL_CTRL_DELTA = 7.f;
 	private static final int MOTOR_CTRL_DELTA = 4;//2;
 	private static final float ROTATE_CTRL_DELTA = 100.f;//80.f;
-	private static final float ALT_CTRL_DELTA = 0.010f;
+	private static final float ALT_CTRL_DELTA = 0.01f;
+	private static final float VELOCITY_Z_CTRL_DELTA = 0.3f;
 	
 	private JTextField mtfYaw;
 	private JTextField mtfPitch;
@@ -104,8 +105,8 @@ public class RemoteControlGui extends JSavedFrame
 			DroneState ds = CopterTelemetry.instance().getDroneState();
 			
 			CmdSetYPR cmdYpr = new CmdSetYPR(0,0,0);
-			//CmdSetVelocityZ cmdVz = null;
-			
+			CmdSetVelocityZ cmdVz = null;
+						
 			// get up
 			if(btnGetUp.getModel().isPressed())
 			{
@@ -114,11 +115,17 @@ public class RemoteControlGui extends JSavedFrame
 					CmdSetBaseGas cmd = new CmdSetBaseGas((int)ds.baseGas + MOTOR_CTRL_DELTA);
 					CopterCommander.instance().addCmd(cmd);
 				}
+				else if(ds.velocityZPid.enabled)
+				{
+					// create instance to inform that we have hold a key
+					cmdVz = new CmdSetVelocityZ(VELOCITY_Z_CTRL_DELTA);
+					if(ds.velocityZPid.target <= 0.f)
+						CopterCommander.instance().addCmd(cmdVz);
+				}
 				else
 				{
 					CmdSetAltitude cmd = new CmdSetAltitude((float)(ds.altPid.target + ALT_CTRL_DELTA));
 					CopterCommander.instance().addCmd(cmd);
-					//cmdVz = new CmdSetVelocityZ(0.05f);
 				}
 			}
 
@@ -130,11 +137,16 @@ public class RemoteControlGui extends JSavedFrame
 					CmdSetBaseGas cmd = new CmdSetBaseGas((int)ds.baseGas - MOTOR_CTRL_DELTA);
 					CopterCommander.instance().addCmd(cmd);
 				}
+				else if(ds.velocityZPid.enabled)
+				{
+					cmdVz = new CmdSetVelocityZ(-VELOCITY_Z_CTRL_DELTA);
+					if(ds.velocityZPid.target >= 0.f)
+						CopterCommander.instance().addCmd(cmdVz);
+				}
 				else
 				{
 					CmdSetAltitude cmd = new CmdSetAltitude((float)(ds.altPid.target - ALT_CTRL_DELTA));
 					CopterCommander.instance().addCmd(cmd);
-					//cmdVz = new CmdSetVelocityZ(-0.05f);
 				}
 			}
 			
@@ -188,16 +200,11 @@ public class RemoteControlGui extends JSavedFrame
 				CopterCommander.instance().addCmd(cmdYpr);
 			}
 			
-			/*if(cmdVz != null)
-			{
-				if(ds.velocityZPid.target != cmdVz.getVelocity())
-					CopterCommander.instance().addCmd(cmdVz);
-			}
-			else
+			if(cmdVz == null && ds.velocityZPid.enabled && ds.velocityZPid.target != 0.f)
 			{
 				cmdVz = new CmdSetVelocityZ(0);
 				CopterCommander.instance().addCmd(cmdVz);
-			}*/
+			}
 			
 			// stop
 			if(btnStop.getModel().isPressed())

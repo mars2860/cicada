@@ -16,7 +16,7 @@
 /// Accel+Gyro+Magneto read period in microseconds
 #define PDL_IMU_READ_PERIOD             5000
 /// Barometer read period in microseconds
-#define PDL_BARO_READ_PERIOD            50000
+#define PDL_BARO_READ_PERIOD            100000
 /// Battery state read period in microseconds
 #define PDL_BATTERY_READ_PERIOD         100000
 /// Escaper update period in microseconds
@@ -24,15 +24,15 @@
 /// Remote control update period in microseconds
 #define PDL_RC_UPDATE_PERIOD            0
 /// Lidar read period in microseconds
-#define PDL_LIDAR_READ_PERIOD           50000
+#define PDL_LIDAR_READ_PERIOD           100000
 /// OpticalFlow read period in microseconds
-#define PDL_OPTICAL_FLOW_READ_PERIOD    50000
+#define PDL_OPTICAL_FLOW_READ_PERIOD    100000
 /// Telemetry update period in microseconds
 #define PDL_DEFAULT_TELEMETRY_UPDATE_PERIOD     50000
 /// Desire time for one loop @ref task_scheduler "See task scheduler"
 #define PDL_DESIRE_UPDATE_TIME                  5000
 /// Max wait time for task to be executed @ref task_scheduler "See task scheduler"
-#define PDL_TASK_MAX_WAIT_TIME                  10000
+#define PDL_TASK_MAX_WAIT_TIME                  20000
 /// Maximum lidar range in meters
 #define PDL_LIDAR_MAX_RANGE 3.f
 /// Drone frame type. One of PDL_DRONE_FRAME_X | PDL_DRONE_FRAME_CROSS

@@ -6,14 +6,6 @@
 
 MPU6050 mpu;
 
-//SampleFilter axFilter, ayFilter, azFilter, gxFilter, gyFilter, gzFilter;
-/*Filter axFilter(20.0, 0.005, IIR::ORDER::OD3);
-Filter ayFilter(20.0, 0.005, IIR::ORDER::OD3);
-Filter azFilter(20.0, 0.005, IIR::ORDER::OD3);
-Filter gxFilter(20.0, 0.005, IIR::ORDER::OD3);
-Filter gyFilter(20.0, 0.005, IIR::ORDER::OD3);
-Filter gzFilter(20.0, 0.005, IIR::ORDER::OD3);*/
-
 void imuReadAccelOffset(pdlDroneState *ds);
 void imuReadGyroOffset(pdlDroneState *ds);
 
@@ -94,29 +86,6 @@ void pdlReadAccel(pdlDroneState *ds)
     ds->accel.pure[i] = (float)(ds->accel.raw[i]) / 8192.f;
     ds->gyro.pure[i] = (float)(ds->gyro.raw[i]) / 16.4f;
     ds->gyro.pure[i] *= 3.1415926535f / 180.f;
-    /*SampleFilter_put(&axFilter, accel[0]);
-    SampleFilter_put(&ayFilter, accel[1]);
-    SampleFilter_put(&azFilter, accel[2]);
-
-    SampleFilter_put(&gxFilter, gyro[0]);
-    SampleFilter_put(&gyFilter, gyro[1]);
-    SampleFilter_put(&gzFilter, gyro[2]);
-
-    accel[0] = (int16_t)SampleFilter_get(&axFilter);
-    accel[1] = (int16_t)SampleFilter_get(&ayFilter);
-    accel[2] = (int16_t)SampleFilter_get(&azFilter);
-
-    gyro[0] = (int16_t)SampleFilter_get(&gxFilter);
-    gyro[1] = (int16_t)SampleFilter_get(&gyFilter);
-    gyro[2] = (int16_t)SampleFilter_get(&gzFilter);*/
-
-    /*accel[0] = axFilter.filterIn(accel[0]);
-    accel[1] = ayFilter.filterIn(accel[1]);
-    accel[2] = azFilter.filterIn(accel[2]);
-
-    gyro[0] = gxFilter.filterIn(gyro[0]);
-    gyro[1] = gyFilter.filterIn(gyro[1]);
-    gyro[2] = gzFilter.filterIn(gyro[2]);*/
   }
 }
 

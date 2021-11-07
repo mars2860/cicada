@@ -2,7 +2,7 @@
 #include "Bitcraze_PMW3901.h"
 #include "movingAvg.h"
 
-// Warn: for SPI-CS used TXD pin! Sold out this wire from OF-module if you going to programm esp8266 by UART
+// Warn: for SPI-CS used TXD pin! Sold out this wire from OF-module if you going to program esp8266 by UART
 Bitcraze_PMW3901 flow(1);
 
 boolean sensorValid;

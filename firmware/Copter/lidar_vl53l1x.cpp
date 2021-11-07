@@ -1,7 +1,9 @@
 #include "pdl.h"
 #include "VL53L1X.h"
+#include <math.h>
 
 VL53L1X sensor;
+const float fov = 27.f * 3.14f/180.f; // field of view for vl53l1x in rad
 
 void pdlSetupLidar(pdlDroneState *ds)
 {
@@ -25,6 +27,7 @@ uint8_t pdlReadLidar(pdlDroneState *ds)
   static float oldRange = 0;
   static uint32_t lastUpdate = 0;
 
+
   if(sensor.dataReady())
   {
     sensor.read(false);
@@ -33,6 +36,13 @@ uint8_t pdlReadLidar(pdlDroneState *ds)
     {
       ds->lidarRange = sensor.ranging_data.range_mm;
       ds->lidarRange /= 1000.f;
+      // tilt compensation
+      float a = acosf(cosf(ds->pitch) * cosf(ds->roll));
+      a = fabsf(a);
+      if(a >= fov / 2.f)
+      {
+        ds->lidarRange = ds->lidarRange * cosf(a - fov/2.f);
+      }
       // calc vertical velocity
       float dt = pdlGetDeltaTime(pdlMicros(), lastUpdate);
       lastUpdate = pdlMicros();

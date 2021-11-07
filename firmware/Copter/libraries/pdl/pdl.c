@@ -70,6 +70,8 @@ void pdlSetup(pdlDroneState *ds)
   pdlPidModifiedFlag = 0;
   pdlUpdateStartTime = 0;
 
+  ds->version = PDL_VERSION;
+
   pdlStopMotors(ds);
   pdlSetupEscaper(ds);
   pdlSetupAccel(ds);
@@ -184,11 +186,19 @@ void pdlUpdateAltPid(pdlDroneState *ds)
   lastUpdateTime = pdlMicros();
   dt = dt / 1000000.f;
 
-  pdlUpdatePid(&ds->altPid, ds->altitude, dt);
-
   // apply alt pid
-  if(ds->altPid.enabled && ds->stabilizationEnabled)
-    ds->baseGas = ds->altPid.out;
+  if(ds->stabilizationEnabled)
+  {
+    pdlUpdatePid(&ds->velocityZPid, ds->velocity[PDL_Z], dt);
+
+    if(ds->velocityZPid.enabled)
+      ds->altPid.target += ds->velocityZPid.out;
+
+    pdlUpdatePid(&ds->altPid, ds->altitude, dt);
+
+    if(ds->altPid.enabled)
+      ds->baseGas = ds->altPid.out;
+  }
 }
 
 void pdlBaroTask(pdlDroneState *ds)
@@ -220,26 +230,6 @@ void pdlUpdateHorVelocityPids(pdlDroneState *ds)
 
   pdlUpdatePid(&ds->velocityXPid,ds->velocity[PDL_X],dt);
   pdlUpdatePid(&ds->velocityYPid,ds->velocity[PDL_Y],dt);
-
-  // apply optical flow pids to levels pids
-  /*
-  if(ds->holdPosEnabled == PDL_HOLDPOS_BOTH_XY)
-  {
-    if(ds->velocityYPid.enabled)
-      ds->pitchPid.target = ds->velocityYPid.out;
-
-    if(ds->velocityXPid.enabled)
-      ds->rollPid.target = ds->velocityXPid.out;
-
-    if(ds->velocityXPid.enabled || ds->velocityYPid.enabled)
-      pdlUpdateLevelsPid(ds);
-  }
-  else
-  {
-    pdlResetPid(&ds->velocityXPid);
-    pdlResetPid(&ds->velocityYPid);
-  }
-  */
 
   if(ds->holdPosEnabled && ds->stabilizationEnabled)
   {
@@ -466,6 +456,7 @@ void pdlParseCommand(pdlDroneState *ds, uint8_t *packet)
         ds->rollRatePid.target = 0;
         ds->pitchPid.target = 0;
         ds->rollPid.target = 0;
+        ds->altPid.target = 0;
         ds->velocityXPid.target = 0;
         ds->velocityYPid.target = 0;
         ds->velocityZPid.target = 0;
@@ -564,11 +555,6 @@ void pdlParseCommand(pdlDroneState *ds, uint8_t *packet)
         ds->holdPosEnabled = PDL_HOLDPOS_Y;
       else if(roll != 0.f)
         ds->holdPosEnabled = PDL_HOLDPOS_X;
-      /*if(pitch != 0.f || roll != 0.f)
-        ds->holdPosEnabled = PDL_HOLDPOS_DISABLED;
-      else
-        ds->holdPosEnabled = PDL_HOLDPOS_BOTH_XY;
-        */
       break;
     case PDL_CMD_SET_TELEMETRY_PERIOD:
       memcpy(&ut0, &packet[1], sizeof(ut0));

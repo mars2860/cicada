@@ -352,9 +352,10 @@ public class DroneState implements Cloneable
 	@SerializedName("baro")
 	public Baro baro = new Baro();
 	
-	// no sense variable, this is 2 bytes gap in C structure
 	public double holdPosEnabled;
-	protected int gap;
+	
+	@NoChart
+	public int version;
 	
 	@Override
 	public Object clone() throws CloneNotSupportedException
@@ -374,6 +375,15 @@ public class DroneState implements Cloneable
 	
 	public void parse(BinaryParser parser, DatagramPacket packet)
 	{
+		version = parser.getUint8t(packet);
+		motorsEnabled = parser.getBool(packet);
+		stabilizationEnabled = parser.getBool(packet);
+		holdPosEnabled = parser.getUint8t(packet);
+		baseGas = parser.getInt32t(packet);
+		motorGas0 = parser.getInt32t(packet);
+		motorGas1 = parser.getInt32t(packet);
+		motorGas2 = parser.getInt32t(packet);
+		motorGas3 = parser.getInt32t(packet);
 		timestamp = parser.getUint32t(packet);
 		battery.parse(parser, packet);
 		wifiLevel = parser.getInt32t(packet);
@@ -407,16 +417,6 @@ public class DroneState implements Cloneable
 		velocityXPid.parse(parser, packet);
 		velocityYPid.parse(parser, packet);
 		velocityZPid.parse(parser, packet);
-		baseGas = parser.getInt32t(packet);
-		motorGas0 = parser.getInt32t(packet);
-		motorGas1 = parser.getInt32t(packet);
-		motorGas2 = parser.getInt32t(packet);
-		motorGas3 = parser.getInt32t(packet);
-		motorsEnabled = parser.getBool(packet);
-		stabilizationEnabled = parser.getBool(packet);
-		holdPosEnabled = parser.getUint8t(packet);
-		gap = parser.getUint8t(packet);
-		//gap = parser.getInt16t(packet);
 		net.telemetryPeriod = (int)parser.getUint32t(packet);
 	}
 	

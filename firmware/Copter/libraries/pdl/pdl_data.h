@@ -16,6 +16,8 @@
  * @{
  */
 
+#define PDL_VERSION 1
+
 #define PDL_X     0
 #define PDL_Y     1
 #define PDL_Z     2
@@ -94,6 +96,19 @@ typedef struct s_pdlTripleAxisSensorState
 /// Drone state takes 504 bytes
 typedef struct s_pdlDroneState
 {
+  /// pdl version
+  uint8_t version;
+  /// Motors enabled
+  uint8_t motorsEnabled;
+  /// Global flag to enable PIDs
+  uint8_t stabilizationEnabled;
+  /// Hold position flag (one of macro PDL_HOLDPOS_). Velocity pids are applied to drone if this flag is above 0
+  uint8_t holdPosEnabled;
+  /// Base gas. This value is output of altitude PID. If altitude PID is disabled you have to control this value yourself
+  int32_t baseGas;
+  /// Motors gas. These values are intended to motor regulator. Gas means your PWM value, DSHOT value, etc.
+  /// When PIDs are enabled these value are baseGas + pids output
+  int32_t motorGas[PDL_MOTOR_COUNT];
   /// Current time in microseconds from system has been started
   uint32_t timestamp;
   /// Battery state
@@ -140,7 +155,7 @@ typedef struct s_pdlDroneState
   pdlPidState pitchPid;
   /// Roll PID
   pdlPidState rollPid;
-  /// Alt PID
+  /// PID to hold altitude
   pdlPidState altPid;
   /// VelocityX PID. This pid is used only to hold position. Change target for yaw/pitch/roll pids to move a drone
   pdlPidState velocityXPid;
@@ -148,19 +163,6 @@ typedef struct s_pdlDroneState
   pdlPidState velocityYPid;
   /// VelocityZ PID
   pdlPidState velocityZPid;
-  /// Base gas. This value is output of altitude PID. If altitude PID is disabled you have to control this value yourself
-  int32_t baseGas;
-  /// Motors gas. These values are intended to motor regulator. Gas means your PWM value, DSHOT value, etc.
-  /// When PIDs are enabled these value are baseGas + pids output
-  int32_t motorGas[PDL_MOTOR_COUNT];
-  /// Motors enabled
-  uint8_t motorsEnabled;
-  /// Global flag to enable PIDs
-  uint8_t stabilizationEnabled;
-  /// Hold position flag (one of macro PDL_HOLDPOS_). Velocity pids are applied to drone if this flag is above 0
-  uint8_t holdPosEnabled;
-  /// Explicit gap for struct size to be divisible by 4
-  uint8_t gap;
 } pdlDroneState;
 
 /// @}

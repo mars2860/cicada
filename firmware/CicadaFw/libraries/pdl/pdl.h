@@ -2,7 +2,7 @@
  *  @mainpage Introduction
  *
  *  Portable Drone Logic (PDL) is the lightweight pure C library implements a common drone logic. The goal of
- *  this project is to be easy to use and easy to port to your hardware platform. PDL supports only quadrocopters
+ *  this project is to be easy to use and easy to port to your hardware platform. PDL supports only quadcopters
  *  at this time
  *
  *  It provides for you

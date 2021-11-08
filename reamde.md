@@ -7,7 +7,7 @@ Cicada project is a quadcopter based on ESP8266 Wifi module. You can make it you
 The hardware is designed to be easy assembled by hands. Parts you need
 - ESP8266 wifi module
 - MT3608 step-up converter
-- 1117-3.3 low drop out regulator
+- 1117-3.3 low drop out regulator 3v3
 - GY-91 module (10DOF sensor based on MPU9250 and BMP280)
 - Lidar module VL53L1X
 - Optical Flow module PMW3901
@@ -47,4 +47,9 @@ ssid_config.h
 
     #endif
 
-Firmware supports update by the air. It is based on ESP8266HTTPUpdateServer 
+Firmware supports update by the air. It is based on ESP8266HTTPUpdateServer
+
+### Design tools
+- Sloeber IDE
+- FreeCAD
+- KiCAD

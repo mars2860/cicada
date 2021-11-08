@@ -2,5 +2,5 @@
   (lib (name mt3608)(type Legacy)(uri ${KIPRJMOD}/../../libs/mt3608.lib)(options "")(descr ""))
   (lib (name maxium)(type Legacy)(uri ${KIPRJMOD}/../../libs/maxium.lib)(options "")(descr ""))
   (lib (name DM3AT-SF-PEJM5)(type Legacy)(uri ${KIPRJMOD}/../../libs/DM3AT-SF-PEJM5.lib)(options "")(descr ""))
-  (lib (name copter-rescue)(type Legacy)(uri ${KIPRJMOD}/copter-rescue.lib)(options "")(descr ""))
+  (lib (name HMC5883L)(type Legacy)(uri ${KIPRJMOD}/../../libs/HMC5883L.lib)(options "")(descr ""))
 )

@@ -14,7 +14,7 @@ import pdl.DroneCommander;
 import pdl.DroneTelemetry;
 import pdl.DroneState;
 
-public class MainGui
+public class CicadaDronePultApp
 {
 	private StartGui mMainFrame;
 	
@@ -26,7 +26,7 @@ public class MainGui
 		@Override
 		public void windowClosing(WindowEvent e)
 		{
-			MainGui.this.stop();
+			CicadaDronePultApp.this.stop();
 		}
 
 		@Override
@@ -104,7 +104,7 @@ public class MainGui
 
 	public static void main(String[] args)
 	{
-		MainGui app = new MainGui();
+		CicadaDronePultApp app = new CicadaDronePultApp();
 		
 		Locale.setDefault(Locale.US);
 		

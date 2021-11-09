@@ -163,22 +163,22 @@ public class RemoteControlGui extends JSavedFrame
 			// pitch fwd
 			if(btnFwd.getModel().isPressed())
 			{
-				cmdYpr.setPitchDeg(LEVEL_CTRL_DELTA);
+				cmdYpr.setPitchDeg(-LEVEL_CTRL_DELTA);
 			}
 			// pitch bck
 			if(btnBck.getModel().isPressed())
 			{
-				cmdYpr.setPitchDeg(-LEVEL_CTRL_DELTA);
+				cmdYpr.setPitchDeg(LEVEL_CTRL_DELTA);
 			}
 			// rotate cw
 			if(btnCw.getModel().isPressed())
 			{
-				cmdYpr.setYawRateDeg(-ROTATE_CTRL_DELTA);
+				cmdYpr.setYawRateDeg(ROTATE_CTRL_DELTA);
 			}
 			// rotate ccw
 			if(btnCcw.getModel().isPressed())
 			{
-				cmdYpr.setYawRateDeg(ROTATE_CTRL_DELTA);
+				cmdYpr.setYawRateDeg(-ROTATE_CTRL_DELTA);
 			}
 			
 			if(cmdYpr.isNull() == false)

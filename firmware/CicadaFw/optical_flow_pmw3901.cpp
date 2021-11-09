@@ -31,7 +31,6 @@ void pdlReadOpticalFlow(pdlDroneState *ds)
   {
     flow.readMotionCount(&ds->opticalFlow.rawY, &ds->opticalFlow.rawX);
 
-    ds->opticalFlow.rawY = -ds->opticalFlow.rawY;
     ds->opticalFlow.rawX = -ds->opticalFlow.rawX;
     // LP filter measurements (this code snippet is from ESP-drone project
     /*
@@ -62,8 +61,8 @@ void pdlReadOpticalFlow(pdlDroneState *ds)
       float x = ds->opticalFlow.rawX;
       float y = ds->opticalFlow.rawY;
 
-      x = ( ((x + ex) * h) / k1 ) * k3;
-      y = ( ((y - ey) * h) / k1 ) * k3;
+      x = ( ((x - ex) * h) / k1 ) * k3;
+      y = ( ((y + ey) * h) / k1 ) * k3;
 
       // changes axes to corresponding drone axes
       ds->velocity[PDL_X] = x / dt;

@@ -87,8 +87,8 @@ public class StatusGui extends JSavedFrame
 			mlbOpticalFlowX.setText(fmt2.format(droneState.opticalFlow.rawX));
 			mlbOpticalFlowY.setText(fmt2.format(droneState.opticalFlow.rawY));
 			
-			mlbYaw.setIcon(rotateImageIcon(ResBox.icon("YAW"), -yaw));
-			mlbPitch.setIcon(rotateImageIcon(ResBox.icon("PITCH"), pitch));
+			mlbYaw.setIcon(rotateImageIcon(ResBox.icon("YAW"), yaw));
+			mlbPitch.setIcon(rotateImageIcon(ResBox.icon("PITCH"), -pitch));
 			mlbRoll.setIcon(rotateImageIcon(ResBox.icon("ROLL"), roll));
 		}
 	}

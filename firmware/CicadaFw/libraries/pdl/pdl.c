@@ -236,7 +236,7 @@ void pdlUpdateHorVelocityPids(pdlDroneState *ds)
     if( ds->velocityYPid.enabled &&
         (ds->holdPosEnabled == PDL_HOLDPOS_Y || ds->holdPosEnabled == PDL_HOLDPOS_BOTH_XY) )
     {
-      ds->rollPid.target = -ds->velocityYPid.out;
+      ds->rollPid.target = ds->velocityYPid.out;
     }
     else
     {
@@ -246,7 +246,7 @@ void pdlUpdateHorVelocityPids(pdlDroneState *ds)
     if( ds->velocityXPid.enabled &&
         (ds->holdPosEnabled == PDL_HOLDPOS_X || ds->holdPosEnabled == PDL_HOLDPOS_BOTH_XY) )
     {
-      ds->pitchPid.target = ds->velocityXPid.out;
+      ds->pitchPid.target = -ds->velocityXPid.out;
     }
     else
     {
@@ -346,10 +346,10 @@ void pdlCrossFrameApplyPids(pdlDroneState *ds)
   dg[2] = ds->baseGas;
   dg[3] = ds->baseGas;
 
-  dg[0] += ds->yawRatePid.out - ds->pitchRatePid.out;
-  dg[1] += -ds->yawRatePid.out + ds->rollRatePid.out;
-  dg[2] += ds->yawRatePid.out + ds->pitchRatePid.out;
-  dg[3] += -ds->yawRatePid.out - ds->rollRatePid.out;
+  dg[0] += -ds->yawRatePid.out + ds->pitchRatePid.out;
+  dg[1] += ds->yawRatePid.out + ds->rollRatePid.out;
+  dg[2] += -ds->yawRatePid.out - ds->pitchRatePid.out;
+  dg[3] += ds->yawRatePid.out - ds->rollRatePid.out;
 
   for(uint8_t i = 0; i < PDL_MOTOR_COUNT; i++)
     pdlSetMotorGas(ds, i, dg[i]);
@@ -364,10 +364,10 @@ void pdlXFrameApplyPids(pdlDroneState *ds)
   dg[2] = ds->baseGas;
   dg[3] = ds->baseGas;
 
-  dg[0] += ds->yawRatePid.out - ds->pitchRatePid.out + ds->rollRatePid.out;
-  dg[1] += -ds->yawRatePid.out + ds->pitchRatePid.out + ds->rollRatePid.out;
-  dg[2] += ds->yawRatePid.out + ds->pitchRatePid.out - ds->rollRatePid.out;
-  dg[3] += -ds->yawRatePid.out - ds->pitchRatePid.out - ds->rollRatePid.out;
+  dg[0] += -ds->yawRatePid.out + ds->pitchRatePid.out + ds->rollRatePid.out;
+  dg[1] += ds->yawRatePid.out - ds->pitchRatePid.out + ds->rollRatePid.out;
+  dg[2] += -ds->yawRatePid.out - ds->pitchRatePid.out - ds->rollRatePid.out;
+  dg[3] += ds->yawRatePid.out + ds->pitchRatePid.out - ds->rollRatePid.out;
 
   for(uint8_t i = 0; i < PDL_MOTOR_COUNT; i++)
     pdlSetMotorGas(ds, i, dg[i]);

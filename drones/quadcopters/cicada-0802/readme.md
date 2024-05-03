@@ -7,7 +7,7 @@ Cicada-0802 is FPV quadcopter based on Cicada Flight Controller. Distance betwee
 - cicada-micro-v2 - flight controller based on ESP-12E module
 - teeny pro 5a - electronic speed controller
 - happymodel 0703 or 0802 KV19000 - motors
-- HQProp 41mm-3blades - propellers
+- HQProp 41mm-3blades or Gemfan 1609 - propellers
 - akk ba3 or ewrf7082ve - camera
 
 

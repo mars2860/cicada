@@ -35,6 +35,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/pdl}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/movingAvg}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/RTIMUFusion2}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/MPU9250}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.cpp.sketch.input.95334001" name="CPP source files" superClass="io.sloeber.compiler.cpp.sketch.input"/>
 							</tool>
@@ -56,6 +57,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/pdl}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/movingAvg}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/RTIMUFusion2}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/MPU9250}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.c.sketch.input.764340330" name="C Source Files" superClass="io.sloeber.compiler.c.sketch.input"/>
 							</tool>
@@ -71,6 +73,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/BMP280}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/I2Cdev}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/MPU6050}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/MPU9250}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/PMW3901}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883L}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/VL53L1X}&quot;"/>
@@ -86,8 +89,11 @@
 							<tool id="io.sloeber.tool.size.683985670" name="Arduino tool Print Size" superClass="io.sloeber.tool.size"/>
 						</toolChain>
 					</folderInfo>
+					<fileInfo id="io.sloeber.core.toolChain.release.303228233.620835343" name="imu_mpu9250_i2cdevlib.cpp" rcbsApplicability="disable" resourcePath="imu_mpu9250_i2cdevlib.cpp" toolsToInvoke="io.sloeber.tool.sketch.compiler.cpp.848463985.1425959612">
+						<tool id="io.sloeber.tool.sketch.compiler.cpp.848463985.1425959612" name="Arduino C++ Compiler" superClass="io.sloeber.tool.sketch.compiler.cpp.848463985"/>
+					</fileInfo>
 					<sourceEntries>
-						<entry excluding="mag_hmc5983.cpp|battery_max1704x.cpp|mag_qmc5883.cpp|pwm.c|pwm_escaper.cpp|imu_mpu6550dmp.cpp|imu_mpu6550dmp_qmc5883.cpp|libraries/?*/**/test*/**|libraries/?*/**/third-party/**|MAX1704X|drivers|libraries/?*/utility/*/*|libraries/?*/**/?xamples/**|libraries/?*/**/?xtras/**|Copter.ino|libraries/**/._*" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="imu_mpu9250_i2cdevlib.cpp|no_magneto.cpp|imu_mpu6550.cpp|mag_hmc5983.cpp|battery_max1704x.cpp|mag_qmc5883.cpp|pwm.c|pwm_escaper.cpp|imu_mpu6550dmp.cpp|imu_mpu6550dmp_qmc5883.cpp|libraries/?*/**/test*/**|libraries/?*/**/third-party/**|MAX1704X|drivers|libraries/?*/utility/*/*|libraries/?*/**/?xamples/**|libraries/?*/**/?xtras/**|Copter.ino|libraries/**/._*" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="drivers"/>
 					</sourceEntries>
 				</configuration>
@@ -103,6 +109,7 @@
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="refreshScope" versionNumber="2">
+		<configuration configurationName="Cicada-board-v1-Release"/>
 		<configuration configurationName="Release">
 			<resource resourceType="PROJECT" workspacePath="/Copter"/>
 		</configuration>

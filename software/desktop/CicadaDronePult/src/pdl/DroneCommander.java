@@ -206,7 +206,7 @@ public class DroneCommander implements Runnable
 		}
 	}
 	
-	private void sendSetupCmd(CmdSetup cmd)
+	public void sendSetupCmd(CmdSetup cmd)
 	{
 		int attempt = 0;
 		while(attempt < SETUP_ATTEMPTS_COUNT)

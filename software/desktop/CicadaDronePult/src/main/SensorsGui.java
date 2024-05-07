@@ -28,8 +28,7 @@ import net.miginfocom.swing.MigLayout;
 import pdl.DroneCommander;
 import pdl.DroneTelemetry;
 import pdl.DroneState;
-import pdl.commands.CmdSelfCalibrateAccel;
-import pdl.commands.CmdSelfCalibrateGyro;
+
 import pdl.commands.CmdSetAccel;
 import pdl.commands.CmdSetGyro;
 import pdl.commands.CmdSetMagneto;
@@ -128,17 +127,21 @@ public class SensorsGui extends JSavedFrame
 			{
 				if(mDataCount < MAX_DATA_COUNT)
 				{
-					mAccelX[mDataCount] = droneState.accel.rawX;
-					mAccelY[mDataCount] = droneState.accel.rawY;
-					mAccelZ[mDataCount] = droneState.accel.rawZ;
+					mAccelRawX[mDataCount] = droneState.accel.rawX;
+					mAccelRawY[mDataCount] = droneState.accel.rawY;
+					mAccelRawZ[mDataCount] = droneState.accel.rawZ;
 					
-					mGyroX[mDataCount] = droneState.gyro.rawX;
-					mGyroY[mDataCount] = droneState.gyro.rawY;
-					mGyroZ[mDataCount] = droneState.gyro.rawZ;
+					mGyroRawX[mDataCount] = droneState.gyro.rawX;
+					mGyroRawY[mDataCount] = droneState.gyro.rawY;
+					mGyroRawZ[mDataCount] = droneState.gyro.rawZ;
 				
-					mMagnetX[mDataCount] = droneState.magneto.rawX;
-					mMagnetY[mDataCount] = droneState.magneto.rawY;
-					mMagnetZ[mDataCount] = droneState.magneto.rawZ;
+					mMagnetRawX[mDataCount] = droneState.magneto.rawX;
+					mMagnetRawY[mDataCount] = droneState.magneto.rawY;
+					mMagnetRawZ[mDataCount] = droneState.magneto.rawZ;
+					
+					mMagnetPureX[mDataCount] = droneState.magneto.pureX;
+					mMagnetPureY[mDataCount] = droneState.magneto.pureY;
+					mMagnetPureZ[mDataCount] = droneState.magneto.pureZ;
 				}
 				
 				mDataCount++;
@@ -258,54 +261,10 @@ public class SensorsGui extends JSavedFrame
 			double maxMz = dss.getMax();
 			double minMz = dss.getMin();
 			*/
-			List<Double> liMagnetX = ArrayHelper.asList(mMagnetX, mDataCount);
-			List<Double> liMagnetY = ArrayHelper.asList(mMagnetY, mDataCount);
-			List<Double> liMagnetZ = ArrayHelper.asList(mMagnetZ, mDataCount);
-			
-			if(liMagnetX.size() < 2 || liMagnetY.size() < 2 || liMagnetZ.size() < 2)
-				return;
-			
-			double maxMx = Collections.max(liMagnetX);
-			double minMx = Collections.min(liMagnetX);
-			double maxMy = Collections.max(liMagnetY);
-			double minMy = Collections.min(liMagnetY);
-			double maxMz = Collections.max(liMagnetZ);
-			double minMz = Collections.min(liMagnetZ);
-				
-			double sx = Math.max((maxMy - minMy)/(maxMx - minMx), 1.0);
-			double sy = Math.max((maxMx - minMx)/(maxMy - minMy), 1.0);
-			double sz = Math.max((maxMy - minMy)/(maxMz - minMz), 1.0);
-			
-			double dx = (maxMx + minMx)/2.0;
-			double dy = (maxMy + minMy)/2.0;
-			double dz = (maxMz + minMz)/2.0;
-			
-			if(dx > 0)
-				dx += 0.5;
-			else
-				dx -= 0.5;
-			
-			if(dy > 0)
-				dy += 0.5;
-			else
-				dy -= 0.5;
-			
-			if(dz > 0)
-				dz += 0.5;
-			else
-				dz -= 0.5;
-			
-			DroneState.TripleAxisSensor sens = new DroneState.TripleAxisSensor();
-			
-			sens.offsetX = (int)dx;
-			sens.offsetY = (int)dy;
-			sens.offsetZ = (int)dz;
-			
-			DroneCommander.instance().addCmd(
-					new CmdSetMagneto(	sens,
-										(float)sx,
-										(float)sy,
-										(float)sz ));
+						
+			DroneState.TripleAxisSensor sens = calcSensOffsets(mMagnetRawX,mMagnetRawY,mMagnetRawZ);
+
+			DroneCommander.instance().sendSetupCmd(new CmdSetMagneto(sens,1.f,1.f,1.f));
 			
 			mModified = true;
 		}
@@ -342,8 +301,12 @@ public class SensorsGui extends JSavedFrame
 		@Override
 		public void actionPerformed(ActionEvent e)
 		{
-			DroneCommander.instance().addCmd(new CmdSelfCalibrateAccel());
+			//DroneCommander.instance().addCmd(new CmdSelfCalibrateAccel());
 			//JOptionPane.showMessageDialog(SensorsGui.this, Text.get("WAIT_CALIBRATION"),"",JOptionPane.INFORMATION_MESSAGE);
+
+			DroneState.TripleAxisSensor sens = calcSensOffsets(mAccelRawX,mAccelRawY,mAccelRawZ);
+			
+			DroneCommander.instance().sendSetupCmd(new CmdSetAccel(sens));
 			
 			mModified = true;
 		}
@@ -354,8 +317,12 @@ public class SensorsGui extends JSavedFrame
 		@Override
 		public void actionPerformed(ActionEvent e)
 		{
-			DroneCommander.instance().addCmd(new CmdSelfCalibrateGyro());
+			//DroneCommander.instance().addCmd(new CmdSelfCalibrateGyro());
 			//JOptionPane.showMessageDialog(SensorsGui.this, Text.get("WAIT_CALIBRATION"),"",JOptionPane.INFORMATION_MESSAGE);
+			
+			DroneState.TripleAxisSensor sens = calcSensOffsets(mGyroRawX,mGyroRawY,mGyroRawZ);
+			
+			DroneCommander.instance().sendSetupCmd(new CmdSetGyro(sens));
 			
 			mModified = true;
 		}
@@ -375,21 +342,24 @@ public class SensorsGui extends JSavedFrame
 	private ChartViewer mChartViewer;
 	private JCheckBox mcbCollectData;
 	private JLabel mlbDataCount;
-	private JRadioButton mrbAccel;
-	private JRadioButton mrbMagnet;
+	private JRadioButton mrbMagnetRaw;
+	private JRadioButton mrbMagnetPure;
 	
 	private static final int MAX_DATA_COUNT = 1024;
 	
 	private int mDataCount;
-	private double mAccelX[];
-	private double mAccelY[];
-	private double mAccelZ[];
-	private double mGyroX[];
-	private double mGyroY[];
-	private double mGyroZ[];
-	private double mMagnetX[];
-	private double mMagnetY[];
-	private double mMagnetZ[];
+	private double mAccelRawX[];
+	private double mAccelRawY[];
+	private double mAccelRawZ[];
+	private double mGyroRawX[];
+	private double mGyroRawY[];
+	private double mGyroRawZ[];
+	private double mMagnetRawX[];
+	private double mMagnetRawY[];
+	private double mMagnetRawZ[];
+	private double mMagnetPureX[];
+	private double mMagnetPureY[];
+	private double mMagnetPureZ[];
 	
 	private boolean mModified = false;
 	
@@ -401,15 +371,18 @@ public class SensorsGui extends JSavedFrame
 		this.setIconImage(ResBox.icon("SENSORS").getImage());
 		
 		mObserver = new OnTelemetryUpdate();
-		mAccelX = new double[MAX_DATA_COUNT];
-		mAccelY = new double[MAX_DATA_COUNT];
-		mAccelZ = new double[MAX_DATA_COUNT];
-		mGyroX = new double[MAX_DATA_COUNT];
-		mGyroY = new double[MAX_DATA_COUNT];
-		mGyroZ = new double[MAX_DATA_COUNT];
-		mMagnetX = new double[MAX_DATA_COUNT];
-		mMagnetY = new double[MAX_DATA_COUNT];
-		mMagnetZ = new double[MAX_DATA_COUNT];
+		mAccelRawX = new double[MAX_DATA_COUNT];
+		mAccelRawY = new double[MAX_DATA_COUNT];
+		mAccelRawZ = new double[MAX_DATA_COUNT];
+		mGyroRawX = new double[MAX_DATA_COUNT];
+		mGyroRawY = new double[MAX_DATA_COUNT];
+		mGyroRawZ = new double[MAX_DATA_COUNT];
+		mMagnetRawX = new double[MAX_DATA_COUNT];
+		mMagnetRawY = new double[MAX_DATA_COUNT];
+		mMagnetRawZ = new double[MAX_DATA_COUNT];
+		mMagnetPureX = new double[MAX_DATA_COUNT];
+		mMagnetPureY = new double[MAX_DATA_COUNT];
+		mMagnetPureZ = new double[MAX_DATA_COUNT];
 		
 		createUI();
 	}
@@ -440,8 +413,8 @@ public class SensorsGui extends JSavedFrame
 		mChartViewer = new ChartViewer();
 		mcbCollectData = new JCheckBox(ResBox.text("COLLECT_DATA"));
 		mlbDataCount = new JLabel();
-		mrbAccel = new JRadioButton(ResBox.text("SHOW_ACCEL"));
-		mrbMagnet = new JRadioButton(ResBox.text("SHOW_MAGNET"));
+		mrbMagnetRaw = new JRadioButton(ResBox.text("SHOW_MAGNET_RAW"));
+		mrbMagnetPure = new JRadioButton(ResBox.text("SHOW_MAGNET_PURE"));
 		JButton btnCalibrateAccel = new JButton(ResBox.text("CALIBRATE_ACCEL"));
 		JButton btnCalibrateGyro = new JButton(ResBox.text("CALIBRATE_GYRO"));
 		JButton btnCalibrateMagnet = new JButton(ResBox.text("CALIBRATE_MAGNET"));
@@ -449,15 +422,15 @@ public class SensorsGui extends JSavedFrame
 		JButton btnResetMagnetCalibration = new JButton(ResBox.text("RESET_MAGNET_CALIBRATION"));
 		
 		ButtonGroup group = new ButtonGroup();
-		group.add(mrbAccel);
-		group.add(mrbMagnet);
+		group.add(mrbMagnetRaw);
+		group.add(mrbMagnetPure);
 		
-		mrbAccel.setSelected(true);
+		mrbMagnetRaw.setSelected(true);
 		
 		this.addComponentListener(new OnChartResize());
 		mcbCollectData.addItemListener(new OnCollectData());
-		mrbAccel.addItemListener(new OnChangeShowedData());
-		mrbMagnet.addItemListener(new OnChangeShowedData());
+		mrbMagnetRaw.addItemListener(new OnChangeShowedData());
+		mrbMagnetPure.addItemListener(new OnChangeShowedData());
 		btnCalibrateAccel.addActionListener(new OnBtnCalibrateAccel());
 		btnCalibrateGyro.addActionListener(new OnBtnCalibrateGyro());
 		btnCalibrateMagnet.addActionListener(new OnBtnCalibrateMagnet());
@@ -500,8 +473,8 @@ public class SensorsGui extends JSavedFrame
 		this.add(new JLabel(ResBox.text("DATA_COUNT")));
 		this.add(mlbDataCount,"wrap");
 		this.add(mcbCollectData,"spanx 2, wrap");
-		this.add(mrbAccel,"spanx 2, wrap");
-		this.add(mrbMagnet,"spanx 2, wrap");
+		this.add(mrbMagnetRaw,"spanx 2, wrap");
+		this.add(mrbMagnetPure,"spanx 2, wrap");
 		
 		this.add(new JPanel(),"h 10!,wrap");
 		
@@ -547,6 +520,97 @@ public class SensorsGui extends JSavedFrame
 		super.setVisible(b);
 	}
 	
+	private DroneState.TripleAxisSensor calcSensOffsets(double x[], double y[], double z[])
+	{
+		DroneState.TripleAxisSensor sens = new DroneState.TripleAxisSensor();
+		
+		List<Double> liX = ArrayHelper.asList(x, mDataCount);
+		List<Double> liY = ArrayHelper.asList(y, mDataCount);
+		List<Double> liZ = ArrayHelper.asList(z, mDataCount);
+		
+		if(liX.size() < 2 || liY.size() < 2 || liZ.size() < 2)
+			return sens;
+		
+		double maxMx = Collections.max(liX);
+		double minMx = Collections.min(liX);
+		double maxMy = Collections.max(liY);
+		double minMy = Collections.min(liY);
+		double maxMz = Collections.max(liZ);
+		double minMz = Collections.min(liZ);
+
+		double dx = (maxMx + minMx)/2.0;
+		double dy = (maxMy + minMy)/2.0;
+		double dz = (maxMz + minMz)/2.0;
+		
+		// round to closest int
+		if(dx > 0)
+			dx += 0.5;
+		else
+			dx -= 0.5;
+		
+		if(dy > 0)
+			dy += 0.5;
+		else
+			dy -= 0.5;
+		
+		if(dz > 0)
+			dz += 0.5;
+		else
+			dz -= 0.5;
+
+		sens.offsetX = (int)(dx);
+		sens.offsetY = (int)(dy);
+		sens.offsetZ = (int)(dz);
+		
+		return sens;
+	}
+	
+	private class AxisBounds
+	{
+		double min;
+		double max;
+	}
+	
+	private AxisBounds calcChartBounds(double x[], double y[], double z[])
+	{
+		AxisBounds result = new AxisBounds();
+		
+		List<Double> liX = ArrayHelper.asList(x, mDataCount);
+		List<Double> liY = ArrayHelper.asList(y, mDataCount);
+		List<Double> liZ = ArrayHelper.asList(z, mDataCount);
+		
+		if(liX.size() < 2 || liY.size() < 2 || liZ.size() < 2)
+			return result;
+		
+		double maxMx = Collections.max(liX);
+		double minMx = Collections.min(liX);
+		double maxMy = Collections.max(liY);
+		double minMy = Collections.min(liY);
+		double maxMz = Collections.max(liZ);
+		double minMz = Collections.min(liZ);
+		
+		if( minMx < result.min )
+			result.min = minMx;
+		if( minMy < result.min )
+			result.min = minMy;
+		if( minMz < result.min )
+			result.min = minMz;
+		
+		if( maxMx > result.max )
+			result.max = maxMx;
+		if( maxMy > result.max )
+			result.max = maxMy;
+		if( maxMz > result.max )
+			result.max = maxMz;
+		
+		double dx = (result.max - result.min)*0.1;
+		
+		result.min -= dx;
+		result.max += dx;
+		
+		return result;
+	}
+	
 	private void drawData()
 	{
 		int w = Math.min(this.getWidth() - 180, this.getHeight() - 50);
@@ -564,23 +628,28 @@ public class SensorsGui extends JSavedFrame
         c.yAxis().setTitle("Y/Z");
         c.yAxis().setMargin(0,0);
 
-        if(mrbAccel.isSelected())
+        if(mrbMagnetRaw.isSelected())
         {
-        	c.xAxis().setLinearScale(-18432, 18432, 2048);
-        	c.yAxis().setLinearScale(-18432, 18432, 2048);
+        	c.addScatterLayer(mMagnetRawX, mMagnetRawY, "MagnetXY", Chart.CircleShape, 5);
+        	c.addScatterLayer(mMagnetRawX, mMagnetRawZ, "MagnetXZ", Chart.CircleShape, 5);
+        	c.addScatterLayer(mMagnetRawY, mMagnetRawZ, "MagnetYZ", Chart.CircleShape, 5);
         	
-        	c.addScatterLayer(mAccelX, mAccelY, "AccelXY", Chart.CircleShape, 5);
-        	c.addScatterLayer(mAccelX, mAccelZ, "AccelXZ", Chart.CircleShape, 5);
-        	c.addScatterLayer(mAccelY, mAccelZ, "AccelYZ", Chart.CircleShape, 5);
+        	AxisBounds bounds = calcChartBounds(mMagnetRawX,mMagnetRawY,mMagnetRawZ);
+        	
+        	c.xAxis().setLinearScale(bounds.min, bounds.max);
+        	c.yAxis().setLinearScale(bounds.min, bounds.max);
+        	
         }
-        else if(mrbMagnet.isSelected())
+        else if(mrbMagnetPure.isSelected())
         {
-        	c.xAxis().setLinearScale(-9216, 9216, 1024);
-        	c.yAxis().setLinearScale(-9216, 9216, 1024);
+        	c.addScatterLayer(mMagnetPureX, mMagnetPureY, "MagnetXY", Chart.CircleShape, 5);
+        	c.addScatterLayer(mMagnetPureX, mMagnetPureZ, "MagnetXZ", Chart.CircleShape, 5);
+        	c.addScatterLayer(mMagnetPureY, mMagnetPureZ, "MagnetYZ", Chart.CircleShape, 5);
         	
-        	c.addScatterLayer(mMagnetX, mMagnetY, "MagnetXY", Chart.CircleShape, 5);
-        	c.addScatterLayer(mMagnetX, mMagnetZ, "MagnetXZ", Chart.CircleShape, 5);
-        	c.addScatterLayer(mMagnetY, mMagnetZ, "MagnetYZ", Chart.CircleShape, 5);
+        	AxisBounds bounds = calcChartBounds(mMagnetPureX,mMagnetPureY,mMagnetPureZ);
+        	
+        	c.xAxis().setLinearScale(bounds.min, bounds.max);
+        	c.yAxis().setLinearScale(bounds.min, bounds.max);
         }
         
         mChartViewer.setChart(c);

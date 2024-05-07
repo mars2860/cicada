@@ -31,10 +31,10 @@
  *
  * @ref pdlPortableInterface
  *
- * PDL uses right-handed coordinate system. You have to be according to this coordinate system when store in pdlDroneState
+ * PDL uses right-handed coordinate system with pozitive Z-axis is down toward Earth. You have to be according to this coordinate system when store in pdlDroneState
  * results from your sensors.
  *
- * @image html pdl_coordinate_system.svg "PDL coordinate system" width=100%
+ * @image html pdl_coordinate_system.jpg "PDL coordinate system" width=100%
  *
  * @defgroup pdlPortableInterface Portable functions
  * @{

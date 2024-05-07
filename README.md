@@ -1,6 +1,19 @@
 ### About
 
-Cicada project is a quadcopter based on ESP8266 Wifi module. You can make it yourself to come in the world of drone developers. Cicada doesn't have a hardware pult with sticks. To control a drone there is desktop application developed on Java  
+The Cicada Project is a quadcopter based on ESP8266 Wifi module. You can make it yourself to come in the world of drone developers. Cicada doesn't have a hardware pult with sticks. To control a drone there is desktop application developed on Java. At this time the drone can fly only inside a room. The mass of the drone is 58 gramms. Time of flight about 2 min
+
+<img src="/photo/top-view.jpg" width="50%" alt="Top view"/>
+<img src="/photo/isometry-view.jpg" width="50%" alt="Isometry view"/>
+<img src="/photo/screen.jpg" width="100%" alt="DesktopApp"/>
+
+[![Watch the video](https://www.youtube.com/watch?v=lsz5Qo_b-Ao)](https://youtu.be/lsz5Qo_b-Ao)
+
+### Features
+
+- All logic is processed by ESP8266
+- Holding position with optical flow sensor PMW3901 and lidar VL53L1X
+- Telemetry sends whole drone state every 50 ms
+- Charts to analizing telemetry data
 
 ### Hardware
 
@@ -13,7 +26,10 @@ The hardware is designed to be easy assembled by hands. Parts you need
 - Optical Flow module PMW3901
 - SMD-0805 resistors and capacitors
 - SMD coil SPM4020T-4R7
-- Motors and escaper. It is supported DSHOT150, DSHOT300, PWM protocols by firmware
+- HappyModel brushless dc motors SE0703 KV19000
+- Teeny PRO 5A Escaper
+- DJI Tello 3044p propellers
+- 320/500 mAh Li-Po battery 25C
 
 ### Firmware
 
@@ -49,7 +65,12 @@ ssid_config.h
 
 Firmware supports update by the air. It is based on ESP8266HTTPUpdateServer
 
+### Chain of PIDs
+
+<img src="/firmware/CicadaFw/libraries/pdl/chain_of_pids.svg" width="100%" alt="Chain of PIDs"/>
+
 ### Design tools
+
 - Sloeber IDE
 - FreeCAD
 - KiCAD

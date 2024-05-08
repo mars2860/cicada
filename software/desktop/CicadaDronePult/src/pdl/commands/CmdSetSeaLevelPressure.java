@@ -2,6 +2,7 @@ package pdl.commands;
 
 import pdl.DroneState;
 
+@Deprecated
 public class CmdSetSeaLevelPressure extends CmdSetup
 {
 	private float mPressure;

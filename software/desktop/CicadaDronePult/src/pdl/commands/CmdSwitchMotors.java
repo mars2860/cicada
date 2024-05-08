@@ -1,7 +1,6 @@
 package pdl.commands;
 
-/** Switch on/off led on ESP07 */
-public class CmdSwitchMotors extends AbstractCopterCmd
+public class CmdSwitchMotors extends AbstractDroneCmd
 {
 	private byte mState;
 	

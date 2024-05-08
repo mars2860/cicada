@@ -29,6 +29,6 @@ public class CmdSetPeriods extends CmdSetup
 	@Override
 	public boolean settingsEquals(DroneState ds)
 	{
-		return (mTelemetryPeriod == ds.net.telemetryPeriod)?true:false;
+		return (mTelemetryPeriod == DroneState.net.curTelemetryPeriod)?true:false;
 	}
 }

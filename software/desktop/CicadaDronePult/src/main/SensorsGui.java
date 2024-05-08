@@ -23,7 +23,7 @@ import ChartDirector.Chart;
 import ChartDirector.ChartViewer;
 import ChartDirector.XYChart;
 import helper.ArrayHelper;
-import main.Settings.WndState;
+import main.AppSettings.WndState;
 import net.miginfocom.swing.MigLayout;
 import pdl.DroneCommander;
 import pdl.DroneTelemetry;
@@ -32,6 +32,7 @@ import pdl.DroneState;
 import pdl.commands.CmdSetAccel;
 import pdl.commands.CmdSetGyro;
 import pdl.commands.CmdSetMagneto;
+import pdl.res.Profile;
 
 public class SensorsGui extends JSavedFrame
 {
@@ -109,17 +110,17 @@ public class SensorsGui extends JSavedFrame
 			*/
 			
 			text = ": " + Integer.toString((int)droneState.magneto.rawX) + "/" +
-					Integer.toString((int)droneState.magneto.offsetX);
+					Integer.toString((int)droneState.magneto.offsetX) + "/" + fmt.format(droneState.magneto.scaleX);
 			mlbMx.setText(text);
 			mlbMx.setToolTipText(text);
 			
 			text = ": " + Integer.toString((int)droneState.magneto.rawY) + "/" +
-					Integer.toString((int)droneState.magneto.offsetY);
+					Integer.toString((int)droneState.magneto.offsetY) + "/" + fmt.format(droneState.magneto.scaleY);
 			mlbMy.setText(text);
 			mlbMy.setToolTipText(text);
 			
 			text = ": " + Integer.toString((int)droneState.magneto.rawZ) + "/" +
-					Integer.toString((int)droneState.magneto.offsetZ);
+					Integer.toString((int)droneState.magneto.offsetZ) + "/" + fmt.format(droneState.magneto.scaleZ);
 			mlbMz.setText(text);
 			mlbMz.setToolTipText(text);
 			
@@ -262,9 +263,46 @@ public class SensorsGui extends JSavedFrame
 			double minMz = dss.getMin();
 			*/
 						
-			DroneState.TripleAxisSensor sens = calcSensOffsets(mMagnetRawX,mMagnetRawY,mMagnetRawZ);
+			//DroneState.TripleAxisSensor sens = calcSensOffsets(mMagnetRawX,mMagnetRawY,mMagnetRawZ);
+			
+			DroneState.Magneto sens = new DroneState.Magneto();
+			
+			List<Double> liX = ArrayHelper.asList(mMagnetRawX, mDataCount);
+			List<Double> liY = ArrayHelper.asList(mMagnetRawY, mDataCount);
+			List<Double> liZ = ArrayHelper.asList(mMagnetRawZ, mDataCount);
+			
+			if(liX.size() < 2 || liY.size() < 2 || liZ.size() < 2)
+				return;
+			
+			double maxMx = Collections.max(liX);
+			double minMx = Collections.min(liX);
+			double maxMy = Collections.max(liY);
+			double minMy = Collections.min(liY);
+			double maxMz = Collections.max(liZ);
+			double minMz = Collections.min(liZ);
 
-			DroneCommander.instance().sendSetupCmd(new CmdSetMagneto(sens,1.f,1.f,1.f));
+			// Hard-iron compensation
+			double dx = (maxMx + minMx)/2.0;
+			double dy = (maxMy + minMy)/2.0;
+			double dz = (maxMz + minMz)/2.0;
+			
+			sens.offsetX = (int)(dx + 0.5);
+			sens.offsetY = (int)(dy + 0.5);
+			sens.offsetZ = (int)(dz + 0.5);
+			
+			// Soft-iron compensation
+	        double scaleX = (maxMx - minMx) / 2.;  // get average x axis max chord length in counts
+	        double scaleY = (maxMy - minMy) / 2.;  // get average y axis max chord length in counts
+	        double scaleZ = (maxMz - minMz) / 2.;  // get average z axis max chord length in counts
+
+	        double avg_rad = scaleX + scaleY + scaleZ;
+	        avg_rad /= 3.0;
+
+	        sens.scaleX = (float)(avg_rad / scaleX);
+	        sens.scaleY = (float)(avg_rad / scaleY);
+	        sens.scaleZ = (float)(avg_rad / scaleZ);
+
+			DroneCommander.instance().sendSetupCmd(new CmdSetMagneto(sens));
 			
 			mModified = true;
 		}
@@ -275,10 +313,9 @@ public class SensorsGui extends JSavedFrame
 		@Override
 		public void actionPerformed(ActionEvent e)
 		{
-			DroneState.TripleAxisSensor sens = new DroneState.TripleAxisSensor();
-			DroneCommander.instance().addCmd(new CmdSetAccel(sens));
-			DroneCommander.instance().addCmd(new CmdSetGyro(sens));
-			DroneCommander.instance().addCmd(new CmdSetMagneto(sens,1.f,1.f,1.f));
+			DroneCommander.instance().addCmd(new CmdSetAccel(new DroneState.Accel()));
+			DroneCommander.instance().addCmd(new CmdSetGyro(new DroneState.Gyro()));
+			DroneCommander.instance().addCmd(new CmdSetMagneto(new DroneState.Magneto()));
 			
 			mModified = true;
 		}
@@ -289,8 +326,7 @@ public class SensorsGui extends JSavedFrame
 		@Override
 		public void actionPerformed(ActionEvent e)
 		{
-			DroneState.TripleAxisSensor sens = new DroneState.TripleAxisSensor();
-			DroneCommander.instance().addCmd(new CmdSetMagneto(sens,1.f,1.f,1.f));
+			DroneCommander.instance().addCmd(new CmdSetMagneto(new DroneState.Magneto()));
 			
 			mModified = true;
 		}
@@ -302,11 +338,32 @@ public class SensorsGui extends JSavedFrame
 		public void actionPerformed(ActionEvent e)
 		{
 			//DroneCommander.instance().addCmd(new CmdSelfCalibrateAccel());
-			//JOptionPane.showMessageDialog(SensorsGui.this, Text.get("WAIT_CALIBRATION"),"",JOptionPane.INFORMATION_MESSAGE);
-
+			//JOptionPane.showMessageDialog(SensorsGui.this, ResBox.text("WAIT_CALIBRATION"),"",JOptionPane.INFORMATION_MESSAGE);
+			
+			//DroneState.Accel accel = Profile.instance().getDroneSettings().accel;
+			DroneState.Accel accel = DroneTelemetry.instance().getDroneState().accel;
 			DroneState.TripleAxisSensor sens = calcSensOffsets(mAccelRawX,mAccelRawY,mAccelRawZ);
 			
-			DroneCommander.instance().sendSetupCmd(new CmdSetAccel(sens));
+			sens.offsetX = accel.offsetX - sens.offsetX;
+			sens.offsetY = accel.offsetY - sens.offsetY;
+			sens.offsetZ = accel.offsetZ - sens.offsetZ;
+			sens.offsetZ += 2048;
+			
+			DroneState.Accel naccel = new DroneState.Accel();
+			naccel.offsetX = sens.offsetX;
+			naccel.offsetY = sens.offsetY;
+			naccel.offsetZ = sens.offsetZ;
+			naccel.dlpf = accel.dlpf;
+			
+			// MPU9250/6500/6050 apply only even values
+			if(naccel.offsetX % 2 != 0)
+				naccel.offsetX += 1;
+			if(naccel.offsetY % 2 != 0)
+				naccel.offsetY += 1;
+			if(naccel.offsetZ % 2 != 0)
+				naccel.offsetZ += 1;
+			
+			DroneCommander.instance().sendSetupCmd(new CmdSetAccel(naccel));
 			
 			mModified = true;
 		}
@@ -318,11 +375,31 @@ public class SensorsGui extends JSavedFrame
 		public void actionPerformed(ActionEvent e)
 		{
 			//DroneCommander.instance().addCmd(new CmdSelfCalibrateGyro());
-			//JOptionPane.showMessageDialog(SensorsGui.this, Text.get("WAIT_CALIBRATION"),"",JOptionPane.INFORMATION_MESSAGE);
+			//JOptionPane.showMessageDialog(SensorsGui.this, ResBox.text("WAIT_CALIBRATION"),"",JOptionPane.INFORMATION_MESSAGE);
 			
+			//DroneState.Gyro gyro = Profile.instance().getDroneSettings().gyro;
+			DroneState.Gyro gyro = DroneTelemetry.instance().getDroneState().gyro;
 			DroneState.TripleAxisSensor sens = calcSensOffsets(mGyroRawX,mGyroRawY,mGyroRawZ);
 			
-			DroneCommander.instance().sendSetupCmd(new CmdSetGyro(sens));
+			sens.offsetX = gyro.offsetX - 2*sens.offsetX;
+			sens.offsetY = gyro.offsetY - 2*sens.offsetY;
+			sens.offsetZ = gyro.offsetZ - 2*sens.offsetZ;
+			
+			DroneState.Gyro ngyro = new DroneState.Gyro();
+			ngyro.offsetX = sens.offsetX;
+			ngyro.offsetY = sens.offsetY;
+			ngyro.offsetZ = sens.offsetZ;
+			ngyro.dlpf = gyro.dlpf;
+			
+			// MPU9250/6500/6050 apply only even values
+			if(ngyro.offsetX % 2 != 0)
+				ngyro.offsetX += 1;
+			if(ngyro.offsetY % 2 != 0)
+				ngyro.offsetY += 1;
+			if(ngyro.offsetZ % 2 != 0)
+				ngyro.offsetZ += 1;
+			
+			DroneCommander.instance().sendSetupCmd(new CmdSetGyro(ngyro));
 			
 			mModified = true;
 		}
@@ -510,9 +587,8 @@ public class SensorsGui extends JSavedFrame
 				{
 					DroneState droneState = DroneTelemetry.instance().getDroneState();
 					
-					Settings.instance().setDroneSettings(droneState);
-				
-					Settings.instance().save();
+					Profile.instance().setDroneSettings(droneState);
+					Profile.instance().save();
 				}
 			}
 		}
@@ -520,9 +596,23 @@ public class SensorsGui extends JSavedFrame
 		super.setVisible(b);
 	}
 	
+	private double average(List<Double> list)
+	{
+		if(list.size() == 0)
+			return 0;
+		
+		double sum = 0;
+		double sz = list.size();
+		
+		for(double val : list)
+			sum += val;
+		
+		return sum/sz;
+	}
+	
 	private DroneState.TripleAxisSensor calcSensOffsets(double x[], double y[], double z[])
 	{
-		DroneState.TripleAxisSensor sens = new DroneState.TripleAxisSensor();
+		DroneState.TripleAxisSensor sens = new DroneState.Accel();
 		
 		List<Double> liX = ArrayHelper.asList(x, mDataCount);
 		List<Double> liY = ArrayHelper.asList(y, mDataCount);
@@ -531,6 +621,7 @@ public class SensorsGui extends JSavedFrame
 		if(liX.size() < 2 || liY.size() < 2 || liZ.size() < 2)
 			return sens;
 		
+		/*
 		double maxMx = Collections.max(liX);
 		double minMx = Collections.min(liX);
 		double maxMy = Collections.max(liY);
@@ -541,6 +632,11 @@ public class SensorsGui extends JSavedFrame
 		double dx = (maxMx + minMx)/2.0;
 		double dy = (maxMy + minMy)/2.0;
 		double dz = (maxMz + minMz)/2.0;
+		*/
+		
+		double dx = average(liX);
+		double dy = average(liY);
+		double dz = average(liZ);
 		
 		// round to closest int
 		if(dx > 0)
@@ -589,6 +685,9 @@ public class SensorsGui extends JSavedFrame
 		double maxMz = Collections.max(liZ);
 		double minMz = Collections.min(liZ);
 		
+		result.min = minMx;
+		result.max = maxMx;
+		
 		if( minMx < result.min )
 			result.min = minMx;
 		if( minMy < result.min )
@@ -607,6 +706,21 @@ public class SensorsGui extends JSavedFrame
 		
 		result.min -= dx;
 		result.max += dx;
+		
+		// make beauty bounds 
+		
+		double val = Math.max(Math.abs(result.min),Math.abs(result.max));
+		val = (double)((int)val - (((int)val)%10) + 10);
+		
+		if(result.min < 0)
+			result.min = -val;
+		else
+			result.min = val;
+		
+		if(result.max < 0)
+			result.max = -val;
+		else
+			result.max = val;
 		
 		return result;
 	}
@@ -636,8 +750,8 @@ public class SensorsGui extends JSavedFrame
         	
         	AxisBounds bounds = calcChartBounds(mMagnetRawX,mMagnetRawY,mMagnetRawZ);
         	
-        	c.xAxis().setLinearScale(bounds.min, bounds.max);
-        	c.yAxis().setLinearScale(bounds.min, bounds.max);
+        	c.xAxis().setLinearScale(bounds.min, bounds.max, Math.abs(bounds.max - bounds.min)/20.0);
+        	c.yAxis().setLinearScale(bounds.min, bounds.max, Math.abs(bounds.max - bounds.min)/20.0);
         	
         }
         else if(mrbMagnetPure.isSelected())
@@ -648,8 +762,8 @@ public class SensorsGui extends JSavedFrame
         	
         	AxisBounds bounds = calcChartBounds(mMagnetPureX,mMagnetPureY,mMagnetPureZ);
         	
-        	c.xAxis().setLinearScale(bounds.min, bounds.max);
-        	c.yAxis().setLinearScale(bounds.min, bounds.max);
+        	c.xAxis().setLinearScale(bounds.min, bounds.max, Math.abs(bounds.max - bounds.min)/20.0);
+        	c.yAxis().setLinearScale(bounds.min, bounds.max, Math.abs(bounds.max - bounds.min)/20.0);
         }
         
         mChartViewer.setChart(c);
@@ -658,12 +772,12 @@ public class SensorsGui extends JSavedFrame
 	@Override
 	protected WndState loadWndState()
 	{
-		return Settings.instance().getSensorsWnd();
+		return AppSettings.instance().getSensorsWnd();
 	}
 
 	@Override
 	protected void saveWndState(WndState ws)
 	{
-		Settings.instance().setSensorsWnd(ws);
+		AppSettings.instance().setSensorsWnd(ws);
 	}
 }

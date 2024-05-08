@@ -1,6 +1,6 @@
 package pdl.commands;
 
-public class CmdSetAltitude extends AbstractCopterCmd
+public class CmdSetAltitude extends AbstractDroneCmd
 {
 	private float mAltitude;
 	

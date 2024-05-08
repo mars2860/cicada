@@ -1,6 +1,6 @@
 package pdl.commands;
 
-public class CmdEnableStabilization extends AbstractCopterCmd
+public class CmdEnableStabilization extends AbstractDroneCmd
 {
 	private int mEnabled;
 	

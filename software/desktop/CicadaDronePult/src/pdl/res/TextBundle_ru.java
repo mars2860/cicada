@@ -1,4 +1,4 @@
-package main;
+package pdl.res;
 
 import java.util.ListResourceBundle;
 

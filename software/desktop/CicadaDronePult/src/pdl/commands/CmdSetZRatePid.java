@@ -3,9 +3,9 @@ package pdl.commands;
 import pdl.DroneState;
 import pdl.DroneState.Pid;
 
-public class CmdSetYawRatePid extends CmdSetupPid
+public class CmdSetZRatePid extends CmdSetupPid
 {
-	public CmdSetYawRatePid(Pid pid)
+	public CmdSetZRatePid(Pid pid)
 	{
 		super(pid, 107);
 	}
@@ -13,6 +13,6 @@ public class CmdSetYawRatePid extends CmdSetupPid
 	@Override
 	public boolean settingsEquals(DroneState ds)
 	{
-		return mPid.settingsEquals(ds.yawRatePid);
+		return mPid.settingsEquals(ds.zRatePid);
 	}
 }

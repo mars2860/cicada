@@ -1,10 +1,7 @@
 package main;
 
-import java.awt.KeyEventDispatcher;
-import java.awt.KeyboardFocusManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.Timer;
@@ -15,34 +12,33 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.JToggleButton;
 
 import helper.NumericDocument;
-import main.Settings.WndState;
+import main.AppSettings.WndState;
+import net.java.games.input.Component;
+import net.java.games.input.Controller;
+import net.java.games.input.ControllerEnvironment;
+import net.java.games.input.Event;
+import net.java.games.input.EventQueue;
 import net.miginfocom.swing.MigLayout;
+import pdl.Accelerator;
 import pdl.DroneCommander;
 import pdl.DroneTelemetry;
 import pdl.DroneState;
+import pdl.commands.CmdEnableStabilization;
 import pdl.commands.CmdSetAltitude;
-import pdl.commands.CmdSetBaseGas;
-import pdl.commands.CmdSetVelocityZ;
-import pdl.commands.CmdSetYPR;
-import pdl.commands.TakeOff;
+import pdl.commands.CmdSetLoad;
+import pdl.commands.CmdSwitchMotors;
 
 public class RemoteControlGui extends JSavedFrame
 {
 	private static final long serialVersionUID = 8512049441078339808L;
 
-	private static final long KEYBOARD_PERIOD = 40; 	// FPS 25
+	public static final long KEYBOARD_PERIOD = 40; 	// FPS 25
 	
-	private static final float LEVEL_CTRL_DELTA = 7.f;
-	private static final int MOTOR_CTRL_DELTA = 4;//2;
-	private static final float ROTATE_CTRL_DELTA = 100.f;//80.f;
-	private static final float ALT_CTRL_DELTA = 0.01f;
-	private static final float VELOCITY_Z_CTRL_DELTA = 0.3f;
-	
-	private JTextField mtfYaw;
-	private JTextField mtfPitch;
-	private JTextField mtfRoll;
+	private static final double STICK_DEAD_VALUE = 0.001;
+
 	private JTextField mtfAlt;
 	private JButton btnGetUp;
 	private JButton btnGetDown;
@@ -53,35 +49,44 @@ public class RemoteControlGui extends JSavedFrame
 	private JButton btnCw;
 	private JButton btnCcw;
 	private JButton btnStop;
+	private JButton btnLoad1;
+	private JButton btnLoad2;
+	//private JButton btnLoad3;
+	private JButton btnAntiTurtle;
+	private JButton btnCamAng0;
+	private JButton btnCamAng45;
+	private JButton btnCamAng90;
+	private JButton btnPhoto;
+	private JToggleButton btnVideo;
+	
+	private JLabel lblGamepad;
 	
 	private Timer tmKeyboard;
-	private KeyDispatcher kd;
 	
-	private class OnBtnSendYpr implements ActionListener
+	private RcSettingsGui rcSettingsGui;
+	
+	private class OnBtnSettings implements ActionListener
 	{
 		@Override
 		public void actionPerformed(ActionEvent e)
 		{
-			String msg = ResBox.text("YAW");
+			rcSettingsGui.setVisible(true);
+		}
+	}
+	
+	private class OnBtnSend implements ActionListener
+	{
+		@Override
+		public void actionPerformed(ActionEvent e)
+		{
+			String msg = "";
 			try
 			{
-				msg = ResBox.text("YAW");
-				float yaw = Float.parseFloat(mtfYaw.getText());
-				msg = ResBox.text("PITCH");
-				float pitch = Float.parseFloat(mtfPitch.getText());
-				msg = ResBox.text("ROLL");
-				float roll = Float.parseFloat(mtfRoll.getText());
 				msg = ResBox.text("ALTITUDE");
 				float alt = Float.parseFloat(mtfAlt.getText());
-				
-				yaw = (float)Math.toRadians(yaw);
-				pitch = (float)Math.toRadians(pitch);
-				roll = (float)Math.toRadians(roll);
 			
-				CmdSetYPR cmd = new CmdSetYPR(yaw,pitch,roll);
-				CmdSetAltitude cmd2 = new CmdSetAltitude(alt);
+				CmdSetAltitude cmd = new CmdSetAltitude(alt);
 				DroneCommander.instance().addCmd(cmd);
-				DroneCommander.instance().addCmd(cmd2);
 			}
 			catch(NumberFormatException ex)
 			{
@@ -95,271 +100,467 @@ public class RemoteControlGui extends JSavedFrame
 		}
 	}
 		
-	private class KeyboardProcess extends TimerTask
+	private class OnInputsPoll extends TimerTask
 	{
-		private boolean yprTrigger = false;
+		private long oldMillis = 0;
 		
+		private Accelerator mLiftAccelerator;
+		private Accelerator mPitchAccelerator;
+		private Accelerator mRollAccelerator;
+		private Accelerator mRotateAccelerator;
+		private boolean requestTrickMode;
+		
+		double liftCtrl;
+		double rollCtrl;
+		double pitchCtrl;
+		double rotateCtrl;
+		
+		// this flag is true if there is input from stick
+		boolean stickLiftActive;
+		boolean stickRotateActive;
+		boolean stickPitchActive;
+		boolean stickRollActive;
+		
+		boolean oldBtnPhotoState;
+		boolean oldBtnVideoState;
+
 		@Override
 		public void run()
 		{
-			DroneState ds = DroneTelemetry.instance().getDroneState();
+			DroneState.RemoteCtrl rc = DroneState.rc;
+
+			/// calculate dt to apply accelerators
 			
-			CmdSetYPR cmdYpr = new CmdSetYPR(0,0,0);
-			CmdSetVelocityZ cmdVz = null;
-						
+			double dt = 0;
+		
+			if(oldMillis > 0)
+			{
+				dt = (System.currentTimeMillis() - oldMillis);
+				dt /= 1000.0;
+			}
+			else
+			{
+				dt = KEYBOARD_PERIOD;
+				dt /= 1000.0;
+			}
+			
+			oldMillis = System.currentTimeMillis();
+			
+			/// grab accelerator settings
+			
+			if(	mLiftAccelerator == null || 
+			    Math.abs(mLiftAccelerator.getAccelTime() - rc.liftAccelTime) > 0.01)
+			{
+				mLiftAccelerator = new Accelerator(-1.0,0,1.0,rc.liftAccelTime);
+			}
+			
+			if(	mPitchAccelerator == null || 
+				Math.abs(mPitchAccelerator.getAccelTime() - rc.moveAccelTime) > 0.01)
+			{
+				mPitchAccelerator = new Accelerator(-1.0,0,1.0,rc.moveAccelTime);
+			}
+			
+			if(	mRollAccelerator == null || 
+				Math.abs(mRollAccelerator.getAccelTime() - rc.moveAccelTime) > 0.01)
+			{
+				mRollAccelerator = new Accelerator(-1.0,0,1.0,rc.moveAccelTime);
+			}
+			
+			if(	mRotateAccelerator == null || 
+				Math.abs(mRotateAccelerator.getAccelTime() - rc.rotateAccelTime) > 0.01)
+			{
+				mRotateAccelerator = new Accelerator(-1.0,0,1.0,rc.rotateAccelTime);
+			}
+			
+			/// input processing
+			
+			Event event = new Event();
+
+			Controller[] controllers = ControllerEnvironment.getDefaultEnvironment().getControllers();
+
+			for(int i = 0; i < controllers.length; i++)
+			{
+				Controller controller = controllers[i];
+				
+				if(	(controller.getType() == Controller.Type.KEYBOARD) ||
+					( controller.getType() == Controller.Type.GAMEPAD &&
+					  controller.getName().compareToIgnoreCase(AppSettings.instance().getInputMap().gamepad) == 0)
+				  )
+				{
+					controller.poll();
+					
+				    EventQueue queue = controller.getEventQueue();
+
+				    while(queue.getNextEvent(event))
+				    {
+				        Component comp = event.getComponent();
+
+				        for(int j = 0; j < AppSettings.InputMap.INPUT_CONTROL_COUNT; j++)
+			        	{
+				        	AppSettings.InputCtrl ic = AppSettings.instance().getInputMap().controls[j];
+				        	
+				        	// update sticks
+				        	
+				        	if(	comp.isAnalog() &&
+				        	    ic.stick.compareToIgnoreCase(comp.getIdentifier().getName()) == 0
+				        	  )
+				        	{
+				        		switch(j)
+				        		{
+				        		case AppSettings.InputMap.UP:
+				        		case AppSettings.InputMap.DOWN:
+				        			liftCtrl = -comp.getPollData();
+				        			stickLiftActive = (Math.abs(liftCtrl) <= STICK_DEAD_VALUE)?false:true;
+				        			break;
+				        		case AppSettings.InputMap.LEFT:
+				        		case AppSettings.InputMap.RIGHT:
+				        			rollCtrl = comp.getPollData();
+				        			stickRollActive = (Math.abs(rollCtrl) <= STICK_DEAD_VALUE)?false:true;
+				        			break;
+				        		case AppSettings.InputMap.FWD:
+				        		case AppSettings.InputMap.BACK:
+				        			pitchCtrl = -comp.getPollData();
+				        			stickPitchActive = (Math.abs(pitchCtrl) <= STICK_DEAD_VALUE)?false:true;
+				        			break;
+				        		case AppSettings.InputMap.TURN_CW:
+				        		case AppSettings.InputMap.TURN_CCW:
+			        				rotateCtrl = comp.getPollData();
+			        				stickRotateActive = (Math.abs(rotateCtrl) <= STICK_DEAD_VALUE)?false:true;
+				        			break;
+				        		}
+				        	}
+				        	
+				        	// update buttons on gamepad or keyboard
+				        	
+				        	String compId = comp.getIdentifier().getName();
+				        	
+				        	if(controller.getType() == Controller.Type.GAMEPAD)
+				        	{
+				        		if(comp.getIdentifier() == Component.Identifier.Axis.POV)
+								{
+									float povPos = comp.getPollData();
+									
+									if(Float.compare(povPos,Component.POV.UP) == 0)
+									{
+										compId = "G_UP";
+									}
+									else if(Float.compare(povPos,Component.POV.DOWN) == 0)
+									{
+										compId = "G_DOWN";
+									}
+									else if(Float.compare(povPos,Component.POV.LEFT) == 0)
+									{
+										compId = "G_LEFT";
+									}
+									else if(Float.compare(povPos,Component.POV.RIGHT) == 0)
+									{
+										compId = "G_RIGHT";
+									}
+									else if(Float.compare(povPos,Component.POV.OFF) == 0)
+									{
+										btnGetUp.getModel().setPressed(false);
+										btnGetDown.getModel().setPressed(false);
+										btnLeft.getModel().setPressed(false);
+										btnRight.getModel().setPressed(false);
+										btnFwd.getModel().setPressed(false);
+										btnBck.getModel().setPressed(false);
+										btnCw.getModel().setPressed(false);
+										btnCcw.getModel().setPressed(false);
+									}
+								}
+								else
+								{
+									compId = "G_" + comp.getIdentifier().getName();
+								}
+				        	}
+				        	
+				        	if(	comp.isAnalog() == false &&
+				        		(ic.btn1.compareToIgnoreCase(compId) == 0 ||
+				        		 ic.btn2.compareToIgnoreCase(compId) == 0
+				        		)
+				        	  )
+				        	{
+				        		boolean btnState = (Float.compare(comp.getPollData(),0) == 0)?false:true; 
+				        		switch(j)
+				        		{
+				        		case AppSettings.InputMap.UP:
+				        			btnGetUp.getModel().setPressed(btnState);
+				        			break;
+				        		case AppSettings.InputMap.DOWN:
+				        			btnGetDown.getModel().setPressed(btnState);
+				        			break;
+				        		case AppSettings.InputMap.LEFT:
+				        			btnLeft.getModel().setPressed(btnState);
+				        			break;
+				        		case AppSettings.InputMap.RIGHT:
+				        			btnRight.getModel().setPressed(btnState);
+				        			break;
+				        		case AppSettings.InputMap.FWD:
+				        			btnFwd.getModel().setPressed(btnState);
+				        			break;
+				        		case AppSettings.InputMap.BACK:
+				        			btnBck.getModel().setPressed(btnState);
+				        			break;
+				        		case AppSettings.InputMap.TURN_CW:
+				        			btnCw.getModel().setPressed(btnState);
+				        			break;
+				        		case AppSettings.InputMap.TURN_CCW:
+				        			btnCcw.getModel().setPressed(btnState);
+				        			break;
+				        		case AppSettings.InputMap.ARM_DISARM:
+				        			if( Float.compare(comp.getPollData(),0) == 0 &&	// arm/disarm button released
+				        			    DroneTelemetry.instance().isDroneConnected() ) 
+				        			{
+				        				DroneState ds = DroneTelemetry.instance().getDroneState();
+				        				boolean enabled = !ds.motorsEnabled;
+				        				CmdSwitchMotors cmd = new CmdSwitchMotors(enabled);
+				        				DroneCommander.instance().addCmd(cmd);
+				        				if(enabled == false)	// also switch off stabilization if we turn off motors
+				        				{
+				        					CmdEnableStabilization cmd2 = new CmdEnableStabilization(false);
+				        					DroneCommander.instance().addCmd(cmd2);
+				        				}
+				        			}
+				        			break;
+				        		case AppSettings.InputMap.TRICK_MODE:
+				        			if(Float.compare(comp.getPollData(),0) == 0)
+				        			{
+				        				requestTrickMode = false;
+				        			}
+				        			else
+				        			{
+				        				requestTrickMode = true;
+				        			}
+				        			break;
+				        		case AppSettings.InputMap.LOAD1:
+				        			btnLoad1.getModel().setPressed(btnState);
+				        			break;
+				        		case AppSettings.InputMap.LOAD2:
+				        			btnLoad2.getModel().setPressed(btnState);
+				        			break;
+				        		case AppSettings.InputMap.ANTITURTLE:
+				        			btnAntiTurtle.getModel().setPressed(btnState);
+				        			break;
+				        		case AppSettings.InputMap.CAMERA_ANGLE_0:
+				        			btnCamAng0.getModel().setPressed(btnState);
+				        			break;
+				        		case AppSettings.InputMap.CAMERA_ANGLE_45:
+				        			btnCamAng45.getModel().setPressed(btnState);
+				        			break;
+				        		case AppSettings.InputMap.CAMERA_ANGLE_90:
+				        			btnCamAng90.getModel().setPressed(btnState);
+				        			break;
+				        		case AppSettings.InputMap.PHOTO:
+				        			btnPhoto.getModel().setPressed(btnState);
+				        			break;
+				        		case AppSettings.InputMap.VIDEO:
+				        			if(btnState)
+				        			{
+				        				btnVideo.setSelected(!btnVideo.isSelected());
+				        			}
+				        			break;
+				        		}
+				        	}
+			        	}
+				    }
+				}
+			}
+			
+			if(DroneTelemetry.instance().isDroneConnected() == false)
+				return; // can't execute code below if drone is disconnected
+			
 			// get up
 			if(btnGetUp.getModel().isPressed())
 			{
-				if(ds.altPid.enabled == false)
-				{
-					CmdSetBaseGas cmd = new CmdSetBaseGas((int)ds.baseGas + MOTOR_CTRL_DELTA);
-					DroneCommander.instance().addCmd(cmd);
-				}
-				else if(ds.velocityZPid.enabled)
-				{
-					// create instance to inform that we have hold a key
-					cmdVz = new CmdSetVelocityZ(VELOCITY_Z_CTRL_DELTA);
-					if(ds.velocityZPid.target <= 0.f)
-						DroneCommander.instance().addCmd(cmdVz);
-				}
-				else
-				{
-					CmdSetAltitude cmd = new CmdSetAltitude((float)(ds.altPid.target + ALT_CTRL_DELTA));
-					DroneCommander.instance().addCmd(cmd);
-				}
+				liftCtrl = mLiftAccelerator.accelerate(dt);
 			}
 
 			// get down
 			if(btnGetDown.getModel().isPressed())
 			{
-				if(ds.altPid.enabled == false)
-				{
-					CmdSetBaseGas cmd = new CmdSetBaseGas((int)ds.baseGas - MOTOR_CTRL_DELTA);
-					DroneCommander.instance().addCmd(cmd);
-				}
-				else if(ds.velocityZPid.enabled)
-				{
-					cmdVz = new CmdSetVelocityZ(-VELOCITY_Z_CTRL_DELTA);
-					if(ds.velocityZPid.target >= 0.f)
-						DroneCommander.instance().addCmd(cmdVz);
-				}
-				else
-				{
-					CmdSetAltitude cmd = new CmdSetAltitude((float)(ds.altPid.target - ALT_CTRL_DELTA));
-					DroneCommander.instance().addCmd(cmd);
-				}
+				liftCtrl = mLiftAccelerator.decelerate(dt);
 			}
-			
+						
 			// roll left
 			if(btnLeft.getModel().isPressed())
 			{
-				cmdYpr.setRollDeg(-LEVEL_CTRL_DELTA);
+				rollCtrl = mRollAccelerator.decelerate(dt);
 			}
+			
 			// roll right
 			if(btnRight.getModel().isPressed())
 			{
-				cmdYpr.setRollDeg(LEVEL_CTRL_DELTA);
+				rollCtrl = mRollAccelerator.accelerate(dt);
 			}
+			
 			// pitch fwd
 			if(btnFwd.getModel().isPressed())
 			{
-				cmdYpr.setPitchDeg(-LEVEL_CTRL_DELTA);
+				pitchCtrl = mPitchAccelerator.accelerate(dt);
 			}
+			
 			// pitch bck
 			if(btnBck.getModel().isPressed())
 			{
-				cmdYpr.setPitchDeg(LEVEL_CTRL_DELTA);
+				pitchCtrl = mPitchAccelerator.decelerate(dt);
 			}
+			
 			// rotate cw
 			if(btnCw.getModel().isPressed())
 			{
-				cmdYpr.setYawRateDeg(ROTATE_CTRL_DELTA);
+				rotateCtrl = mRotateAccelerator.accelerate(dt);
 			}
+			
 			// rotate ccw
 			if(btnCcw.getModel().isPressed())
 			{
-				cmdYpr.setYawRateDeg(-ROTATE_CTRL_DELTA);
-			}
-			
-			if(cmdYpr.isNull() == false)
-			{
-				if(	cmdYpr.getPitchRad() != ds.pitchPid.target ||
-					cmdYpr.getRollRad() != ds.rollPid.target ||
-					cmdYpr.getYawRad() != ds.yawRatePid.target )
-				{
-					DroneCommander.instance().addCmd(cmdYpr);
-				}
-				yprTrigger = true;
-			}
-			else if(yprTrigger) // to stop moving after we release a key
-			{
-				yprTrigger = false;
-				cmdYpr = new CmdSetYPR(0,0,0);
-				DroneCommander.instance().addCmd(cmdYpr);
-				DroneCommander.instance().addCmd(cmdYpr);
-				DroneCommander.instance().addCmd(cmdYpr);
-			}
-			
-			if(cmdVz == null && ds.velocityZPid.enabled && ds.velocityZPid.target != 0.f)
-			{
-				cmdVz = new CmdSetVelocityZ(0);
-				DroneCommander.instance().addCmd(cmdVz);
+				rotateCtrl = mRotateAccelerator.decelerate(dt);
 			}
 			
 			// stop
 			if(btnStop.getModel().isPressed())
 			{
-				cmdYpr = new CmdSetYPR(0,0,0);
-				DroneCommander.instance().addCmd(cmdYpr);
-				CmdSetVelocityZ cmd = new CmdSetVelocityZ(0);
+				liftCtrl = 0;
+				rollCtrl = 0;
+				pitchCtrl = 0;
+				rotateCtrl = 0;
+				mLiftAccelerator.reset();
+				mPitchAccelerator.reset();
+				mRollAccelerator.reset();
+				mRotateAccelerator.reset();
+			}
+			else
+			{
+				if(	btnGetUp.getModel().isPressed() == false &&
+					btnGetDown.getModel().isPressed() == false)
+				{
+					mLiftAccelerator.normalize(dt);
+					
+					if(stickLiftActive == false)
+						liftCtrl = mLiftAccelerator.getValue();
+				}
+				
+				if( btnCw.getModel().isPressed() == false &&
+					btnCcw.getModel().isPressed() == false )
+				{
+					mRotateAccelerator.normalize(dt);
+					
+					if(stickRotateActive == false)
+						rotateCtrl = mRotateAccelerator.getValue();
+				}
+				
+				if( btnFwd.getModel().isPressed() == false &&
+					btnBck.getModel().isPressed() == false)
+				{
+					mPitchAccelerator.normalize(dt);
+					
+					if(stickPitchActive == false)
+						pitchCtrl = mPitchAccelerator.getValue();
+				}
+				
+				if( btnLeft.getModel().isPressed() == false && 
+					btnRight.getModel().isPressed() == false )
+				{
+					mRollAccelerator.normalize(dt);
+					
+					if(stickRollActive == false)
+						rollCtrl = mRollAccelerator.getValue();
+				}
+			}
+			
+			DroneCommander.instance().setTrickMode(requestTrickMode);;
+			DroneCommander.instance().liftDrone(liftCtrl);
+			DroneCommander.instance().rotateDrone(rotateCtrl);
+			DroneCommander.instance().moveDrone(pitchCtrl,rollCtrl);
+			
+			DroneState ds = DroneTelemetry.instance().getDroneState();
+			
+			// LOAD1
+			if(btnLoad1.getModel().isPressed() && ds.load1.enabled == false)
+			{
+				CmdSetLoad cmd = new CmdSetLoad(0,true,ds.load1.period);
 				DroneCommander.instance().addCmd(cmd);
 			}
+			if(btnLoad1.getModel().isPressed() == false && ds.load1.enabled)
+			{
+				CmdSetLoad cmd = new CmdSetLoad(0,false,ds.load1.period);
+				DroneCommander.instance().addCmd(cmd);
+			}
+			// LOAD2
+			if(btnLoad2.getModel().isPressed() && ds.load2.enabled == false)
+			{
+				CmdSetLoad cmd = new CmdSetLoad(1,true,ds.load2.period);
+				DroneCommander.instance().addCmd(cmd);
+			}
+			if(btnLoad2.getModel().isPressed() == false && ds.load2.enabled)
+			{
+				CmdSetLoad cmd = new CmdSetLoad(1,false,ds.load2.period);
+				DroneCommander.instance().addCmd(cmd);
+			}
+			// ANTI TURTLE
+			DroneCommander.instance().antiTurtle(btnAntiTurtle.getModel().isPressed(),DroneState.Motors.antiTurtleGas);
+			// Camera Move
+			if(btnCamAng0.getModel().isPressed())
+			{
+				DroneCommander.instance().setCameraAngle(0);
+			}
+			if(btnCamAng45.getModel().isPressed())
+			{
+				DroneCommander.instance().setCameraAngle(45);
+			}
+			if(btnCamAng90.getModel().isPressed())
+			{
+				DroneCommander.instance().setCameraAngle(90);
+			}
+			// Photo
+			if(btnPhoto.getModel().isPressed() && oldBtnPhotoState == false)
+			{
+				ResBox.sound("PHOTO_TAKEN").play();
+				DroneCommander.instance().takePhoto();
+				
+			}
+			oldBtnPhotoState = btnPhoto.getModel().isPressed();
+			// Video
+			if(btnVideo.isSelected() && oldBtnVideoState == false)
+			{
+				DroneCommander.instance().startVideo();
+			}
+			else if(btnVideo.isSelected() == false && oldBtnVideoState == true)
+			{
+				DroneCommander.instance().stopVideo();
+			}
+			else
+			{
+				btnVideo.setSelected(ds.videoState);
+			}
+			oldBtnVideoState = btnVideo.isSelected();
 		}
 	}
-	
-	private class KeyDispatcher implements KeyEventDispatcher
-	{
-		@Override
-		public boolean dispatchKeyEvent(KeyEvent event)
-		{
-			if(event.getID() == KeyEvent.KEY_PRESSED)
-			{
-				if(event.getKeyCode() == KeyEvent.VK_Q)
-				{
-					btnCcw.requestFocus();
-					btnCcw.getModel().setPressed(true);
-				}
-				
-				if(event.getKeyCode() == KeyEvent.VK_W)
-				{
-					btnCcw.requestFocus();
-					btnFwd.getModel().setPressed(true);
-				}
-				
-				if(event.getKeyCode() == KeyEvent.VK_E)
-				{
-					btnCcw.requestFocus();
-					btnCw.getModel().setPressed(true);
-				}
-				
-				if(event.getKeyCode() == KeyEvent.VK_A)
-				{
-					btnCcw.requestFocus();
-					btnLeft.getModel().setPressed(true);
-				}
-				
-				if(event.getKeyCode() == KeyEvent.VK_S)
-				{
-					btnCcw.requestFocus();
-					btnBck.getModel().setPressed(true);
-				}
-				
-				if(event.getKeyCode() == KeyEvent.VK_D)
-				{
-					btnCcw.requestFocus();
-					btnRight.getModel().setPressed(true);
-				}
-				
-				if(event.getKeyCode() == KeyEvent.VK_Z)
-				{
-					btnCcw.requestFocus();
-					btnGetUp.getModel().setPressed(true);
-				}
-				
-				if(event.getKeyCode() == KeyEvent.VK_X)
-				{
-					btnCcw.requestFocus();
-					btnGetDown.getModel().setPressed(true);
-				}
-				
-				if(event.getKeyCode() == KeyEvent.VK_C)
-				{
-					btnCcw.requestFocus();
-					btnStop.getModel().setPressed(true);
-				}
-			}
-			
-			if(event.getID() == KeyEvent.KEY_RELEASED)
-			{
-				if(event.getKeyCode() == KeyEvent.VK_Q)
-				{
-					btnCcw.getModel().setPressed(false);
-				}
-				
-				if(event.getKeyCode() == KeyEvent.VK_W)
-				{
-					btnFwd.getModel().setPressed(false);
-				}
-				
-				if(event.getKeyCode() == KeyEvent.VK_E)
-				{
-					btnCw.getModel().setPressed(false);
-				}
-				
-				if(event.getKeyCode() == KeyEvent.VK_A)
-				{
-					btnLeft.getModel().setPressed(false);
-				}
-				
-				if(event.getKeyCode() == KeyEvent.VK_S)
-				{
-					btnBck.getModel().setPressed(false);
-				}
-				
-				if(event.getKeyCode() == KeyEvent.VK_D)
-				{
-					btnRight.getModel().setPressed(false);
-				}
-				
-				if(event.getKeyCode() == KeyEvent.VK_Z)
-				{
-					btnGetUp.getModel().setPressed(false);
-				}
-				
-				if(event.getKeyCode() == KeyEvent.VK_X)
-				{
-					btnGetDown.getModel().setPressed(false);
-				}
-				
-				if(event.getKeyCode() == KeyEvent.VK_C)
-				{
-					btnStop.getModel().setPressed(false);
-				}
-				
-				if(event.getKeyCode() == KeyEvent.VK_SHIFT)
-				{
-					TakeOff cmd = new TakeOff();
-					cmd.run();
-				}
-			}
-			
-			return false;
-		}
-	}
-
 	
 	private class OnWndListener implements WindowListener
 	{
 
 		@Override
-		public void windowOpened(WindowEvent e)
+		public void windowOpened(WindowEvent e) {}
+
+		@Override
+		public void windowClosing(WindowEvent e)
 		{
-			tmKeyboard = new Timer();
-			tmKeyboard.schedule(new KeyboardProcess(), 0, KEYBOARD_PERIOD);
-			kd = new KeyDispatcher();
-			KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(kd);
+			if(tmKeyboard != null)
+			{
+				tmKeyboard.cancel();
+				tmKeyboard = null;
+			}
 		}
 
 		@Override
-		public void windowClosing(WindowEvent e) {}
-
-		@Override
-		public void windowClosed(WindowEvent e)
+		public void windowClosed(WindowEvent e) 
 		{
-			KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(kd);
-			tmKeyboard.cancel();
-			tmKeyboard = null;
-			kd = null;
+			if(tmKeyboard != null)
+			{
+				tmKeyboard.cancel();
+				tmKeyboard = null;
+			}
 		}
 
 		@Override
@@ -369,7 +570,32 @@ public class RemoteControlGui extends JSavedFrame
 		public void windowDeiconified(WindowEvent e) {}
 
 		@Override
-		public void windowActivated(WindowEvent e) {}
+		public void windowActivated(WindowEvent e)
+		{
+			lblGamepad.setText("<html>" + ResBox.text("GAMEPAD_NOT_FOUND") + "</html>"); // html is added to automatically wrap text to new line
+			Controller[] controllers = ControllerEnvironment.getDefaultEnvironment().getControllers();
+			
+			String curGamepad = AppSettings.instance().getInputMap().gamepad;
+
+			for(int i = 0; i < controllers.length; i++)
+			{
+				Controller controller = controllers[i];
+				
+				if(	controller.getType() == Controller.Type.GAMEPAD &&
+					controller.getName().compareToIgnoreCase(curGamepad) == 0)
+				{
+					lblGamepad.setText("<html>" + controller.getName() + "</html>");
+				}
+			}
+			
+			btnStop.requestFocus();
+			
+			if(tmKeyboard == null)
+			{
+				tmKeyboard = new Timer("RcInputTimer");
+				tmKeyboard.scheduleAtFixedRate(new OnInputsPoll(), 100, KEYBOARD_PERIOD);
+			}
+		}
 
 		@Override
 		public void windowDeactivated(WindowEvent e) {}
@@ -377,41 +603,26 @@ public class RemoteControlGui extends JSavedFrame
 
 	public RemoteControlGui()
 	{
-		super(ResBox.text("REMOTE_CONTROL"),200,400);
+		super(ResBox.text("REMOTE_CONTROL"),253,298);
 		createUI();
+		rcSettingsGui = new RcSettingsGui();
 	}
 	
 	private void createUI()
 	{
-		this.setLayout(new MigLayout("","[center,grow][center,grow][center,grow][center,grow]"));
+		this.setLayout(new MigLayout("","[grow][][]"));
 		this.setIconImage(ResBox.icon("REMOTE_CONTROL").getImage());
 
-		mtfYaw = new JTextField();
-		mtfYaw.setDocument(new NumericDocument(2,true));
-		mtfYaw.setText("0");
-		mtfPitch = new JTextField();
-		mtfPitch.setDocument(new NumericDocument(2,true));
-		mtfPitch.setText("0");
-		mtfRoll = new JTextField();
-		mtfRoll.setDocument(new NumericDocument(2,true));
-		mtfRoll.setText("0");
 		mtfAlt = new JTextField();
 		mtfAlt.setDocument(new NumericDocument(3,true));
 		mtfAlt.setText("0");
 		
 		JButton btnSendYpr = new JButton(ResBox.text("SEND"));
-		btnSendYpr.addActionListener(new OnBtnSendYpr());
+		btnSendYpr.addActionListener(new OnBtnSend());
 		
-		this.add(new JLabel(ResBox.text("YAW") + "(deg)"));
-		this.add(new JLabel(ResBox.text("PITCH") + "(deg)"));
-		this.add(new JLabel(ResBox.text("ROLL") + "(deg)"));
-		this.add(new JLabel(ResBox.text("ALTITUDE") + "(m)"),"wrap");
-		this.add(mtfYaw,"grow");
-		this.add(mtfPitch,"grow");
-		this.add(mtfRoll,"grow");
-		this.add(mtfAlt,"grow");
-		this.add(btnSendYpr,"wrap");
-		
+		JButton btnRcSettings = new JButton(ResBox.icon("SETTINGS"));
+		btnRcSettings.addActionListener(new OnBtnSettings());
+
 		btnGetUp = new JButton(ResBox.icon("ARROW_GET_UP"));
 		btnGetDown = new JButton(ResBox.icon("ARROW_GET_DOWN"));
 		btnLeft = new JButton(ResBox.icon("ARROW_LEFT"));
@@ -422,34 +633,69 @@ public class RemoteControlGui extends JSavedFrame
 		btnCcw = new JButton(ResBox.icon("ROTATE_CCW"));
 		btnStop = new JButton(ResBox.icon("STOP"));
 		
+		btnLoad1 = new JButton(ResBox.text("LOAD1"));
+		btnLoad2 = new JButton(ResBox.text("LOAD2"));
+		//btnLoad3 = new JButton(ResBox.text("LOAD3"));
+		btnAntiTurtle = new JButton(ResBox.text("ANTITURTLE"));
+		btnCamAng0 = new JButton(ResBox.text("CAMERA_ANGLE_0"));
+		btnCamAng45 = new JButton(ResBox.text("CAMERA_ANGLE_45"));
+		btnCamAng90 = new JButton(ResBox.text("CAMERA_ANGLE_90"));
+		btnPhoto = new JButton(ResBox.text("PHOTO"));
+		btnVideo = new JToggleButton(ResBox.text("VIDEO"));
+		
 		btnStop.requestFocus();
 		
 		JPanel pnlCtrl = new JPanel(new MigLayout());
 		
-		pnlCtrl.add(btnCcw);
-		pnlCtrl.add(btnFwd);
-		pnlCtrl.add(btnCw,"wrap");
-		pnlCtrl.add(btnLeft);
-		pnlCtrl.add(btnStop);
-		pnlCtrl.add(btnRight,"wrap");
-		pnlCtrl.add(btnGetUp);
-		pnlCtrl.add(btnBck);
-		pnlCtrl.add(btnGetDown);
+		pnlCtrl.add(new JLabel(ResBox.text("ALTITUDE") + "(m)"));
+		pnlCtrl.add(mtfAlt,"grow");
+		pnlCtrl.add(btnSendYpr,"grow,wrap");
 		
-		this.add(pnlCtrl,"span 4,grow");
-
+		lblGamepad = new JLabel();
+		lblGamepad.setMaximumSize(new java.awt.Dimension(130,30));
+		
+		pnlCtrl.add(lblGamepad,"spanx 2, align left");
+		pnlCtrl.add(btnRcSettings,"growx,wrap");
+		pnlCtrl.add(btnCcw,"growx");
+		pnlCtrl.add(btnFwd,"growx");
+		pnlCtrl.add(btnCw,"growx,wrap");
+		pnlCtrl.add(btnLeft,"growx");
+		pnlCtrl.add(btnStop,"growx");
+		pnlCtrl.add(btnRight,"growx,wrap");
+		pnlCtrl.add(btnGetUp,"growx");
+		pnlCtrl.add(btnBck,"growx");
+		pnlCtrl.add(btnGetDown,"growx,wrap");
+		pnlCtrl.add(btnLoad1,"growx");
+		pnlCtrl.add(btnLoad2,"growx");
+		//pnlCtrl.add(btnLoad3,"wrap");
+		pnlCtrl.add(btnAntiTurtle,"growx,wrap");
+		pnlCtrl.add(btnCamAng0,"growx");
+		pnlCtrl.add(btnCamAng45,"growx");
+		pnlCtrl.add(btnCamAng90,"growx,wrap");
+		pnlCtrl.add(btnPhoto,"growx");
+		pnlCtrl.add(btnVideo,"growx");
+		
+		this.add(pnlCtrl,"span,grow");	
+		
 		this.addWindowListener(new OnWndListener());
 	}
 	
 	@Override
 	protected WndState loadWndState()
 	{
-		return Settings.instance().getRcWnd();
+		return AppSettings.instance().getRcWnd();
 	}
 
 	@Override
 	protected void saveWndState(WndState ws)
 	{
-		Settings.instance().setRcWnd(ws);
+		AppSettings.instance().setRcWnd(ws);	
+	}
+	
+	public void onEmergencyStop()
+	{
+		pdl.commands.CmdSwitchMotors cmd = new pdl.commands.CmdSwitchMotors(false);
+		
+		DroneCommander.instance().addCmd(cmd);
 	}
 }

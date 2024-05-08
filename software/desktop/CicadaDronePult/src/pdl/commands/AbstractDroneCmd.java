@@ -1,10 +1,10 @@
 package pdl.commands;
 
-public abstract class AbstractCopterCmd
+public abstract class AbstractDroneCmd
 {
 	protected int mCmdCode;
 	
-	public AbstractCopterCmd(int code)
+	public AbstractDroneCmd(int code)
 	{
 		mCmdCode = code;
 	}
@@ -49,6 +49,15 @@ public abstract class AbstractCopterCmd
 		data[pos++] = (byte)((bits >>> 16) & 0xFF);
 		data[pos++] = (byte)((bits >>> 24) & 0xFF);
 		
+		return pos;
+	}
+	
+	protected int writeString(int pos, byte data[], String value)
+	{
+		for(byte val : value.getBytes())
+		{
+			data[pos++] = val;
+		}
 		return pos;
 	}
 }

@@ -11,13 +11,14 @@ import javax.swing.JSlider;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import main.Settings.WndState;
+import main.AppSettings.WndState;
 import net.miginfocom.swing.MigLayout;
 import pdl.DroneCommander;
 import pdl.DroneTelemetry;
 import pdl.DroneState;
 import pdl.commands.CmdEnableStabilization;
 import pdl.commands.CmdSetBaseGas;
+import pdl.commands.CmdSetMotorsDir;
 import pdl.commands.CmdSetMotorsGas;
 import pdl.commands.CmdSwitchMotors;
 
@@ -27,11 +28,14 @@ public class MotorsGui extends JSavedFrame
 	
 	private JCheckBox mcbMotorsEnabled;
 	private JCheckBox mcbStabilizationEnabled;
+	private JCheckBox mcbReverse;
 	private JCheckBox mcbHoldPosEnabled;
-	private MotorGasSlider mgas0;
+	private JCheckBox mcbTrickMode;
+	/*private MotorGasSlider mgas0;
 	private MotorGasSlider mgas1;
 	private MotorGasSlider mgas2;
-	private MotorGasSlider mgas3;
+	private MotorGasSlider mgas3;*/
+	private MotorGasSlider mgas[];
 	private MotorGasSlider mgasBase;
 	private CmdSetMotorsGas mCmdSetGas = new CmdSetMotorsGas();
 	
@@ -77,13 +81,22 @@ public class MotorsGui extends JSavedFrame
 		}	
 	}
 	
-	public static class OnMotorsEnabled implements ActionListener
+	public class OnMotorsEnabled implements ActionListener
 	{
 		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			boolean state = !DroneTelemetry.instance().getDroneState().motorsEnabled;
 			DroneCommander.instance().addCmd(new CmdSwitchMotors(state));		
+		}
+	}
+	
+	public class OnMotorsReverse implements ActionListener
+	{
+		@Override
+		public void actionPerformed(ActionEvent e)
+		{
+			DroneCommander.instance().addCmd(new CmdSetMotorsDir(mcbReverse.isSelected()));		
 		}
 	}
 	
@@ -112,15 +125,22 @@ public class MotorsGui extends JSavedFrame
 			
 			DroneState droneState = DroneTelemetry.instance().getDroneState();
 			
-			mgas0.setGas((int)droneState.motorGas0,false);
-			mgas1.setGas((int)droneState.motorGas1,false);
-			mgas2.setGas((int)droneState.motorGas2,false);
-			mgas3.setGas((int)droneState.motorGas3,false);
+			//mgas0.setGas((int)droneState.motorGas0,false);
+			//mgas1.setGas((int)droneState.motorGas1,false);
+			//mgas2.setGas((int)droneState.motorGas2,false);
+			//mgas3.setGas((int)droneState.motorGas3,false);
+			
+			for(int i = 0; i < DroneState.Motors.count; i++)
+			{
+				mgas[i].setGas((int)droneState.motorGas[i],false);
+			}
+			
 			mgasBase.setGas((int)droneState.baseGas, false);
 			
 			mcbMotorsEnabled.setSelected(droneState.motorsEnabled);
 			mcbStabilizationEnabled.setSelected(droneState.stabilizationEnabled);
-			mcbHoldPosEnabled.setSelected((droneState.holdPosEnabled > 0.f)?true:false);
+			mcbHoldPosEnabled.setSelected((droneState.pidFlags > 0.f)?true:false);
+			mcbTrickMode.setSelected(droneState.trickModeEnabled);
 		}
 	}
 
@@ -137,63 +157,55 @@ public class MotorsGui extends JSavedFrame
 	
 	private void createUI()
 	{
-		JPanel pnlMotors = new JPanel(new MigLayout("","","[][][][grow]"));
+		JPanel pnlMotors = new JPanel(new MigLayout("","","[][][][][][grow]"));
 		
 		mcbMotorsEnabled = new JCheckBox(ResBox.text("MOTORS_ENABLED"));
 		mcbMotorsEnabled.addActionListener(new OnMotorsEnabled());
+		
+		mcbReverse = new JCheckBox(ResBox.text("REVERSE"));
+		mcbReverse.addActionListener(new OnMotorsReverse());
 		
 		mcbStabilizationEnabled = new JCheckBox(ResBox.text("STABILIZATION_ENABLED"));
 		mcbStabilizationEnabled.addActionListener(new OnStabilizationEnabled());
 		
 		mcbHoldPosEnabled = new JCheckBox(ResBox.text("HOLD_POS_ENABLED"));
 		mcbHoldPosEnabled.setEnabled(false);
+		
+		mcbTrickMode = new JCheckBox(ResBox.text("TRICK_MODE"));
+		mcbTrickMode.setEnabled(false);
 
-		mgas0 = new MotorGasSlider("M1");
-		mgas1 = new MotorGasSlider("M2");
-		mgas2 = new MotorGasSlider("M3");
-		mgas3 = new MotorGasSlider("M4");
+		//mgas0 = new MotorGasSlider("M1");
+		//mgas1 = new MotorGasSlider("M2");
+		//mgas2 = new MotorGasSlider("M3");
+		//mgas3 = new MotorGasSlider("M4");
+		mgas = new MotorGasSlider[DroneState.Motors.count];
+		for(int i = 0; i < DroneState.Motors.count; i++)
+		{
+			mgas[i] = new MotorGasSlider("M"+i);
+			mgas[i].addChangeListener(new MotorGasChanged(i));
+		}
 		mgasBase = new MotorGasSlider("BASE");
 				
-		mgas0.addChangeListener(new MotorGasChanged(0));
-		mgas1.addChangeListener(new MotorGasChanged(1));
-		mgas2.addChangeListener(new MotorGasChanged(2));
-		mgas3.addChangeListener(new MotorGasChanged(3));
+		//mgas0.addChangeListener(new MotorGasChanged(0));
+		//mgas1.addChangeListener(new MotorGasChanged(1));
+		//mgas2.addChangeListener(new MotorGasChanged(2));
+		//mgas3.addChangeListener(new MotorGasChanged(3));
 		mgasBase.addChangeListener(new SetAllMotorGas());
-		
-		/*
-		MotorGasSlider yawSlider = new MotorGasSlider("Yaw");
-		yawSlider.setGas((MotorGasSlider.MIN_GAS + MotorGasSlider.MAX_GAS)/2,false);
-		yawSlider.addChangeListener(new ChangeListener()
-		{
-			int oldValue;
-			
-			@Override
-			public void stateChanged(ChangeEvent e)
-			{
-				JSlider sl = (JSlider)e.getSource();
-				if(!sl.getValueIsAdjusting())
-				{
-					int dx = sl.getValue() - oldValue;
-					oldValue = sl.getValue();
-					
-					mgas0.setGas(mgas0.getGas() + dx,true);
-					mgas2.setGas(mgas2.getGas() + dx,true);
-					mgas1.setGas(mgas1.getGas() - dx,true);
-					mgas3.setGas(mgas3.getGas() - dx,true);
-				}
-			}
-		});
-		*/
 		
 		pnlMotors.add(mcbMotorsEnabled,"span,wrap");
 		pnlMotors.add(mcbStabilizationEnabled,"span,wrap");
+		pnlMotors.add(mcbReverse,"span,wrap");
 		pnlMotors.add(mcbHoldPosEnabled,"span,wrap");
-		pnlMotors.add(mgas0,"grow");
-		pnlMotors.add(mgas1,"grow");
-		pnlMotors.add(mgas2,"grow");
-		pnlMotors.add(mgas3,"grow");
+		pnlMotors.add(mcbTrickMode,"span,wrap");
+		for(int i = 0; i < DroneState.Motors.count; i++)
+		{
+			pnlMotors.add(mgas[i],"grow");
+		}
+		//pnlMotors.add(mgas0,"grow");
+		//pnlMotors.add(mgas1,"grow");
+		//pnlMotors.add(mgas2,"grow");
+		//pnlMotors.add(mgas3,"grow");
 		pnlMotors.add(mgasBase,"grow");
-		//pnlMotorsGas.add(yawSlider,"grow");
 		
 		this.add(pnlMotors);
 	}
@@ -201,12 +213,12 @@ public class MotorsGui extends JSavedFrame
 	@Override
 	protected WndState loadWndState()
 	{
-		return Settings.instance().getMotorsWnd();
+		return AppSettings.instance().getMotorsWnd();
 	}
 
 	@Override
 	protected void saveWndState(WndState ws)
 	{
-		Settings.instance().setMotorsWnd(ws);
+		AppSettings.instance().setMotorsWnd(ws);
 	}
 }

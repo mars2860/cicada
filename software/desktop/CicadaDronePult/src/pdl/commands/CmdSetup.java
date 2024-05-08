@@ -2,7 +2,7 @@ package pdl.commands;
 
 import pdl.DroneState;
 
-public abstract class CmdSetup extends AbstractCopterCmd
+public abstract class CmdSetup extends AbstractDroneCmd
 {
 	public CmdSetup(int code)
 	{

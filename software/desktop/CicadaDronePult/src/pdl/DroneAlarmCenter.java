@@ -4,12 +4,13 @@ import java.util.Observable;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import main.ResBox;
-
-
 public class DroneAlarmCenter extends Observable
 {
 	private static DroneAlarmCenter mSingleton;
+	
+	public static final double WIFI_LOW_LEVEL = -82.0;
+	public static final double BATTERY_LOW_LEVEL = 15.0;
+	public static final double BATTERY_CRITICAL_LOW_LEVEL = 5;
 	
 	public static DroneAlarmCenter instance()
 	{
@@ -32,7 +33,9 @@ public class DroneAlarmCenter extends Observable
 	{
 		synchronized(mMutex)
 		{
-			if(mAlarms.add(alarm))
+			//if(mAlarms.add(alarm))
+			// notify always to play alarm sounds in loop
+			mAlarms.add(alarm);
 			{
 				this.setChanged();
 				this.notifyObservers();
@@ -67,11 +70,10 @@ public class DroneAlarmCenter extends Observable
 		return level;
 	}
 	
-	public String getAlarmText()
+	public Alarm getAlarm()
 	{
 		Alarm alarm = null;
-		String text = ResBox.text("SYSTEM_OK");
-		
+
 		synchronized(mMutex)
 		{
 			try
@@ -83,10 +85,36 @@ public class DroneAlarmCenter extends Observable
 				// nothing
 			}
 		}
-		
-		if(alarm != null)
-			text = ResBox.text(alarm.name());
-		
-		return text;
+
+		return alarm;
+	}
+
+	public boolean getAlarm(Alarm alarm)
+	{
+		boolean result = false;
+		synchronized(mMutex)
+		{
+			try
+			{
+				result = mAlarms.contains(alarm);
+			}
+			catch(Exception e)
+			{
+				// nothing
+			}
+		}
+
+		return result;
+	}
+
+	void clearAll()
+	{
+		synchronized(mMutex)
+		{
+			mAlarms.clear();
+			this.setChanged();
+			this.notifyObservers();
+			this.clearChanged();
+		}
 	}
 }

@@ -2,6 +2,7 @@ package main;
 
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.io.File;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Locale;
@@ -11,7 +12,9 @@ import javax.swing.JOptionPane;
 
 import pdl.DroneAlarmCenter;
 import pdl.DroneCommander;
+import pdl.DroneLog;
 import pdl.DroneTelemetry;
+import pdl.res.Profile;
 import pdl.DroneState;
 
 public class CicadaDronePultApp
@@ -30,7 +33,10 @@ public class CicadaDronePultApp
 		}
 
 		@Override
-		public void windowClosed(WindowEvent e) {}
+		public void windowClosed(WindowEvent e) 
+		{
+			//CicadaDronePultApp.this.stop();	// sometimes doesn't work ?!
+		}
 
 		@Override
 		public void windowIconified(WindowEvent e) {}
@@ -58,8 +64,18 @@ public class CicadaDronePultApp
 		DroneAlarmCenter.instance().deleteObservers();
 		DroneTelemetry.instance().deleteObservers();
 		
-		Settings.instance().load();
+		AppSettings.load();
 		ResBox.load();
+		
+		File file = AppSettings.instance().getCurProfileFile();
+		if(Profile.load(file) == false)
+		{
+			JOptionPane.showMessageDialog(	null,
+											ResBox.text("CANT_LOAD_PROFILE") + ":" + file.getAbsolutePath(),
+											ResBox.text("ERROR"),
+											JOptionPane.ERROR_MESSAGE);
+			return;
+		}
 		
 		mMainFrame = new StartGui();
 		mMainFrame.setVisible(true);
@@ -67,18 +83,18 @@ public class CicadaDronePultApp
 	
 		try
 		{
-			DroneState ds = Settings.instance().getDroneSettings();
-			DroneCommander.instance().start(ds.net.ip, ds.net.cmdPort);
-			DroneTelemetry.instance().start(ds.net.ip, ds.net.telemetryPort);
+			DroneCommander.instance().start(DroneState.net.ip, DroneState.net.cmdPort);
+			DroneTelemetry.instance().start(DroneState.net.ip, DroneState.net.telemetryPort);
+			DroneLog.instance().start(DroneState.net.ip, DroneState.net.logPort);
 		}
 		catch(UnknownHostException e)
 		{
-			showErrorMsg(ResBox.text("INVALID_HOST"));
+			showErrorMsg(mMainFrame,ResBox.text("INVALID_HOST"));
 			e.printStackTrace();
 		}
 		catch(SocketException e)
 		{
-			showErrorMsg(ResBox.text("SOCKET_NOT_OPEN"));
+			showErrorMsg(mMainFrame,ResBox.text("SOCKET_NOT_OPEN"));
 			e.printStackTrace();
 		}
 	}
@@ -87,6 +103,7 @@ public class CicadaDronePultApp
 	{
 		DroneCommander.instance().stop();
 		DroneTelemetry.instance().stop();
+		DroneLog.instance().stop();
 		
 		if(mMainFrame != null)
 		{
@@ -94,12 +111,12 @@ public class CicadaDronePultApp
 			mMainFrame = null;
 		}
 		
-		Settings.instance().save();
+		AppSettings.instance().save();
 	}
 	
-	private void showErrorMsg(String text)
+	public static void showErrorMsg(java.awt.Component parent, String text)
 	{
-		JOptionPane.showMessageDialog(mMainFrame, text, ResBox.text("ERROR"), JOptionPane.ERROR_MESSAGE);
+		JOptionPane.showMessageDialog(parent, text, ResBox.text("ERROR"), JOptionPane.ERROR_MESSAGE);
 	}
 
 	public static void main(String[] args)

@@ -1,6 +1,6 @@
 package pdl.commands;
 
-public class CmdSetYPR extends AbstractCopterCmd
+public class CmdSetYPR extends AbstractDroneCmd
 {
 	private float mYaw = 0.f;
 	private float mPitch = 0.f;
@@ -30,9 +30,9 @@ public class CmdSetYPR extends AbstractCopterCmd
 		return data;
 	}
 	
-	public void setYawRateDeg(float yawRateDeg)
+	public void setYawDeg(float yawDeg)
 	{
-		mYaw = (float)Math.toRadians(yawRateDeg);
+		mYaw = (float)Math.toRadians(yawDeg);
 	}
 	
 	public void setRollDeg(float rollDeg)

@@ -2,24 +2,27 @@ package main;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.List;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.io.File;
 
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
 
-import main.Settings.WndState;
+import main.AppSettings.WndState;
 import treetable.AbstractTreeTableModel;
 import treetable.JTreeTable;
 import treetable.TreeTableModel;
 import net.miginfocom.swing.MigLayout;
 import pdl.DroneCommander;
 import pdl.DroneTelemetry;
+import pdl.res.Profile;
+import pdl.res.SettingsNode;
 import pdl.DroneState;
-import pdl.DroneState.SettingGroup;
 
 public class SettingsGui extends JSavedFrame
 {
@@ -27,40 +30,26 @@ public class SettingsGui extends JSavedFrame
 	// TODO Перезапуск сервера при изменении сетевых настроек
 	
 	private static final long serialVersionUID = 1818813549822697828L;
-	
-	public class Node
-	{
-		public String name = new String();
-		public String value = new String();
-		public String nValue = new String();
-		// Relationship between Node and DroneState
-		public java.lang.reflect.Field settingField;
-		public java.lang.reflect.Field settingGroup;
-		public List<Node> childs = new ArrayList<Node>();
-		
-		public Node() {}
-
-		public Node(String name)
-		{
-			Node.this.name = name;
-		}
-		
-		@Override
-		public String toString()
-		{
-			return name;
-		}
-	}
 
 	public class SettingsTreeTableModel extends AbstractTreeTableModel
 	{
 		private String mColName[] = {	ResBox.text("PARAM"),
-										ResBox.text("NEW_VALUE"),
 										ResBox.text("CURRENT_VALUE")};
 				
-		public SettingsTreeTableModel(Node root)
+		public SettingsTreeTableModel(SettingsNode root)
 		{
 			super(root);
+			
+			// exclude RemoteCtrl because we cant edit enums inside treetable
+			// RemoteCtrl we can customize in RemoteCtrlGui
+			for(SettingsNode group : root.childs)
+			{
+				if(group.value instanceof DroneState.RemoteCtrl)
+				{
+					root.childs.remove(group);
+					return;
+				}
+			}
 		}
 
 		@Override
@@ -87,12 +76,10 @@ public class SettingsGui extends JSavedFrame
 		@Override
 		public Object getValueAt(Object node, int column)
 		{
-			Node n = (Node)node;
+			SettingsNode n = (SettingsNode)node;
 			if(column == 0)
 				return n.name;
-			if(column == 1)
-				return n.nValue;
-			if(column == 2)
+			if(column == 1 && n.childs.size() == 0)
 				return n.value;
 			
 			return "";
@@ -101,7 +88,7 @@ public class SettingsGui extends JSavedFrame
 		@Override
 		public Object getChild(Object parent, int index)
 		{
-			Node node = (Node)parent;
+			SettingsNode node = (SettingsNode)parent;
 			
 			if(index < node.childs.size())
 				return node.childs.get(index);
@@ -112,7 +99,7 @@ public class SettingsGui extends JSavedFrame
 		@Override
 		public int getChildCount(Object parent)
 		{
-			Node node = (Node)parent;
+			SettingsNode node = (SettingsNode)parent;
 			return node.childs.size();
 		}
 		
@@ -128,7 +115,7 @@ public class SettingsGui extends JSavedFrame
 		@Override
 		public boolean isLeaf(Object node)
 		{
-			Node n = (Node)node;
+			SettingsNode n = (SettingsNode)node;
 			if(n.childs.size() > 0)
 				return false;
 			return true;
@@ -137,17 +124,18 @@ public class SettingsGui extends JSavedFrame
 		@Override
 		public void setValueAt(Object aValue, Object node, int column)
 		{
-			Node n = (Node)node;
-			n.nValue = aValue.toString();
+			SettingsNode n = (SettingsNode)node;
+			n.value = aValue;
 		}
 	}
 	
+	/*
 	private class OnBtnReceive implements ActionListener
 	{
 		@Override
 		public void actionPerformed(ActionEvent e)
 		{
-			if(DroneTelemetry.instance().isCopterConnected() == false)
+			if(DroneTelemetry.instance().isDroneConnected() == false)
 			{
 				JOptionPane.showMessageDialog(
 						SettingsGui.this,
@@ -160,7 +148,7 @@ public class SettingsGui extends JSavedFrame
 			DroneState ds = DroneTelemetry.instance().getDroneState();
 			// Restore net settings
 			// It needs because net settings are not presented inside telemetry packet
-			ds.net = Settings.instance().getDroneSettings().net;
+			//ds.net = Settings.instance().getDroneSettings().net;
 			Settings.instance().setDroneSettings(ds);
 			Node root = buildSettingsTree(ds);
 			mtt.setTreeTableModel(new SettingsTreeTableModel(root));
@@ -172,12 +160,16 @@ public class SettingsGui extends JSavedFrame
 					JOptionPane.INFORMATION_MESSAGE);
 		}
 	}
+	*/
 	
 	private class OnBtnSend implements ActionListener
 	{
 		@Override
 		public void actionPerformed(ActionEvent e)
 		{
+			if(DroneTelemetry.instance().isDroneConnected() == false)
+				return;
+			
 			DroneState ds = grabNewSettings();
 			
 			if(ds == null)
@@ -190,7 +182,7 @@ public class SettingsGui extends JSavedFrame
 				return;
 			}
 			
-			if(DroneTelemetry.instance().isCopterConnected() == false)
+			if(DroneTelemetry.instance().isDroneConnected() == false)
 			{
 				JOptionPane.showMessageDialog(
 						SettingsGui.this,
@@ -208,32 +200,56 @@ public class SettingsGui extends JSavedFrame
 					"",
 					JOptionPane.INFORMATION_MESSAGE);
 			
-			ds = DroneTelemetry.instance().getDroneState();
-			// Restore net settings
-			// It needs because net settings are not presented inside telemetry packet
-			ds.net = Settings.instance().getDroneSettings().net;
-			Settings.instance().setDroneSettings(ds);
+			// wait 1s to receive actual settings from drone
+			try
+			{
+				Thread.sleep(1000);
+			}
+			catch(Exception ex)
+			{
+				ex.printStackTrace();
+			}
 			
-			Node root = buildSettingsTree(ds);
-			mtt.setTreeTableModel(new SettingsTreeTableModel(root));
+			ds = DroneTelemetry.instance().getDroneState();
+			// Fill settings tree with received settings to be sure in settings we have really on drone
+			Profile.instance().setDroneSettings(ds);
+			
+			updateSettingsTree();
 		}	
 	}
 	
-	private class OnBtnLoad implements ActionListener
+	private class OnProfileItem implements ItemListener
 	{
 		@Override
-		public void actionPerformed(ActionEvent e)
+		public void itemStateChanged(ItemEvent e)
 		{
-			Settings.instance().load();
-			DroneState ds = Settings.instance().getDroneSettings();
-			Node root = buildSettingsTree(ds);
-			mtt.setTreeTableModel(new SettingsTreeTableModel(root));
+			if(e.getStateChange() == ItemEvent.DESELECTED)
+				return;
+			
+			String profileName = e.getItem().toString();
+			
+			if(Profile.instance().getName().compareToIgnoreCase(profileName) == 0)
+				return;
+			
+			File file = AppSettings.instance().getProfileFile(profileName);
+			if(Profile.load(file) == false)
+			{
+				JOptionPane.showMessageDialog(	null,
+												ResBox.text("CANT_LOAD_PROFILE") + ":" + file.getAbsolutePath(),
+												ResBox.text("ERROR"),
+												JOptionPane.ERROR_MESSAGE);
+				return;
+			}
+			
+			AppSettings.instance().setCurProfileName(profileName);
+			
+			updateSettingsTree();
 
 			JOptionPane.showMessageDialog(
 					SettingsGui.this,
 					ResBox.text("SETTINGS_LOADED"),
 					"",
-					JOptionPane.INFORMATION_MESSAGE);
+					JOptionPane.INFORMATION_MESSAGE);			
 		}
 	}
 	
@@ -242,17 +258,115 @@ public class SettingsGui extends JSavedFrame
 		@Override
 		public void actionPerformed(ActionEvent e)
 		{
-			Settings.instance().save();
+			DroneState ds = grabNewSettings();
+			
+			if(ds == null)
+			{
+				JOptionPane.showMessageDialog(
+						SettingsGui.this,
+						ResBox.text("CANT_GRAB_SETTINGS"),
+						ResBox.text("ERROR"),
+						JOptionPane.ERROR_MESSAGE);
+				return;
+			}
+			
+			String profileName = JOptionPane.showInputDialog(	SettingsGui.this,
+																ResBox.text("TYPE_PROFILE_NAME"),
+																Profile.instance().getName());
+			if(profileName == null || profileName.isEmpty())
+			{
+				JOptionPane.showMessageDialog(
+						SettingsGui.this,
+						ResBox.text("TYPE_PROFILE_NAME"),
+						ResBox.text("ERROR"),
+						JOptionPane.ERROR_MESSAGE);
+				return;
+			}
+			
+			boolean addNewItemToCombo = false;
+			
+			if(profileName.compareToIgnoreCase(Profile.instance().getName()) != 0)
+				addNewItemToCombo = true;
+			
+			Profile.instance().setDroneSettings(ds);
+			
+			File file = AppSettings.instance().getProfileFile(profileName);
+ 			
+			if(Profile.instance().save(file) == true)
+			{
+				// Select new profile in combo box
+				if(addNewItemToCombo)
+				{
+					cbProfiles.addItem(profileName);
+				}
+				
+				ItemListener listeners[] = cbProfiles.getItemListeners();
+				// don't fire item changed event
+				cbProfiles.removeItemListener(listeners[0]);
+				cbProfiles.setSelectedItem(profileName);
+				cbProfiles.addItemListener(listeners[0]);
+				
+				JOptionPane.showMessageDialog(
+						SettingsGui.this,
+						ResBox.text("SETTINGS_SAVED"),
+						"",
+						JOptionPane.INFORMATION_MESSAGE);	
+			}
+			else
+			{
+				JOptionPane.showMessageDialog(
+						SettingsGui.this,
+						ResBox.text("SETTINGS_SAVED"),
+						"",
+						JOptionPane.ERROR_MESSAGE);
+			}
+		}
+	}
+	
+	private class OnBtnSaveDefault implements ActionListener
+	{
+		@Override
+		public void actionPerformed(ActionEvent e)
+		{
+			if(DroneTelemetry.instance().isDroneConnected() == false)
+				return;
+			
+			DroneCommander.instance().saveDefaultCfg();
 			
 			JOptionPane.showMessageDialog(
 					SettingsGui.this,
-					ResBox.text("SETTINGS_SAVED"),
+					ResBox.text("SETTINGS_SAVED_DEFAULT"),
+					"",
+					JOptionPane.INFORMATION_MESSAGE);	
+		}
+	}
+	
+	private class OnBtnLoadDefault implements ActionListener
+	{
+		@Override
+		public void actionPerformed(ActionEvent e)
+		{
+			if(DroneTelemetry.instance().isDroneConnected() == false)
+				return;
+			
+			DroneCommander.instance().loadDefaultCfg();
+			
+			JOptionPane.showMessageDialog(
+					SettingsGui.this,
+					ResBox.text("SETTINGS_LOADED_DEFAULT"),
 					"",
 					JOptionPane.INFORMATION_MESSAGE);
+			
+			DroneState ds = DroneTelemetry.instance().getDroneState();
+			// Fill settings tree with received settings to be sure in settings we have really on drone
+			Profile.instance().setDroneSettings(ds);
+			
+			updateSettingsTree();
 		}
 	}
 	
 	private JTreeTable mtt;
+	private JComboBox<String> cbProfiles;
 	
 	public SettingsGui()
 	{
@@ -262,123 +376,101 @@ public class SettingsGui extends JSavedFrame
 		this.createUI();
 	}
 	
+	private void updateSettingsTree()
+	{
+		SettingsNode root = Profile.instance().buildSettingsTree();
+
+		if(mtt == null)
+		{
+			mtt = new JTreeTable(new SettingsTreeTableModel(root));
+			mtt.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		}
+		else
+		{
+			mtt.setTreeTableModel(new SettingsTreeTableModel(root));
+		}
+	}
+	
 	private void createUI()
 	{
-		DroneState ds = Settings.instance().getDroneSettings();
-		Node root = buildSettingsTree(ds);
-
-		mtt = new JTreeTable(new SettingsTreeTableModel(root));
-		mtt.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		JPanel pnlBtns = new JPanel(new MigLayout("","[][][][grow][][]"));
 		
-		JPanel pnlBtns = new JPanel(new MigLayout("","[][][][]"));
+		cbProfiles = new JComboBox<String>();
+		for(String item : AppSettings.instance().listProfiles())
+		{
+			cbProfiles.addItem(item);
+		}
+		cbProfiles.setSelectedItem(AppSettings.instance().getCurProfileName());
+		cbProfiles.addItemListener(new OnProfileItem());
 		
-		JButton btnReceive = new JButton(ResBox.text("RECEIVE"));
+		updateSettingsTree();
+		
+		//JButton btnReceive = new JButton(ResBox.text("RECEIVE"));
 		JButton btnSend = new JButton(ResBox.text("SEND"));
-		JButton btnLoad = new JButton(ResBox.text("LOAD"));
 		JButton btnSave = new JButton(ResBox.text("SAVE"));
+		JButton btnSaveDefault = new JButton(ResBox.text("SAVE_DEFAULT_CFG"));
+		JButton btnLoadDefault = new JButton(ResBox.text("LOAD_DEFAULT_CFG"));
 		
-		btnReceive.addActionListener(new OnBtnReceive());
+		//btnReceive.addActionListener(new OnBtnReceive());
 		btnSend.addActionListener(new OnBtnSend());
-		btnLoad.addActionListener(new OnBtnLoad());
 		btnSave.addActionListener(new OnBtnSave());
+		btnSaveDefault.addActionListener(new OnBtnSaveDefault());
+		btnLoadDefault.addActionListener(new OnBtnLoadDefault());
 		
-		pnlBtns.add(btnReceive,"w 80!");
+		pnlBtns.add(cbProfiles,"w 150!");
+		//pnlBtns.add(btnReceive,"w 80!");
 		pnlBtns.add(btnSend,"w 80!");
-		pnlBtns.add(btnLoad,"w 80!");
 		pnlBtns.add(btnSave,"w 80!");
+		pnlBtns.add(new JPanel(),"grow");
+		pnlBtns.add(btnLoadDefault);
+		pnlBtns.add(btnSaveDefault);
 		
 		JPanel pnlSettings = new JPanel(new MigLayout("","[grow]","[][grow]"));
 		
-		pnlSettings.add(pnlBtns,"wrap");
+		pnlSettings.add(pnlBtns,"grow,wrap");
 		pnlSettings.add(new JScrollPane(mtt),"grow");
 		
 		this.add(pnlSettings);
 	}
-	
-	private Node buildSettingsTree(DroneState ds)
-	{
-		Node root = new Node(ResBox.text("SETTINGS"));
-		
-		// Build settings tree by settings class
-		// Each nested class of Settings is Group of Params
-		// Each member of that class is Param
-		
-		for(java.lang.reflect.Field settingGroupField : DroneState.class.getFields())
-		{
-			SettingGroup settingGroupAnnotation = settingGroupField.getAnnotation(DroneState.SettingGroup.class);
-			
-			if(settingGroupAnnotation != null)
-			{
-				Node groupNode = new Node(ResBox.text(settingGroupAnnotation.name()));
-				
-				for(java.lang.reflect.Field settingField : settingGroupField.getType().getFields())
-				{
-					if(settingField.isAnnotationPresent(DroneState.Setting.class) == false)
-						continue;
-					
-					Node paramNode = new Node(settingField.getName());
-					
-					try
-					{
-						paramNode.value = settingField.get(settingGroupField.get(ds)).toString();
-						paramNode.settingField = settingField;
-						paramNode.settingGroup = settingGroupField;
-					}
-					catch(Exception e)
-					{
-						e.printStackTrace();
-					}
-					
-					groupNode.childs.add(paramNode);
-				}
-				
-				root.childs.add(groupNode);
-			}
-		}
-		
-		return root;
-	}
-	
+
 	private DroneState grabNewSettings()
 	{
-		DroneState ds = Settings.instance().getDroneSettings();
-		Node root = (Node)mtt.getTreeTableModel().getRoot();
+		DroneState ds = new DroneState();
+		SettingsNode root = (SettingsNode)mtt.getTreeTableModel().getRoot();
 		
-		for(Node group : root.childs)
+		for(SettingsNode group : root.childs)
 		{
-			for(Node param : group.childs)
+			for(SettingsNode param : group.childs)
 			{
-				if(param.nValue.isEmpty())
-					continue;
-				
 				try
 				{
 					Object settingGroupObj = param.settingGroup.get(ds);
+					Object value = param.value;
 					String type = param.settingField.getGenericType().toString();
 
 					if(type.startsWith("int"))
 					{
-						int i = Integer.parseInt(param.nValue);
+						int i = Integer.parseInt(value.toString());
 						param.settingField.setInt(settingGroupObj, i);
 					}
 					else if(type.startsWith("double"))
 					{
-						double d = Double.parseDouble(param.nValue);
+						double d = Double.parseDouble(value.toString());
 						param.settingField.setDouble(settingGroupObj, d);
 					}
 					else if(type.startsWith("float"))
 					{
-						float f = Float.parseFloat(param.nValue);
+						float f = Float.parseFloat(value.toString());
 						param.settingField.setFloat(settingGroupObj, f);
 					}
 					else if(type.startsWith("bool"))
 					{
-						boolean b = Boolean.parseBoolean(param.nValue);
+						boolean b = Boolean.parseBoolean(value.toString());
 						param.settingField.setBoolean(settingGroupObj, b);
 					}
 					else if(type.contains("String"))
 					{
-						param.settingField.set(settingGroupObj, param.nValue);
+						param.settingField.set(settingGroupObj, value.toString());
 					}
 				}
 				catch(NumberFormatException e)
@@ -409,12 +501,12 @@ public class SettingsGui extends JSavedFrame
 	@Override
 	protected WndState loadWndState()
 	{
-		return Settings.instance().getSettingsWnd();
+		return AppSettings.instance().getSettingsWnd();
 	}
 
 	@Override
 	protected void saveWndState(WndState ws)
 	{
-		Settings.instance().setSettingsWnd(ws);
+		AppSettings.instance().setSettingsWnd(ws);
 	}
 }

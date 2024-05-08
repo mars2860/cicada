@@ -24,11 +24,12 @@ public class DroneTelemetry extends java.util.Observable implements Runnable
 	}
 	
 	public static final int TIMEOUT = 3000;
+	public static final int DRONE_MAX_PACKET_SIZE = 1096;
 	
 	private DroneState mDroneState = new DroneState();
 	private int mBlackBoxSize;
 	private Deque<DroneState> mBlackBox;
-	private static final int MAX_BLACK_BOX_SIZE = 64000;	// about 18 Mb
+	//private static final int MAX_BLACK_BOX_SIZE = 64000;	// about 18 Mb
 	private int mDroneTelemetryPort;
 	private InetAddress mDroneInetAddress;
 	private DatagramSocket mSocket;
@@ -37,6 +38,8 @@ public class DroneTelemetry extends java.util.Observable implements Runnable
 	private Object objTelemetrySync;
 	private Object objDataSync;
 	private boolean mDroneConnected;
+	private double mFlyTime;
+	private double oldTimestamp;
 
 	private DroneTelemetry()
 	{
@@ -46,9 +49,20 @@ public class DroneTelemetry extends java.util.Observable implements Runnable
 		mBlackBoxSize = 0;
 	}
 	
+	public double getFlyTime()
+	{
+		return mFlyTime;
+	}
+	
+	public void resetFlyTime()
+	{
+		mFlyTime = 0;
+	}
+	
+	/** Start new thread to receive telemetry packets. If thread is started it will be restarted */
 	public void start(String ip, int port) throws UnknownHostException, SocketException
 	{
-		if(mSocket != null)
+		if(mTelemetryRun || mSocket != null)
 			this.stop();
 		
 		mDroneTelemetryPort = port;
@@ -61,11 +75,11 @@ public class DroneTelemetry extends java.util.Observable implements Runnable
 		mTelemetryThread.start();
 	}
 	
+	/** Stops telemetry service. But It doesn't clear observers list and doesn't clear Black Box! */
 	public void stop()
 	{
 		mTelemetryRun = false;
-		
-		//System.out.println("Telemetry thread has started");
+		mDroneConnected = false;
 		
 		try
 		{
@@ -76,7 +90,9 @@ public class DroneTelemetry extends java.util.Observable implements Runnable
 				//System.out.println("Wait until telemetry thread stops");
 				// Wait until thread stops its work
 				if(mTelemetryThread != null && mTelemetryThread.isAlive())
+				{
 					objTelemetrySync.wait();
+				}
 				//System.out.println("End to wait for telemetry thread stop");
 			}
 		}
@@ -88,13 +104,13 @@ public class DroneTelemetry extends java.util.Observable implements Runnable
 		if(mSocket != null)
 		{
 			mSocket.close();
+			mSocket = null;
 		}
-		
-		DroneAlarmCenter.instance().clearAlarm(Alarm.DRONE_NOT_FOUND);
-		DroneAlarmCenter.instance().clearAlarm(Alarm.DRONE_RECEIVE_ERROR);
+
+		DroneAlarmCenter.instance().clearAll();
 	}
 	
-	public boolean isCopterConnected()
+	public boolean isDroneConnected()
 	{
 		return mDroneConnected;
 	}
@@ -124,7 +140,7 @@ public class DroneTelemetry extends java.util.Observable implements Runnable
 		
 		synchronized(objDataSync)
 		{
-			result = mDroneState.net.telemetryPeriod;
+			result = DroneState.net.telemetryPeriod;
 		}
 		
 		return result;
@@ -135,7 +151,7 @@ public class DroneTelemetry extends java.util.Observable implements Runnable
 	@Override
 	public void run()
 	{	
-		byte[] receivedData = new byte[1024];
+		byte[] receivedData = new byte[DRONE_MAX_PACKET_SIZE];
 		
 		while(mTelemetryRun)
 		{
@@ -147,8 +163,8 @@ public class DroneTelemetry extends java.util.Observable implements Runnable
 				
 				if(receivedPacket.getAddress().equals(mDroneInetAddress))
 				{
-					DroneAlarmCenter.instance().clearAlarm(Alarm.DRONE_NOT_FOUND);
-					DroneAlarmCenter.instance().clearAlarm(Alarm.DRONE_RECEIVE_ERROR);
+					DroneAlarmCenter.instance().clearAlarm(Alarm.ALARM_DRONE_NOT_FOUND);
+					DroneAlarmCenter.instance().clearAlarm(Alarm.ALARM_RECEIVE_ERROR);
 
 					synchronized(objDataSync)
 					{
@@ -159,11 +175,15 @@ public class DroneTelemetry extends java.util.Observable implements Runnable
 						mDroneState.parse(parser, receivedPacket);
 						mBlackBox.offer(mDroneState);
 						mBlackBoxSize++;
-						if(mBlackBoxSize >= MAX_BLACK_BOX_SIZE)
+						if(mBlackBoxSize >= DroneState.misc.blackBoxSize)
 						{
 							mBlackBox.poll();
 							mBlackBoxSize--;
+							if(mBlackBoxSize < 0)
+								mBlackBoxSize = 0;
 						}
+						checkDroneStateForAlarms(mDroneState);
+						updateFlyTime();
 					}
 
 					this.setChanged();
@@ -174,19 +194,126 @@ public class DroneTelemetry extends java.util.Observable implements Runnable
 			catch(SocketTimeoutException e)
 			{
 				mDroneConnected = false;
-				DroneAlarmCenter.instance().setAlarm(Alarm.DRONE_NOT_FOUND);
+				DroneAlarmCenter.instance().setAlarm(Alarm.ALARM_DRONE_NOT_FOUND);
 			}
 			catch(IOException e)
 			{
-				DroneAlarmCenter.instance().setAlarm(Alarm.DRONE_RECEIVE_ERROR);
+				DroneAlarmCenter.instance().setAlarm(Alarm.ALARM_RECEIVE_ERROR);
 				e.printStackTrace();
 			}
 		}
+		
+		//System.out.println("Telemetry thread finish its work");
 		
 		synchronized(objTelemetrySync)
 		{
 			//System.out.println("Notify telemetry thread is stopped");
 			objTelemetrySync.notify();
+		}
+	}
+	
+	protected void updateFlyTime()
+	{
+		if(mDroneState.baseGas > (DroneState.Motors.maxGas - DroneState.Motors.minGas) / 8)
+		{
+			mFlyTime += mDroneState.timestamp - oldTimestamp;
+		}
+		
+		oldTimestamp = mDroneState.timestamp;
+	}
+	
+	protected void checkDroneStateForAlarms(DroneState ds)
+	{
+		int errors = (int)ds.errors;
+		if((errors & 0x1) > 0)
+		{
+			DroneAlarmCenter.instance().setAlarm(Alarm.ALARM_IMU_NOT_READY);
+		}
+		else
+		{
+			DroneAlarmCenter.instance().clearAlarm(Alarm.ALARM_IMU_NOT_READY);
+		}
+		if(ds.gps.enabled && (errors & 0x2) > 0)
+		{
+			DroneAlarmCenter.instance().setAlarm(Alarm.ALARM_MAGNETO_NOT_READY);
+		}
+		else
+		{
+			DroneAlarmCenter.instance().clearAlarm(Alarm.ALARM_MAGNETO_NOT_READY);
+		}
+		if(ds.battery.percent < DroneAlarmCenter.BATTERY_CRITICAL_LOW_LEVEL)
+		{
+			DroneAlarmCenter.instance().clearAlarm(Alarm.ALARM_LOW_BATTERY);
+			DroneAlarmCenter.instance().setAlarm(Alarm.ALARM_LOW_BATTERY_CRITICAL);
+		}
+		else if(ds.battery.percent < DroneAlarmCenter.BATTERY_LOW_LEVEL)
+		{
+			DroneAlarmCenter.instance().setAlarm(Alarm.ALARM_LOW_BATTERY);
+		}
+		else 
+		{
+			DroneAlarmCenter.instance().clearAlarm(Alarm.ALARM_LOW_BATTERY);
+			DroneAlarmCenter.instance().clearAlarm(Alarm.ALARM_LOW_BATTERY_CRITICAL);
+		}
+		
+		if(ds.rssi <= DroneAlarmCenter.WIFI_LOW_LEVEL)
+		{
+			DroneAlarmCenter.instance().setAlarm(Alarm.ALARM_LOW_RADIO_SIGNAL);
+		}
+		else if(ds.rssi >= DroneAlarmCenter.WIFI_LOW_LEVEL + 4.0)
+		{
+			DroneAlarmCenter.instance().clearAlarm(Alarm.ALARM_LOW_RADIO_SIGNAL);
+		}
+
+		if(ds.velocityZPid.enabled)
+		{
+			DroneAlarmCenter.instance().clearAlarm(Alarm.ALARM_ENABLE_VELOCITY_Z_PID);
+			if(ds.motorsEnabled && !ds.stabilizationEnabled)
+			{
+				if(Math.abs(ds.velUp) > 0.3)
+				{
+					DroneAlarmCenter.instance().setAlarm(Alarm.ALARM_VERT_VELO_NOT_NULL);
+				}
+				else
+				{
+					DroneAlarmCenter.instance().clearAlarm(Alarm.ALARM_VERT_VELO_NOT_NULL);
+				}
+			}
+			else
+			{
+				DroneAlarmCenter.instance().clearAlarm(Alarm.ALARM_VERT_VELO_NOT_NULL);
+			}
+		}
+		else
+		{
+			DroneAlarmCenter.instance().clearAlarm(Alarm.ALARM_DISABLE_VELOCITY_Z_PID);
+			DroneAlarmCenter.instance().clearAlarm(Alarm.ALARM_VERT_VELO_NOT_NULL);
+		}
+		
+		if(ds.altPid.enabled)
+		{
+			DroneAlarmCenter.instance().clearAlarm(Alarm.ALARM_ENABLE_ALT_PID);
+		}
+		
+		if(ds.gps.enabled)
+		{
+			if((int)ds.gps.fixType != 3 || (int)ds.gps.numSV < 6)
+			{
+				DroneAlarmCenter.instance().setAlarm(Alarm.ALARM_GPS_NOT_FIXED);
+			}
+			else
+			{
+				DroneAlarmCenter.instance().clearAlarm(Alarm.ALARM_GPS_NOT_FIXED);
+			}
+		}
+		
+		if(ds.baseGas == 0 && (Math.abs(ds.pitchDeg) > 60 || Math.abs(ds.rollDeg) > 60))
+		{
+			DroneAlarmCenter.instance().setAlarm(Alarm.ALARM_DANGER_LEVEL);
+		}
+		else
+		{
+			DroneAlarmCenter.instance().clearAlarm(Alarm.ALARM_DANGER_LEVEL);
 		}
 	}
 	
@@ -196,7 +323,7 @@ public class DroneTelemetry extends java.util.Observable implements Runnable
 	public DroneState[] getBlackBox(int range)
 	{
 		DroneState[] result = new DroneState[0];
-		int telemetryPeriod = mDroneState.net.telemetryPeriod;
+		int telemetryPeriod = DroneState.net.telemetryPeriod;
 		
 		if(range > 0 && telemetryPeriod > 0)
 		{

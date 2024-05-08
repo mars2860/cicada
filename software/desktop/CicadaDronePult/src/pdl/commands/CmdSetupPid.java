@@ -26,7 +26,7 @@ public abstract class CmdSetupPid extends CmdSetup
 		pos = writeFloat(pos,data,mPid.ki);
 		pos = writeFloat(pos,data,mPid.kd);
 		pos = writeFloat(pos,data,mPid.maxOut);
-		pos = writeFloat(pos,data,mPid.maxErrSum);
+		pos = writeFloat(pos,data,0.f);//mPid.maxErrSum);
 		
 		return data;
 	}

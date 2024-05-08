@@ -12,19 +12,25 @@ import javax.swing.event.ChangeListener;
 
 import helper.NumericDocument;
 import net.miginfocom.swing.MigLayout;
+import pdl.DroneState;
 
 public class MotorGasSlider extends javax.swing.JPanel
 {
 	private static final long serialVersionUID = -4207784842035696255L;
 	
-	public static final int MIN_GAS = 0;
-	public static final int MAX_GAS = 1999;
+	public static final int DEFAULT_MIN_GAS = 0;
+	public static final int DEFAULT_NULL_GAS = 0;
+	public static final int DEFAULT_MAX_GAS = 1999;	// dshot switches motor off at value 2000!
+	//public static final int MAX_GAS = 200;	// for PWM 25 kHz
 	
 	private JSlider mSlider;
 	private JTextField mlbGas;
 	private JLabel mlbGasPercent;
 	private ChangeListener mcl;
 	private boolean mValueAdjusting;
+	private int mMinGas = DEFAULT_MIN_GAS;
+	private int mNullGas = DEFAULT_NULL_GAS;
+	private int mMaxGas = DEFAULT_MAX_GAS;
 	
 	private class OnGasChanged implements ChangeListener
 	{
@@ -36,8 +42,17 @@ public class MotorGasSlider extends javax.swing.JPanel
 			
 			int value = mSlider.getValue();
 			float percent = value;
-			percent /= mSlider.getMaximum();
-			percent *= 100.0;
+			
+			if(value >= mNullGas)
+			{
+				percent /= mSlider.getMaximum();
+				percent *= 100.0;
+			}
+			else
+			{
+				percent /= mSlider.getMinimum();
+				percent *= 100.0;
+			}
 				
 			DecimalFormat fmt = new DecimalFormat();
 			fmt.setMaximumFractionDigits(0);
@@ -73,11 +88,19 @@ public class MotorGasSlider extends javax.swing.JPanel
 	
 	public MotorGasSlider(String name)
 	{
+		mMinGas = DroneState.Motors.minGas;
+		mNullGas = DroneState.Motors.nullGas;
+		mMaxGas = DroneState.Motors.maxGas;
+		
 		this.createVertical(name);
 	}
 	
 	public MotorGasSlider(String name, boolean horizontal)
 	{
+		mMinGas = DroneState.Motors.minGas;
+		mNullGas = DroneState.Motors.nullGas;
+		mMaxGas = DroneState.Motors.maxGas;
+		
 		if(horizontal)
 			this.createHorizontal(name);
 		else
@@ -88,7 +111,7 @@ public class MotorGasSlider extends javax.swing.JPanel
 	{
 		this.setLayout(new MigLayout("insets 0 0 0 0","[35!, center]","[][grow][][]"));
 		
-		mSlider = new JSlider(JSlider.VERTICAL, MIN_GAS, MAX_GAS, 0);
+		mSlider = new JSlider(JSlider.VERTICAL, mMinGas, mMaxGas, mNullGas);
 		mlbGas = new JTextField();
 		mlbGasPercent = new JLabel();
 		
@@ -112,7 +135,7 @@ public class MotorGasSlider extends javax.swing.JPanel
 	{
 		this.setLayout(new MigLayout("insets 0 0 0 0","[][grow][][]","[center]"));
 		
-		mSlider = new JSlider(JSlider.HORIZONTAL, MIN_GAS, MAX_GAS, 0);
+		mSlider = new JSlider(JSlider.HORIZONTAL, mMinGas, mMaxGas, mNullGas);
 		mlbGas = new JTextField();
 		mlbGasPercent = new JLabel();
 		

@@ -1,6 +1,6 @@
 package pdl.commands;
 
-public class CmdSelfCalibrateAccel extends AbstractCopterCmd
+public class CmdSelfCalibrateAccel extends AbstractDroneCmd
 {
 	public CmdSelfCalibrateAccel()
 	{

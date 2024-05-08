@@ -3,9 +3,9 @@ package pdl.commands;
 import pdl.DroneState;
 import pdl.DroneState.Pid;
 
-public class CmdSetRollRatePid extends CmdSetupPid
+public class CmdSetXRatePid extends CmdSetupPid
 {
-	public CmdSetRollRatePid(Pid pid)
+	public CmdSetXRatePid(Pid pid)
 	{
 		super(pid,119);
 	}
@@ -13,6 +13,6 @@ public class CmdSetRollRatePid extends CmdSetupPid
 	@Override
 	public boolean settingsEquals(DroneState ds)
 	{
-		return mPid.settingsEquals(ds.rollRatePid);
+		return mPid.settingsEquals(ds.xRatePid);
 	}
 }

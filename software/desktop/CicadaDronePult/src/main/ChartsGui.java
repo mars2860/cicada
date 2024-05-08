@@ -13,6 +13,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -46,9 +47,10 @@ import ChartDirector.TrackCursorAdapter;
 import ChartDirector.ViewPortAdapter;
 import ChartDirector.ViewPortChangedEvent;
 import ChartDirector.XYChart;
-import main.Settings.WndState;
+import main.AppSettings.WndState;
 import net.miginfocom.swing.MigLayout;
 import pdl.DroneTelemetry;
+import pdl.res.Profile;
 import pdl.DroneState;
 
 public class ChartsGui extends JSavedFrame
@@ -58,6 +60,9 @@ public class ChartsGui extends JSavedFrame
 	private static final int REALTIME_CHART_RANGE = 30000000;
 	/// millis
 	private static final int REALTIME_CHART_UPDATE_PERIOD = 250;
+	// name of a special list item to render a track of drone
+	// when it renders a track of drone, no other charts draw
+	private static final String TRACK_LIST_ITEM_NAME = "track";
 	
 	private Set<String> mSelSources = new HashSet<String>();
 	private DroneState[] mData;
@@ -74,6 +79,8 @@ public class ChartsGui extends JSavedFrame
 	private ChartMouseListener mChartMouseListener;
 	private Timer mRealtimeChartTimer;
 	private Object mTimerSyncObj = new Object();
+	
+	private boolean mDrawTrack = false;
 	
 	private class CheckListItem
 	{
@@ -134,6 +141,10 @@ public class ChartsGui extends JSavedFrame
 			JList<CheckListItem> list = (JList<CheckListItem>)event.getSource();
 			int index = list.locationToIndex(event.getPoint());
 	        CheckListItem item = list.getModel().getElementAt(index);
+	        if(item.label.compareToIgnoreCase(TRACK_LIST_ITEM_NAME) == 0)
+	        {
+	        	mDrawTrack = !item.isSelected();
+	        }
 	        item.setSelected(!item.isSelected());
 	        list.repaint(list.getCellBounds(index, index));
 		}
@@ -179,10 +190,10 @@ public class ChartsGui extends JSavedFrame
 				if(mData.length > 0)
 				{
 					mDataChartViewer.setFullRange("x", mData[0].timestamp, mData[mData.length - 1].timestamp);
-					mDataChartViewer.setZoomInWidthLimit(100.0/mData.length);
-					
 					mSelLeftTimestamp = mData[0].timestamp;
 					mSelRightTimestamp = mSelLeftTimestamp;
+					
+					mDataChartViewer.setZoomInWidthLimit(100.0/mData.length);
 
 					btnSaveImage.setEnabled(true);
 					btnExportSelRange.setEnabled(true);
@@ -303,7 +314,7 @@ public class ChartsGui extends JSavedFrame
 				
 				if(end - REALTIME_CHART_RANGE < start)
 					end = start + REALTIME_CHART_RANGE;
-			
+
 				mDataChartViewer.setFullRange("x", start, end);
 				mDataChartViewer.setZoomInWidthLimit(100.0/mData.length);
 				
@@ -362,7 +373,7 @@ public class ChartsGui extends JSavedFrame
 		// copy&paste from chartdirector example
 	    private void trackLineLabel(XYChart c, int mouseX)
 	    {
-	    	if(mData.length == 0 || c == null)
+	    	if(mData.length == 0 || c == null || mSelSources.isEmpty() || mDrawTrack)
 	    		return;
 	    	
 	        // Clear the current dynamic layer and get the DrawArea object to draw on it.
@@ -384,8 +395,11 @@ public class ChartsGui extends JSavedFrame
 	        int seconds = (int)((xValue - minutes*60000000.0)/1000000.0);
 	        double mseconds = (xValue - minutes*60000000.0 - seconds*1000000.0)/1000.0;
 	        // Draw a label on the x-axis to show the track line position.
-	        String xlabel = "<*font,bgColor=000000*> " + Integer.toString(minutes) + "m" + 
-	        Integer.toString(seconds) + "s" + fmt.format(mseconds) + "ms"+ " <*/font*>";
+	        String xlabel = "";
+
+	        xlabel = "<*font,bgColor=000000*> " + Integer.toString(minutes) + "m" + 
+	        			Integer.toString(seconds) + "s" + fmt.format(mseconds) + "ms"+ " <*/font*>";
+	        
 	        TTFText t = d.text(xlabel, "Arial Bold", 8);
 
 	        // Restrict the x-pixel position of the label to make sure it stays inside the chart image.
@@ -512,7 +526,7 @@ public class ChartsGui extends JSavedFrame
 	
 	private void createUI()
 	{
-		this.setLayout(new MigLayout("","[grow][]","[grow][35%]"));
+		this.setLayout(new MigLayout("","[grow][200px]","[grow]"));
 		this.addComponentListener(new OnFrameResize());
 		this.addWindowListener(new OnWindowListener());
 		
@@ -536,12 +550,23 @@ public class ChartsGui extends JSavedFrame
 		
 		pnlPeriod.add(rbRealtime,"grow,wrap");
 		pnlPeriod.add(rbSnapshot,"grow,wrap");
-		pnlPeriod.add(btnSubmit,"grow,wrap");
+		pnlPeriod.add(btnSubmit,"grow");
 		
 		//---------------------------------------------------------------------
 		// Source panel
 		
-		List<CheckListItem> items = buildCheckListItems(DroneState.class, "");
+		//List<CheckListItem> items = buildCheckListItems(DroneState.class, "");
+		List<CheckListItem> items = new ArrayList<CheckListItem>();
+		try
+		{
+			items = buildCheckListItems(Profile.instance().getDroneSettings(), "");
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+		// Add special item for rendering track of drone
+		items.add(new CheckListItem(TRACK_LIST_ITEM_NAME));
 		JList<CheckListItem> lstSource = new JList<CheckListItem>(items.toArray(new CheckListItem[0]));
 		
 		lstSource.setCellRenderer(new CheckListRenderer());
@@ -567,7 +592,7 @@ public class ChartsGui extends JSavedFrame
 	    pnlData.add(btnSaveImage,"grow,wrap");
 	    pnlData.add(btnExportSelRange,"grow,wrap");
 	    pnlData.add(btnExportFullRange,"grow,wrap");
-	    pnlData.add(btnClearBlackBox,"grow,wrap");
+	    pnlData.add(btnClearBlackBox,"grow");
 
 	    JPanel pnlSource = new JPanel(new MigLayout("insets 0 0 0 0","[grow]","[][grow]"));
 	    
@@ -583,15 +608,16 @@ public class ChartsGui extends JSavedFrame
 	    mDataChartViewer.setZoomDirection(Chart.DirectionHorizontalVertical);
 	    mDataChartViewer.setMouseWheelZoomRatio(1.1);
 	    mDataChartViewer.addViewPortListener(new OnChartViewportChanged());
+	    mDataChartViewer.setMinimumSize(new java.awt.Dimension(200,200));
 	    mChartMouseListener = new ChartMouseListener();
 	    
 	    mData = new DroneState[0];
 	    
-		this.add(mDataChartViewer,"spany,grow");
-		this.add(pnlSource,"grow,spany,wrap");
-		this.add(new JPanel(),"grow");
+		this.add(mDataChartViewer,"grow");
+		this.add(pnlSource,"grow");
 	}
-	
+
+	/*
 	private List<CheckListItem> buildCheckListItems(Class<?> klass, String baseName)
 	{
 		List<CheckListItem> items = new ArrayList<CheckListItem>();
@@ -606,8 +632,51 @@ public class ChartsGui extends JSavedFrame
 			else if( fields[i].getAnnotation(DroneState.NoChart.class) == null && 
 					 java.lang.reflect.Modifier.isStatic(fields[i].getModifiers()) == false)
 			{
+				
 				CheckListItem j = new CheckListItem(baseName + fields[i].getName());
 				items.add(j);
+			}
+		}
+
+		return items;
+	}
+	*/
+	
+	private List<CheckListItem> buildCheckListItems(Object obj, String baseName) throws IllegalArgumentException, IllegalAccessException
+	{
+		Class<?> klass = obj.getClass();
+		List<CheckListItem> items = new ArrayList<CheckListItem>();
+		
+		Field fields[] = klass.getFields();
+		for(int i = 0; i < fields.length; i++)
+		{
+			if( fields[i].getAnnotation(DroneState.NoChart.class) != null || 
+				java.lang.reflect.Modifier.isStatic(fields[i].getModifiers()) == true)
+			{
+				continue;
+			}
+				
+			if(fields[i].getType().getFields().length > 0)
+			{
+				items.addAll(buildCheckListItems(fields[i].get(obj), fields[i].getName() + "."));
+			}
+			else
+			{
+				if(fields[i].getType().isArray())
+				{
+					Object array = fields[i].get(obj);
+					int length = Array.getLength(array);
+					for(int idx = 0; idx < length; idx++)
+					{
+						CheckListItem j = new CheckListItem(baseName + fields[i].getName() + "[" + idx + "]");
+						items.add(j);	
+					}
+				}
+				else
+				{
+					CheckListItem j = new CheckListItem(baseName + fields[i].getName());
+					items.add(j);
+				}
 			}
 		}
 
@@ -618,6 +687,11 @@ public class ChartsGui extends JSavedFrame
 	{
 		if(mData == null)
 			return;
+		
+		double xMinValue = 0;
+		double xMaxValue = 0;
+		double yMinValue = 0;
+		double yMaxValue = 0;
 		
 		int w = mDataChartViewer.getWidth();
 		int h = mDataChartViewer.getHeight();
@@ -646,9 +720,39 @@ public class ChartsGui extends JSavedFrame
 	    
 	    double timestamp[] = new double[mData.length];
 	    
+	    double drawTrackMinEast = 0;
+	    double drawTrackMaxEast = 0;
+
 	    for(int i = 0; i < mData.length; i++)
-	    	timestamp[i] = mData[i].timestamp;
+	    {
+	    	if(mDrawTrack)
+	    	{
+	    		timestamp[i] = mData[i].posEast;
+	    		
+	    		if(mData[i].posEast < drawTrackMinEast)
+	    			drawTrackMinEast = mData[i].posEast;
+	    		if(mData[i].posEast > drawTrackMaxEast)
+	    			drawTrackMaxEast = mData[i].posEast;
+	    	}
+	    	else
+	    	{
+	    		timestamp[i] = mData[i].timestamp;
+	    	}
+	    }
 	    
+	    if(mDrawTrack)
+	    {
+	    	xMinValue = drawTrackMinEast - 0.5;
+	    	xMaxValue = drawTrackMaxEast + 0.5;
+	    	mDataChartViewer.setFullRange("x", xMinValue, xMaxValue);
+	    }
+	    else if(rbSnapshot.isSelected())
+	    {
+	    	xMinValue = mData[0].timestamp;
+	    	xMaxValue = mData[mData.length - 1].timestamp;
+	    	mDataChartViewer.setFullRange("x", xMinValue, xMaxValue);
+	    }
+
 		double timestampStart = mDataChartViewer.getValueAtViewPort("x", mDataChartViewer.getViewPortLeft());
 		double timestampEnd = mDataChartViewer.getValueAtViewPort("x", mDataChartViewer.getViewPortLeft() +
 	            mDataChartViewer.getViewPortWidth());
@@ -667,17 +771,50 @@ public class ChartsGui extends JSavedFrame
 		
 		for(String srcName : mSelSources)
 		{
+			if(mDrawTrack == true && srcName.compareToIgnoreCase(TRACK_LIST_ITEM_NAME) != 0)
+				continue;
+			
+			if(mDrawTrack == false && srcName.compareToIgnoreCase(TRACK_LIST_ITEM_NAME) == 0)
+				continue;
+			
 			try
 			{
 				String fieldName[] = srcName.split("[.]");
 				double data[] = new double[noOfPoints];
+				double trackTargetX[] = null;
+				double trackTargetY[] = null;
+				if(mDrawTrack)
+				{
+					trackTargetX = new double[noOfPoints];
+					trackTargetY = new double[noOfPoints];
+				}
 			
 				for(int i = startIndex, k = 0; i <= endIndex; i++, k++)
 				{
 					Object value = mData[i];
 					
-					for(int j = 0; j < fieldName.length; j++)
-						value = value.getClass().getField(fieldName[j]).get(value);
+					if(mDrawTrack)
+					{
+						value = mData[i].posNorth;
+						trackTargetX[k] = mData[i].posNorthPid.target;
+						trackTargetY[k] = mData[i].posEastPid.target;
+					}
+					else
+					{
+						for(int j = 0; j < fieldName.length; j++)
+						{
+							if(fieldName[j].contains("["))
+							{
+								String arrayName[] = fieldName[j].split("[\\[\\]]");
+								value = value.getClass().getField(arrayName[0]).get(value);
+								value = Array.get(value,Integer.parseInt(arrayName[1]));
+							}
+							else
+							{
+								value = value.getClass().getField(fieldName[j]).get(value);
+							}
+						}
+					}
 					
 					if(value instanceof Double)
 						data[k] = (Double)value;
@@ -703,44 +840,94 @@ public class ChartsGui extends JSavedFrame
 				}
 			
 				c.addLineLayer(data, -1, srcName).setXData(viewportTimestamp);
+				
+				if(mDrawTrack)
+				{
+					c.addLineLayer(trackTargetX, -1, "target").setXData(trackTargetY);
+					break;
+				}
 			}
 			catch(Exception e)
 			{
 				e.printStackTrace();
 			}
 		}
-	
-		if(mDataChartViewer.getViewPortWidth() == 1.0)
-			mDataChartViewer.setFullRange("y", minDataValue, maxDataValue);
 		
-		double bottom = mDataChartViewer.getViewPortTop();
-		double top = bottom + mDataChartViewer.getViewPortHeight();
-		maxDataValue = mDataChartViewer.getValueAtViewPort("y", top);
-		minDataValue = mDataChartViewer.getValueAtViewPort("y", bottom);
-		double d = (maxDataValue - minDataValue)*0.05;
-		maxDataValue += d;
-		minDataValue -= d;
-		c.yAxis().setLinearScale(minDataValue, maxDataValue, (maxDataValue - minDataValue)/10.0);
-		
-		if(rbRealtime.isSelected())
+		if(mDrawTrack)
 		{
-			 timestampEnd = mDataChartViewer.getValueAtViewPort("x",
-					 mDataChartViewer.getViewPortLeft() + mDataChartViewer.getViewPortWidth());
-			 c.xAxis().setLinearScale(timestampStart, timestampEnd, (timestampEnd - timestampStart)/20.0);
+			yMinValue = minDataValue;
+			yMaxValue = maxDataValue;
+			
+			// make scale of x and y to be equal
+			double xFullRange = xMaxValue - xMinValue;
+			double yFullRange = yMaxValue - yMinValue;
+			double xLength = c.getPlotArea().getWidth();
+			double yLength = c.getPlotArea().getHeight();
+			
+			double xScale = xFullRange / xLength;
+			double yScale = yFullRange / yLength;
+			
+			double minAxisValue = 0;
+			double maxAxisValue = 0;
+			
+			double tick = 0;
+
+			if(xScale > yScale)
+			{
+				yFullRange = xScale * yLength;
+				minAxisValue = yMinValue + (yMaxValue - yMinValue - yFullRange)/2.0;
+				maxAxisValue = minAxisValue + yFullRange;
+				tick = (maxAxisValue - minAxisValue)/10.0;
+				c.yAxis().setLinearScale(minAxisValue,maxAxisValue,tick);
+				c.xAxis().setLinearScale(xMinValue,xMaxValue,tick);
+			}
+			else
+			{
+				xFullRange = yScale * xLength;
+				minAxisValue = xMinValue + (xMaxValue - xMinValue - xFullRange)/2.0;
+				maxAxisValue = minAxisValue + xFullRange;
+				tick = (maxAxisValue - minAxisValue)/10.0;
+				c.xAxis().setLinearScale(minAxisValue,maxAxisValue,tick);
+				c.yAxis().setLinearScale(yMinValue,yMaxValue,tick);
+			}
 		}
 		else
 		{
-			// c.xAxis().setLinearScale(timestampStart, timestampEnd, 500000);
-			mDataChartViewer.syncLinearAxisWithViewPort("x", c.xAxis());
-		}
+			if(mDataChartViewer.getViewPortWidth() == 1.0)
+				mDataChartViewer.setFullRange("y", minDataValue, maxDataValue);
 		
-		c.xAxis().setTickDensity(20);
-		c.yAxis().setTickDensity(10);
+			double bottom = mDataChartViewer.getViewPortTop();
+			double top = bottom + mDataChartViewer.getViewPortHeight();
+			maxDataValue = mDataChartViewer.getValueAtViewPort("y", top);
+			minDataValue = mDataChartViewer.getValueAtViewPort("y", bottom);
+			double d = (maxDataValue - minDataValue)*0.05;
+			maxDataValue += d;
+			minDataValue -= d;
+			c.yAxis().setLinearScale(minDataValue, maxDataValue, (maxDataValue - minDataValue)/10.0);
+			
+			if(rbRealtime.isSelected())
+			{
+				 timestampEnd = mDataChartViewer.getValueAtViewPort("x",
+						 mDataChartViewer.getViewPortLeft() + mDataChartViewer.getViewPortWidth());
+				 c.xAxis().setLinearScale(timestampStart, timestampEnd, (timestampEnd - timestampStart)/20.0);
+			}
+			else
+			{
+				// c.xAxis().setLinearScale(timestampStart, timestampEnd, 500000);
+				mDataChartViewer.syncLinearAxisWithViewPort("x", c.xAxis());
+			}
+			
+			//c.xAxis().setTickDensity(20);
+			//c.yAxis().setTickDensity(20);
+		}
 		
 		if(mSelLeftTimestamp != mSelRightTimestamp)
 		{
 			c.xAxis().addZone(mSelLeftTimestamp, mSelRightTimestamp, 0x800080);
 		}
+		
+		// replace yellow color in chart palette because it looks ugly
+		c.setColor(11, 0x5f0000);
 		
        	mDataChartViewer.setChart(c);   
 	}
@@ -775,6 +962,8 @@ public class ChartsGui extends JSavedFrame
 			
 			for(String srcName : mSelSources)
 			{
+				if(srcName.compareToIgnoreCase(TRACK_LIST_ITEM_NAME) == 0)
+					continue;
 				fos.write(comma.getBytes());
 				fos.write(srcName.getBytes());
 			}
@@ -787,6 +976,9 @@ public class ChartsGui extends JSavedFrame
 				
 				for(String srcName : mSelSources)
 				{
+					if(srcName.compareToIgnoreCase(TRACK_LIST_ITEM_NAME) == 0)
+						continue;
+					
 					String fieldName[] = srcName.split("[.]");
 					Object value = mData[i];
 
@@ -810,12 +1002,12 @@ public class ChartsGui extends JSavedFrame
 	@Override
 	protected WndState loadWndState()
 	{
-		return Settings.instance().getChartsWnd();
+		return AppSettings.instance().getChartsWnd();
 	}
 
 	@Override
 	protected void saveWndState(WndState ws)
 	{
-		Settings.instance().setChartsWnd(ws);
+		AppSettings.instance().setChartsWnd(ws);
 	}
 }

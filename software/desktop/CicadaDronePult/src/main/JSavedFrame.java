@@ -19,7 +19,7 @@ public abstract class JSavedFrame extends JFrame
 	{
 		super(title);
 		
-		Settings.WndState ws = loadWndState();
+		AppSettings.WndState ws = loadWndState();
 		
 		if(ws.w != 0 && ws.h != 0)
 		{
@@ -38,23 +38,28 @@ public abstract class JSavedFrame extends JFrame
 		
 		this.addWindowListener(new WindowListener()
 		{
+			public void saveWndState()
+			{
+				Point location = JSavedFrame.this.getLocation();
+				int width = JSavedFrame.this.getWidth();
+				int height = JSavedFrame.this.getHeight();
+				
+				AppSettings.WndState ws = new AppSettings.WndState();
+				ws.x = location.x;
+				ws.y = location.y;
+				ws.w = width;
+				ws.h = height;
+				
+				JSavedFrame.this.saveWndState(ws);
+			}
+			
 			@Override
 			public void windowOpened(WindowEvent e) {}
 
 			@Override
 			public void windowClosing(WindowEvent e)
 			{
-				Point location = JSavedFrame.this.getLocation();
-				int width = JSavedFrame.this.getWidth();
-				int height = JSavedFrame.this.getHeight();
-				
-				Settings.WndState ws = new Settings.WndState();
-				ws.x = location.x;
-				ws.y = location.y;
-				ws.w = width;
-				ws.h = height;
-				
-				saveWndState(ws);
+				saveWndState();
 			}
 
 			@Override
@@ -70,7 +75,10 @@ public abstract class JSavedFrame extends JFrame
 			public void windowActivated(WindowEvent e) {}
 
 			@Override
-			public void windowDeactivated(WindowEvent e) {}
+			public void windowDeactivated(WindowEvent e)
+			{
+				saveWndState();
+			}
 		});
 	}
 
@@ -94,6 +102,6 @@ public abstract class JSavedFrame extends JFrame
 		return picture;
 	}
 	
-	protected abstract Settings.WndState loadWndState();
-	protected abstract void saveWndState(Settings.WndState ws);
+	protected abstract AppSettings.WndState loadWndState();
+	protected abstract void saveWndState(AppSettings.WndState ws);
 }

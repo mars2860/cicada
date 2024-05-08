@@ -1,6 +1,6 @@
 package pdl.commands;
 
-public class CmdSelfCalibrateGyro extends AbstractCopterCmd
+public class CmdSelfCalibrateGyro extends AbstractDroneCmd
 {
 	public CmdSelfCalibrateGyro()
 	{

@@ -1,6 +1,6 @@
 package pdl.commands;
 
-public class CmdResetAltitude extends AbstractCopterCmd
+public class CmdResetAltitude extends AbstractDroneCmd
 {
 	public CmdResetAltitude()
 	{

@@ -1,6 +1,6 @@
 package pdl.commands;
 
-public class CmdSetMotorsGas extends AbstractCopterCmd
+public class CmdSetMotorsGas extends AbstractDroneCmd
 {
 	private int mgas0;
 	private int mgas1;

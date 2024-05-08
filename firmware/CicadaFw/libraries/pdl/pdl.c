@@ -1,326 +1,118 @@
 #include "pdl.h"
+#include "pdl_tasks.h"
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#include <stdio.h>
 
-typedef struct s_pdlTask
+char pdlLog[PDL_LOG_BUF_SIZE];
+int pdlLogPos = 0;
+
+int pdl_printf(const char *format, ... )
 {
-  uint32_t lastUpdateTime;
-  uint32_t period;
-} pdlTaskState;
+  if(pdlLogPos >= PDL_LOG_BUF_SIZE)
+    return 0;
 
-pdlTaskState pdlRcTS;
-pdlTaskState pdlBatteryTS;
-pdlTaskState pdlImuTS;
-pdlTaskState pdlOpticalFlowTS;
-pdlTaskState pdlLidarTS;
-pdlTaskState pdlBaroTS;
-pdlTaskState pdlUpdateEscaperTS;
-pdlTaskState pdlTelemetryTS;
+  va_list args;
+  va_start(args, format);
+  int res = vsnprintf(&pdlLog[pdlLogPos],PDL_LOG_BUF_SIZE - pdlLogPos,format,args);
+  va_end(args);
 
-/// Set true if some pid has been modified
-uint8_t pdlPidModifiedFlag;
-/// Time of system when pdlUpdate has been invoked in last time
-uint32_t pdlUpdateStartTime;
+  if(res > 0)
+    pdlLogPos += res;
 
-void pdlCrossFrameApplyPids(pdlDroneState*);
-void pdlXFrameApplyPids(pdlDroneState*);
+  if(pdlLogPos > PDL_LOG_BUF_SIZE)
+    pdlLogPos = PDL_LOG_BUF_SIZE;
 
-void pdlUpdateAltPid(pdlDroneState*);
-void pdlUpdateLevelsPid(pdlDroneState*);
-void pdlUpdateHorVelocityPids(pdlDroneState*);
+  return res;
+}
 
-uint8_t pdlCanTaskRun(pdlTaskState*);
-
-void pdlRcTask(pdlDroneState*);
-void pdlBatteryTask(pdlDroneState*);
-void pdlImuTask(pdlDroneState*);
-void pdlBaroTask(pdlDroneState*);
-void pdlLidarTask(pdlDroneState*);
-void pdlOpticalFlowTask(pdlDroneState*);
-void pdlUpdateEscaperTask(pdlDroneState*);
-void pdlTelemetryTask(pdlDroneState*);
-
-void parsePidConfigPacket(pdlPidState *pid, uint8_t *packet);
-void parseTripleAxisSensorConfigPacket(pdlTripleAxisSensorState *ps, uint8_t *packet);
-
-//-----------------------------------------------------------------------------
-
-uint32_t pdlGetDeltaTime(uint32_t cur, uint32_t last)
+char* pdlGetLog()
 {
-  if(cur >= last)
-    return cur - last;
+  return &pdlLog[0];
+}
 
-  return UINT32_MAX - last + cur;
+int pdlGetLogSize()
+{
+  return pdlLogPos;
+}
+
+void pdlResetLog()
+{
+  memset(&pdlLog[0],0,PDL_LOG_BUF_SIZE);
+  pdlLogPos = 0;
 }
 
 void pdlSetup(pdlDroneState *ds)
 {
   memset(ds,0,sizeof(pdlDroneState));
 
-  pdlRcTS.period = PDL_RC_UPDATE_PERIOD;
-  pdlBatteryTS.period = PDL_BATTERY_READ_PERIOD;
-  pdlImuTS.period = PDL_IMU_READ_PERIOD;
-  pdlOpticalFlowTS.period = PDL_OPTICAL_FLOW_READ_PERIOD;
-  pdlLidarTS.period = PDL_LIDAR_READ_PERIOD;
-  pdlBaroTS.period = PDL_BARO_READ_PERIOD;
-  pdlUpdateEscaperTS.period = PDL_ESCAPER_UPDATE_PERIOD;
-  pdlTelemetryTS.period = PDL_DEFAULT_TELEMETRY_UPDATE_PERIOD;
-
-  pdlPidModifiedFlag = 0;
-  pdlUpdateStartTime = 0;
-
   ds->version = PDL_VERSION;
 
+  pdlSetupTasks();
+
+  ds->battery.minVoltage = 6.2f;
+  ds->battery.maxVoltage = 8.3f;
+
+  ds->kfSettings.navModelNoise = 0.05f;
+  ds->kfSettings.accVariance = 10.f;
+  ds->kfSettings.baroAltVariance = 50.f;
+  ds->kfSettings.lidarVelVariance1 = 0.03f;
+  ds->kfSettings.ofVelVariance1 = 0.015f;
+  ds->kfSettings.ofVelVariance2 = 0.095f;
+  ds->kfSettings.lidarVelVariance2 = 1000000.f;
+  ds->kfSettings.poseModelNoise = 20.f;
+  ds->kfSettings.yawRateVariance = 0.0035f;
+  ds->kfSettings.pitchRollRateVariance = 0.013f;
+  ds->kfSettings.magHeadingVariance = 0.1f;
+  ds->kfSettings.accPitchRollVariance = 0.0041f;
+  ds->kfSettings.gpsHorSpeedVariance = 1.f;
+  ds->kfSettings.gpsVerSpeedVariance = 1.f;
+  ds->kfSettings.gpsHorPosVariance = 10.f;
+  ds->kfSettings.gpsVerPosVariance = 10.f;
+
+  pdlResetKalman(ds);
   pdlStopMotors(ds);
-  pdlSetupEscaper(ds);
-  pdlSetupAccel(ds);
+  pdlLoadDefaultCfg(ds);
+  // reset errors flag after load
+  // because before we saved entire pdl.DroneState with errors flag
+  // which is not actual after load config
+  ds->errors = 0;
+  ds->videoState = 0;
+  ds->motorsEnabled = 0;
+  ds->stabilizationEnabled = 0;
+  pdlSetupEsc(ds);
+  pdlSetupRc(ds);
+  pdlSetupTelemetry(ds);
   pdlSetupGyro(ds);
+  pdlSetupAccel(ds);
   pdlSetupMagneto(ds);
   pdlSetupBaro(ds);
-  pdlSetupRc(ds);
   pdlSetupLidar(ds);
   pdlSetupOpticalFlow(ds);
-  pdlSetupTelemetry(ds);
-}
-
-uint8_t pdlCanTaskRun(pdlTaskState *ts)
-{
-  uint32_t dt, frameDt;
-
-  dt = pdlGetDeltaTime(pdlMicros(), ts->lastUpdateTime);
-  if(dt < ts->period)
-    return 0;
-
-  dt -= ts->period;
-  frameDt = pdlGetDeltaTime(pdlMicros(), pdlUpdateStartTime);
-
-  if(frameDt >= PDL_DESIRE_UPDATE_TIME && dt < PDL_TASK_MAX_WAIT_TIME)
-    return 0;
-
-  ts->lastUpdateTime = pdlMicros();
-  return 1;
-}
-
-void pdlSetTelemetryUpdatePeriod(uint32_t t)
-{
-  pdlTelemetryTS.period = t;
-}
-
-uint32_t pdlGetTelemetryUpdatePeriod(void)
-{
-  return pdlTelemetryTS.period;
-}
-
-void pdlRcTask(pdlDroneState *ds)
-{
-  if(!pdlCanTaskRun(&pdlRcTS))
-    return;
-
-  pdlRemoteControl(ds);
-}
-
-void pdlTelemetryTask(pdlDroneState *ds)
-{
-  if(!pdlCanTaskRun(&pdlTelemetryTS))
-    return;
-
-  pdlUpdateTelemetry(ds);
-}
-
-void pdlBatteryTask(pdlDroneState *ds)
-{
-  if(!pdlCanTaskRun(&pdlBatteryTS))
-    return;
-
-  pdlReadBattery(ds);
-}
-
-void pdlUpdateLevelsPid(pdlDroneState *ds)
-{
-  static uint32_t levelPidsLastUpdateTime = 0;
-  float dt;
-
-  dt = pdlGetDeltaTime(pdlMicros(), levelPidsLastUpdateTime);
-  levelPidsLastUpdateTime = pdlMicros();
-  dt = dt / 1000000.f;
-
-  pdlUpdatePid(&ds->pitchPid, ds->pitch, dt);
-  pdlUpdatePid(&ds->rollPid, ds->roll, dt);
-
-  // apply level pids to angular rate pids
-  if(ds->stabilizationEnabled)
-  {
-    if(ds->pitchPid.enabled)
-      ds->pitchRatePid.target = ds->pitchPid.out;
-    if(ds->rollPid.enabled)
-      ds->rollRatePid.target = ds->rollPid.out;
-  }
-
-  // update angular rates pids
-  pdlUpdatePid(&ds->yawRatePid, ds->gyro.pure[PDL_Z], dt);
-  pdlUpdatePid(&ds->pitchRatePid, ds->gyro.pure[PDL_Y], dt);
-  pdlUpdatePid(&ds->rollRatePid, ds->gyro.pure[PDL_X], dt);
-}
-
-void pdlImuTask(pdlDroneState *ds)
-{
-  if(!pdlCanTaskRun(&pdlImuTS))
-    return;
-
-  pdlReadAccel(ds);
-  pdlReadGyro(ds);
-  pdlReadMagneto(ds);
-
-  pdlTripleAxisSensorFusion(ds);
-
-  pdlUpdateLevelsPid(ds);
-}
-
-void pdlUpdateAltPid(pdlDroneState *ds)
-{
-  static uint32_t lastUpdateTime = 0;
-  float dt;
-
-  dt = pdlGetDeltaTime(pdlMicros(), lastUpdateTime);
-  lastUpdateTime = pdlMicros();
-  dt = dt / 1000000.f;
-
-  // apply alt pid
-  if(ds->stabilizationEnabled)
-  {
-    pdlUpdatePid(&ds->velocityZPid, ds->velocity[PDL_Z], dt);
-
-    if(ds->velocityZPid.enabled)
-      ds->altPid.target += ds->velocityZPid.out;
-
-    pdlUpdatePid(&ds->altPid, ds->altitude, dt);
-
-    if(ds->altPid.enabled)
-      ds->baseGas = ds->altPid.out;
-  }
-}
-
-void pdlBaroTask(pdlDroneState *ds)
-{
-  if(!pdlCanTaskRun(&pdlBaroTS))
-    return;
-
-  if(pdlReadBaro(ds))
-    pdlUpdateAltPid(ds);
-}
-
-void pdlLidarTask(pdlDroneState *ds)
-{
-  if(!pdlCanTaskRun(&pdlLidarTS))
-    return;
-
-  if(pdlReadLidar(ds))
-    pdlUpdateAltPid(ds);
-}
-
-void pdlUpdateHorVelocityPids(pdlDroneState *ds)
-{
-  static uint32_t lastUpdateTime = 0;
-  float dt;
-
-  dt = pdlGetDeltaTime(pdlMicros(), lastUpdateTime);
-  lastUpdateTime = pdlMicros();
-  dt = dt / 1000000.f;
-
-  pdlUpdatePid(&ds->velocityXPid,ds->velocity[PDL_X],dt);
-  pdlUpdatePid(&ds->velocityYPid,ds->velocity[PDL_Y],dt);
-
-  if(ds->holdPosEnabled && ds->stabilizationEnabled)
-  {
-    if( ds->velocityYPid.enabled &&
-        (ds->holdPosEnabled == PDL_HOLDPOS_Y || ds->holdPosEnabled == PDL_HOLDPOS_BOTH_XY) )
-    {
-      ds->rollPid.target = ds->velocityYPid.out;
-    }
-    else
-    {
-      pdlResetPid(&ds->velocityYPid);
-    }
-
-    if( ds->velocityXPid.enabled &&
-        (ds->holdPosEnabled == PDL_HOLDPOS_X || ds->holdPosEnabled == PDL_HOLDPOS_BOTH_XY) )
-    {
-      ds->pitchPid.target = -ds->velocityXPid.out;
-    }
-    else
-    {
-      pdlResetPid(&ds->velocityXPid);
-    }
-  }
-  else
-  {
-    pdlResetPid(&ds->velocityXPid);
-    pdlResetPid(&ds->velocityYPid);
-  }
-}
-
-void pdlOpticalFlowTask(pdlDroneState *ds)
-{
-  if(!pdlCanTaskRun(&pdlOpticalFlowTS))
-    return;
-
-  pdlReadOpticalFlow(ds);
-  pdlUpdateHorVelocityPids(ds);
-}
-
-void pdlUpdateEscaperTask(pdlDroneState *ds)
-{
-  if(!pdlCanTaskRun(&pdlUpdateEscaperTS))
-    return;
-
-  pdlUpdateEscaper(ds);
+  pdlSetupBattery(ds);
+  pdlSetupGps(ds);
+  pdlSetupLoads(ds);
+  pdlSetupCamera(ds);
 }
 
 void pdlUpdate(pdlDroneState *ds)
 {
   ds->timestamp = pdlMicros();
 
-  pdlUpdateStartTime = pdlMicros();
-
-  pdlUpdateEscaperTask(ds);
-  pdlImuTask(ds);
+  pdlPidTask(ds);
+  pdlEscTask(ds);
+  pdlGyroTask(ds);
+  pdlAccelTask(ds);
+  pdlMagTask(ds);
   pdlLidarTask(ds);
   pdlOpticalFlowTask(ds);
-  pdlRcTask(ds);
   pdlBaroTask(ds);
+  pdlGpsTask(ds);
+  pdlRcTask(ds);
   pdlTelemetryTask(ds);
   pdlBatteryTask(ds);
-
-  if(ds->stabilizationEnabled && ds->motorsEnabled)
-  {
-    if(pdlPidModifiedFlag)
-    {
-      pdlPidModifiedFlag = 0;
-      // apply pids result to motors
-      switch(PDL_DRONE_FRAME)
-      {
-        case PDL_DRONE_FRAME_CROSS:
-          pdlCrossFrameApplyPids(ds);
-          break;
-        case PDL_DRONE_FRAME_X:
-          pdlXFrameApplyPids(ds);
-          break;
-      }
-    }
-  }
-  else
-  {
-    pdlResetPid(&ds->yawRatePid);
-    pdlResetPid(&ds->pitchRatePid);
-    pdlResetPid(&ds->rollRatePid);
-    pdlResetPid(&ds->pitchPid);
-    pdlResetPid(&ds->rollPid);
-    pdlResetPid(&ds->altPid);
-    pdlResetPid(&ds->velocityXPid);
-    pdlResetPid(&ds->velocityYPid);
-    pdlResetPid(&ds->velocityZPid);
-  }
+  pdlLoadTask(ds);
 
   if(!ds->motorsEnabled)
   {
@@ -328,49 +120,62 @@ void pdlUpdate(pdlDroneState *ds)
   }
 }
 
+//-----------------------------------------------------------------------------
+// MOTORS
+
+static int32_t pdlMotorMaxGas = PDL_DEFAULT_MOTOR_GAS_MAX;
+static int32_t pdlMotorNullGas = PDL_DEFAULT_MOTOR_GAS_NULL;
+static int32_t pdlMotorMinGas = PDL_DEFAULT_MOTOR_GAS_MIN;
+
+void pdlSetMotorMaxGas(int32_t gas)
+{
+  pdlMotorMaxGas = gas;
+}
+
+void pdlSetMotorNullGas(int32_t gas)
+{
+  pdlMotorNullGas = gas;
+}
+
+void pdlSetMotorMinGas(int32_t gas)
+{
+  pdlMotorMinGas = gas;
+}
+
+int32_t pdlGetMotorMaxGas()
+{
+  return pdlMotorMaxGas;
+}
+
+int32_t pdlGetMotorNullGas()
+{
+  return pdlMotorNullGas;
+}
+
+int32_t pdlGetMotorMinGas()
+{
+  return pdlMotorMinGas;
+}
+
 void pdlStopMotors(pdlDroneState *ds)
 {
   ds->motorsEnabled = 0;
-  ds->baseGas = PDL_MOTOR_GAS_NULL;
+  ds->baseGas = pdlMotorNullGas;
 
-  for(uint8_t i = 0; i < PDL_MOTOR_COUNT; i++)
-    pdlSetMotorGas(ds, i, PDL_MOTOR_GAS_NULL);
+  for(uint8_t i = 0; i < PDL_MOTOR_COUNT; i++) {
+    pdlSetMotorGas(ds, i, pdlMotorNullGas);
+  }
 }
 
-void pdlCrossFrameApplyPids(pdlDroneState *ds)
+void pdlSetBaseGas(pdlDroneState* ds, int32_t gas)
 {
-  float dg[4];
+  if(gas < pdlMotorMinGas)
+      gas = pdlMotorMinGas;
 
-  dg[0] = ds->baseGas;
-  dg[1] = ds->baseGas;
-  dg[2] = ds->baseGas;
-  dg[3] = ds->baseGas;
+    if(gas > pdlMotorMaxGas)
+      gas = pdlMotorMaxGas;
 
-  dg[0] += -ds->yawRatePid.out + ds->pitchRatePid.out;
-  dg[1] += ds->yawRatePid.out + ds->rollRatePid.out;
-  dg[2] += -ds->yawRatePid.out - ds->pitchRatePid.out;
-  dg[3] += ds->yawRatePid.out - ds->rollRatePid.out;
-
-  for(uint8_t i = 0; i < PDL_MOTOR_COUNT; i++)
-    pdlSetMotorGas(ds, i, dg[i]);
-}
-
-void pdlXFrameApplyPids(pdlDroneState *ds)
-{
-  float dg[4];
-
-  dg[0] = ds->baseGas;
-  dg[1] = ds->baseGas;
-  dg[2] = ds->baseGas;
-  dg[3] = ds->baseGas;
-
-  dg[0] += -ds->yawRatePid.out + ds->pitchRatePid.out + ds->rollRatePid.out;
-  dg[1] += ds->yawRatePid.out - ds->pitchRatePid.out + ds->rollRatePid.out;
-  dg[2] += -ds->yawRatePid.out - ds->pitchRatePid.out - ds->rollRatePid.out;
-  dg[3] += ds->yawRatePid.out + ds->pitchRatePid.out - ds->rollRatePid.out;
-
-  for(uint8_t i = 0; i < PDL_MOTOR_COUNT; i++)
-    pdlSetMotorGas(ds, i, dg[i]);
+    ds->baseGas = gas;
 }
 
 void pdlSetMotorGas(pdlDroneState *ds, uint8_t m, int32_t gas)
@@ -378,11 +183,11 @@ void pdlSetMotorGas(pdlDroneState *ds, uint8_t m, int32_t gas)
   if(m >= PDL_MOTOR_COUNT)
     return;
 
-  if(gas < PDL_MOTOR_GAS_MIN)
-    gas = PDL_MOTOR_GAS_MIN;
+  if(gas < pdlMotorMinGas)
+    gas = pdlMotorMinGas;
 
-  if(gas > PDL_MOTOR_GAS_MAX)
-    gas = PDL_MOTOR_GAS_MAX;
+  if(gas > pdlMotorMaxGas)
+    gas = pdlMotorMaxGas;
 
   ds->motorGas[m] = gas;
 }
@@ -395,217 +200,270 @@ void pdlAddMotorGas(pdlDroneState *ds, uint8_t m, int32_t gas)
   pdlSetMotorGas(ds, m, ds->motorGas[m] + gas);
 }
 
-void pdlUpdatePid(pdlPidState *pid, float input, float dt)
+//-----------------------------------------------------------------------------
+// OTHER
+
+void pdlPreventFlyAway(pdlDroneState *ds, int32_t rssiMinLevel, float safeAlt, float safeVeloZ)
 {
-  if(!pid->enabled)
+  static int32_t old_rssi = 0;
+
+  if(ds->motorsEnabled && ds->stabilizationEnabled)
   {
-    pdlResetPid(pid);
-    return;
-  }
-
-  float err = pid->target - input;
-  float prevErr = pid->target - pid->input;
-
-  //output = Un1 + (kp + kd/dt)*En + (-kp - 2.f*kd/dt)*En1 + kd/dt*En2;
-  //output = Un1 + kp*(En - En1) + ki_d*En + kd_d*(En - 2.f*En1 + En2);
-  if(fabsf(pid->errSum) * pid->ki < pid->maxOut)
-    pid->errSum += dt*(err + prevErr)/2.f;
-  /*if(fabsf(pid->errSum) > fabsf(pid->maxErrSum))
-  {
-    if(pid->errSum > 0)
-      pid->errSum = pid->maxErrSum;
-    else
-      pid->errSum = -pid->maxErrSum;
-  }*/
-
-  pid->out = pid->kp*err + pid->ki*pid->errSum + pid->kd*(err - prevErr)/dt;
-  pid->input = input;
-  if(fabsf(pid->out) > fabsf(pid->maxOut))
-  {
-    if(pid->out > 0)
-      pid->out = pid->maxOut;
-    else
-      pid->out = -pid->maxOut;
-  }
-
-  pdlPidModifiedFlag = 1;
-}
-
-void pdlResetPid(pdlPidState *pid)
-{
-  pid->errSum = 0;
-  pid->input = 0;
-  pid->out = 0;
-}
-
-void pdlParseCommand(pdlDroneState *ds, uint8_t *packet)
-{
-  int32_t t0,t1,t2,t3;
-  uint32_t ut0;
-  float yaw,pitch,roll;
-  uint8_t cmd = packet[0];
-  switch(cmd)
-  {
-    case PDL_CMD_SWITCH_MOTORS:
-      pdlStopMotors(ds);
-      ds->motorsEnabled = packet[1];
-      if(ds->motorsEnabled)
+    if(ds->rc.rssi < rssiMinLevel && old_rssi >= rssiMinLevel)
+    {
+      // when drone gets out control zone
+      // lets stop it
+      ds->posNorthPid.target = ds->posNorthPid.input;
+      ds->velocityXPid.target = 0;
+      ds->pitchPid.target = 0;
+      ds->posEastPid.target = ds->posEastPid.input;
+      ds->velocityYPid.target = 0;
+      ds->rollPid.target = 0;
+      ds->velocityZPid.target = 0;
+      ds->altPid.target = ds->altPid.input;
+      ds->xRatePid.target = 0;
+      ds->yRatePid.target = 0;
+      ds->zRatePid.target = 0;
+      ds->headingPid.target = ds->headingPid.input;
+      if(ds->nav[PDL_UP].pos > safeAlt)
       {
-        ds->yawRatePid.target = 0;
-        ds->pitchRatePid.target = 0;
-        ds->rollRatePid.target = 0;
-        ds->pitchPid.target = 0;
-        ds->rollPid.target = 0;
-        ds->altPid.target = 0;
-        ds->velocityXPid.target = 0;
-        ds->velocityYPid.target = 0;
-        ds->velocityZPid.target = 0;
-        ds->holdPosEnabled = PDL_HOLDPOS_BOTH_XY;
+        if(safeVeloZ > 0.f)
+          safeVeloZ = -safeVeloZ;
+
+        ds->velocityZPid.target = safeVeloZ;
       }
-      break;
-    case PDL_CMD_SET_BASE_GAS:
-      memcpy(&t0, &packet[1], sizeof(int32_t));
-      ds->baseGas = t0;
-      if(!ds->stabilizationEnabled)
+      else if(ds->nav[PDL_UP].pos < -safeAlt)
       {
-        pdlSetMotorGas(ds,0,ds->baseGas);
-        pdlSetMotorGas(ds,1,ds->baseGas);
-        pdlSetMotorGas(ds,2,ds->baseGas);
-        pdlSetMotorGas(ds,3,ds->baseGas);
+        if(safeVeloZ < 0.f)
+          safeVeloZ = -safeVeloZ;
+
+        ds->velocityZPid.target = safeVeloZ;
       }
-      break;
-    case PDL_CMD_SET_MOTORS_GAS:
-      memcpy(&t0, &packet[1], sizeof(int32_t));
-      memcpy(&t1, &packet[5], sizeof(int32_t));
-      memcpy(&t2, &packet[9], sizeof(int32_t));
-      memcpy(&t3, &packet[13], sizeof(int32_t));
-
-      pdlSetMotorGas(ds,0,t0);
-      pdlSetMotorGas(ds,1,t1);
-      pdlSetMotorGas(ds,2,t2);
-      pdlSetMotorGas(ds,3,t3);
-
-      break;
-    case PDL_CMD_SET_ACCEL:
-      parseTripleAxisSensorConfigPacket(&ds->accel, packet);
-      pdlSetupAccel(ds);
-      break;
-    case PDL_CMD_SET_GYRO:
-      parseTripleAxisSensorConfigPacket(&ds->gyro, packet);
-      pdlSetupGyro(ds);
-      break;
-    case PDL_CMD_SET_MAGNETO:
-      parseTripleAxisSensorConfigPacket(&ds->magneto, packet);
-      pdlSetupMagneto(ds);
-      break;
-    case PDL_CMD_SELF_CALIB_ACCEL:
-      pdlCalibrateAccel(ds);
-      break;
-    case PDL_CMD_SELF_CALIB_GYRO:
-      pdlCalibrateGyro(ds);
-      break;
-    case PDL_CMD_SET_YAW_RATE_PID:
-      parsePidConfigPacket(&ds->yawRatePid, packet);
-      break;
-    case PDL_CMD_SET_PITCH_RATE_PID:
-      parsePidConfigPacket(&ds->pitchRatePid, packet);
-      break;
-    case PDL_CMD_SET_ROLL_RATE_PID:
-      parsePidConfigPacket(&ds->rollRatePid, packet);
-      break;
-    case PDL_CMD_SET_PITCH_PID:
-      parsePidConfigPacket(&ds->pitchPid, packet);
-      break;
-    case PDL_CMD_SET_ROLL_PID:
-      parsePidConfigPacket(&ds->rollPid, packet);
-      break;
-    case PDL_CMD_SET_ALT_PID:
-      parsePidConfigPacket(&ds->altPid, packet);
-      break;
-    case PDL_CMD_SET_VELOCITY_X_PID:
-      parsePidConfigPacket(&ds->velocityXPid, packet);
-      break;
-    case PDL_CMD_SET_VELOCITY_Y_PID:
-      parsePidConfigPacket(&ds->velocityYPid, packet);
-      break;
-    case PDL_CMD_SET_VELOCITY_Z_PID:
-      parsePidConfigPacket(&ds->velocityZPid, packet);
-      break;
-    case PDL_CMD_SET_YPR:
-      memcpy(&yaw, &packet[1], sizeof(yaw));
-      memcpy(&pitch, &packet[1 + sizeof(pitch)], sizeof(pitch));
-      memcpy(&roll, &packet[1 + sizeof(yaw) + sizeof(pitch)], sizeof(roll));
-
-      ds->yawRatePid.target = yaw;
-
-      if(ds->pitchPid.enabled)
-        ds->pitchPid.target = pitch;
-      else
-        ds->pitchRatePid.target = pitch;
-
-      if(ds->rollPid.enabled)
-        ds->rollPid.target = roll;
-      else
-        ds->rollRatePid.target = roll;
-      // disable hold pos if we have user defined target
-      ds->holdPosEnabled = PDL_HOLDPOS_BOTH_XY;
-      if(roll != 0.f && pitch != 0.f)
-        ds->holdPosEnabled = PDL_HOLDPOS_DISABLED;
-      else if(pitch != 0.f)
-        ds->holdPosEnabled = PDL_HOLDPOS_Y;
-      else if(roll != 0.f)
-        ds->holdPosEnabled = PDL_HOLDPOS_X;
-      break;
-    case PDL_CMD_SET_TELEMETRY_PERIOD:
-      memcpy(&ut0, &packet[1], sizeof(ut0));
-      pdlSetTelemetryUpdatePeriod(ut0);
-      break;
-    case PDL_CMD_ENABLE_STABILIZATION:
-      ds->stabilizationEnabled = packet[1];
-      break;
-    case PDL_CMD_RESET_ALTITUDE:
-      //vz = 0;
-      ds->baro.seaLevelPressure = ds->baro.pressure;
-      break;
-    case PDL_CMD_SET_SEA_LEVEL:
-      memcpy(&ds->baro.seaLevelPressure, &packet[1], sizeof(ds->baro.seaLevelPressure));
-      break;
-    case PDL_CMD_SET_ALTITUDE:
-      memcpy(&ds->altPid.target, &packet[1], sizeof(ds->altPid.target));
-      break;
-    case PDL_CMD_SET_VELOCITY_Z:
-      memcpy(&ds->velocityZPid.target, &packet[1], sizeof(ds->velocityZPid.target));
-      break;
+      // turn off motors if we in acro mode because no other way to stop drone
+      if(!ds->rollPid.enabled || !ds->pitchPid.enabled)
+        ds->motorsEnabled = 0;
+    }
   }
 }
 
-void parseTripleAxisSensorConfigPacket(pdlTripleAxisSensorState *ps, uint8_t *packet)
+void pdlSetPitchTarget(pdlDroneState* ds, float target)
 {
-  int16_t dx,dy,dz;
+  ds->pitchPid.target = target;
 
-  memcpy(&dx, &packet[1], sizeof(int16_t));
-  memcpy(&dy, &packet[3], sizeof(int16_t));
-  memcpy(&dz, &packet[5], sizeof(int16_t));
+  pdlSetPidPitchFlag(ds,1);
 
-  ps->offset[PDL_X] = dx;
-  ps->offset[PDL_Y] = dy;
-  ps->offset[PDL_Z] = dz;
+  if(target == 0)
+  {
+    pdlSetPidVeloXFlag(ds,1);
+    // we restore posXPid flag in pdlUpdateHorVelocityPids
+  }
+  else
+  {
+    pdlSetPidVeloXFlag(ds,0);
+    pdlSetPidPosNorthFlag(ds,0);
+    pdlSetPidPosEastFlag(ds,0);
+  }
 }
 
-void parsePidConfigPacket(pdlPidState *pid, uint8_t *packet)
+void pdlSetRollTarget(pdlDroneState* ds, float target)
 {
-  float kp,ki,kd,maxOut,maxErrSum;
-  uint8_t enabled = packet[1];
-  memcpy(&kp, &packet[2], sizeof(kp));
-  memcpy(&ki, &packet[2 + sizeof(kp)], sizeof(ki));
-  memcpy(&kd, &packet[2 + sizeof(kp) + sizeof(ki)], sizeof(kd));
-  memcpy(&maxOut, &packet[2 + sizeof(kp) + sizeof(ki) + sizeof(kd)], sizeof(maxOut));
-  memcpy(&maxErrSum, &packet[2 + sizeof(kp) + sizeof(ki) + sizeof(kd) + sizeof(maxErrSum)], sizeof(maxErrSum));
+  ds->rollPid.target = target;
 
-  pid->enabled = enabled;
-  pid->kp = kp;
-  pid->ki = ki;
-  pid->kd = kd;
-  pid->maxOut = maxOut;
-  //pid->maxErrSum = maxErrSum;
+  pdlSetPidRollFlag(ds,1);
+
+  if(target == 0)
+  {
+    pdlSetPidVeloYFlag(ds,1);
+    // we restore posYPid flag in pdlUpdateHorVelocityPids
+  }
+  else
+  {
+    pdlSetPidVeloYFlag(ds,0);
+    pdlSetPidPosEastFlag(ds,0);
+    pdlSetPidPosNorthFlag(ds,0);
+  }
+}
+
+void pdlSetYawRateTarget(pdlDroneState* ds, float target)
+{
+  //ds->yawRatePid.target = target;
+  ds->yawRateTarget = target;
+
+  if(target == 0)
+  {
+    pdlSetPidHeadingFlag(ds,1);
+    //pdlSetPidVeloXFlag(ds,1);
+    //pdlSetPidVeloYFlag(ds,1);
+  }
+  else
+  {
+    pdlSetPidHeadingFlag(ds,0);
+    // commented because it doesnt prevent
+    /*if(ds->velocityXPid.target == 0)
+    {
+      pdlSetPidVeloXFlag(ds,0); // prevent from shaking when rotating
+      ds->pitchPid.target = 0;
+    }
+    if(ds->velocityYPid.target == 0)
+    {
+      pdlSetPidVeloYFlag(ds,0);
+      ds->rollPid.target = 0;
+    }*/
+  }
+}
+
+void pdlSetHeadingTarget(pdlDroneState *ds, float target)
+{
+  ds->headingPid.target = target;
+}
+
+void pdlSetPitchRateTarget(pdlDroneState *ds, float target)
+{
+  //ds->pitchRatePid.target = target;
+  ds->pitchRateTarget = target;
+
+  if(target == 0)
+  {
+    pdlSetPidPitchFlag(ds,1);
+    pdlSetPidVeloXFlag(ds,1);
+    // we restore posXPid flag in pdlUpdateHorVelocityPids
+  }
+  else
+  {
+    pdlSetPidPitchFlag(ds,0);
+    pdlSetPidVeloXFlag(ds,0);
+    pdlSetPidPosNorthFlag(ds,0);
+    pdlSetPidPosEastFlag(ds,0);
+  }
+}
+
+void pdlSetRollRateTarget(pdlDroneState *ds, float target)
+{
+  //ds->rollRatePid.target = target;
+  ds->rollRateTarget = target;
+
+  if(target == 0)
+  {
+    pdlSetPidRollFlag(ds,1);
+    pdlSetPidVeloYFlag(ds,1);
+    // we restore posYPid flag in pdlUpdateHorVelocityPids
+  }
+  else
+  {
+    pdlSetPidRollFlag(ds,0);
+    pdlSetPidVeloYFlag(ds,0);
+    pdlSetPidPosEastFlag(ds,0);
+    pdlSetPidPosNorthFlag(ds,0);
+  }
+}
+
+void pdlSetVelocityXTarget(pdlDroneState *ds, float t)
+{
+  ds->velocityXPid.target = t;
+
+  if(ds->velocityXPid.target != 0.f)
+  {
+    pdlSetPidPosNorthFlag(ds,0);
+    pdlSetPidPosEastFlag(ds,0);
+    // we restore posXPid flag in pdlUpdateHorVelocityPids
+  }
+}
+
+void pdlSetVelocityYTarget(pdlDroneState *ds, float t)
+{
+  ds->velocityYPid.target = t;
+
+  if(ds->velocityYPid.target != 0.f)
+  {
+    pdlSetPidPosEastFlag(ds,0);
+    pdlSetPidPosNorthFlag(ds,0);
+    // we restore posYPid flag in pdlUpdateHorVelocityPids
+  }
+}
+
+void pdlSetVelocityZTarget(pdlDroneState *ds, float t)
+{
+  ds->velocityZPid.target = t;
+
+  if(ds->velocityZPid.target != 0.f)
+  {
+    pdlSetPidAltFlag(ds,0);
+    // we restore altPid flag in pdlUpdateAltPid
+  }
+}
+
+void pdlEnableMotors(pdlDroneState *ds, uint8_t enable)
+{
+  pdlStopMotors(ds);
+  ds->motorsEnabled = enable;
+  if(ds->motorsEnabled)
+  {
+    ds->zRatePid.target = 0;
+    ds->yRatePid.target = 0;
+    ds->xRatePid.target = 0;
+    ds->yawRateTarget = 0;
+    ds->pitchRateTarget = 0;
+    ds->rollRateTarget = 0;
+    ds->pitchPid.target = 0;
+    ds->rollPid.target = 0;
+    ds->altPid.target = 0;
+    ds->posNorthPid.target = 0;
+    ds->posEastPid.target = 0;
+    ds->velocityXPid.target = 0;
+    ds->velocityYPid.target = 0;
+    ds->velocityZPid.target = 0;
+    ds->pidFlags = PDL_PID_ALL_FLAG;
+    ds->headingPid.target = ds->pose[PDL_YAW].pos;
+    ds->opticalFlow.sumX = 0;
+    ds->opticalFlow.sumY = 0;
+    // to prevent d-reg from first run error
+    ds->headingPid.input = ds->headingPid.target;
+    // to prevent overflowed err-sum in PIDs if user switch on stabilization before
+    ds->stabilizationEnabled = 0;
+    // reset Kalman filters
+    for(uint8_t i = 0; i < 3; i++)
+    {
+      // can't use pdlNavKF_Init to prevent reset accBias
+      ds->nav[i].pos = 0;
+      ds->nav[i].vel = 0;
+      ds->nav[i].acc = 0;
+
+      ds->pose[i].pos = 0;
+      ds->pose[i].vel = 0;
+      ds->pose[i].acc = 0;
+    }
+    ds->pose[PDL_YAW].pos = ds->magneto.heading;
+    ds->pose[PDL_PITCH].pos = ds->accel.pitch;
+    ds->pose[PDL_ROLL].pos = ds->accel.roll;
+    // store gps position
+    ds->gps.startLat = ds->gps.curLat;
+    ds->gps.startLon = ds->gps.curLon;
+    ds->gps.startAlt = ds->gps.curAlt;
+  }
+}
+
+void pdlEnableStabilization(pdlDroneState *ds, uint8_t enable)
+{
+  ds->stabilizationEnabled = enable;
+  if(ds->stabilizationEnabled)
+  {
+    ds->pidFlags = PDL_PID_ALL_FLAG;
+    ds->headingPid.target = ds->pose[PDL_YAW].pos;
+  }
+}
+
+void pdlEnableTrickMode(pdlDroneState *ds, uint8_t enable)
+{
+  ds->trickModeEnabled = enable;
+}
+
+void pdlSetEscMode(pdlDroneState *ds, uint8_t mode)
+{
+  ds->esc = mode;
+  pdlSetupEsc(ds);
+}
+
+void pdlSetFrameType(pdlDroneState *ds, uint8_t frame)
+{
+  ds->frame = frame;
 }

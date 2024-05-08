@@ -54,12 +54,16 @@ void dshotSetup(uint8_t pin1, uint8_t pin2, uint8_t pin3, uint8_t pin4, uint32_t
 void dshotSet(uint16_t value1, uint16_t value2, uint16_t value3, uint16_t value4);
 
 /** Takes 108 us to send all data */
-void ICACHE_RAM_ATTR dshotWrite150();
+void IRAM_ATTR dshotWrite150();
+//void ICACHE_RAM_ATTR dshotWrite150();
 /** Takes 54 us to send all data */
-void ICACHE_RAM_ATTR dshotWrite300();
+void IRAM_ATTR dshotWrite300();
+//void ICACHE_RAM_ATTR dshotWrite300();
 /** Takes 27 us to send all data */
 //void ICACHE_RAM_ATTR dshotWrite600();
 /** Enables dshot packets auto sending by timer */
 void dshotEnable(uint8_t enable);
+/** Returns 1 if dshot timer is enabled */
+uint8_t dshotIsEnabled();
 
 #endif

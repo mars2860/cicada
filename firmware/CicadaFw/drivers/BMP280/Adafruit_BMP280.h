@@ -160,8 +160,8 @@ public:
   Adafruit_BMP280(int8_t cspin, SPIClass *theSPI = &SPI);
   Adafruit_BMP280(int8_t cspin, int8_t mosipin, int8_t misopin, int8_t sckpin);
 
-  bool begin(uint8_t addr = BMP280_ADDRESS, uint8_t chipid = BMP280_CHIPID);
-  bool init(uint8_t addr = BMP280_ADDRESS, uint8_t chipid = BMP280_CHIPID);
+  uint8_t begin(uint8_t addr = BMP280_ADDRESS, uint8_t chipid = BMP280_CHIPID);
+  uint8_t init(uint8_t addr = BMP280_ADDRESS, uint8_t chipid = BMP280_CHIPID);
 
   float seaLevelForAltitude(float altitude, float atmospheric);
 

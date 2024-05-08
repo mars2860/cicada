@@ -35,7 +35,8 @@ static volatile uint8_t gpio16Set;
 static volatile uint8_t gpio16State0[16];
 static volatile uint8_t gpio16State1[16];
 
-void ICACHE_RAM_ATTR onTimerISR()
+//void ICACHE_RAM_ATTR onTimerISR() // deprecated
+void IRAM_ATTR onTimerISR()
 {
   dshotWrite300();
   timer1_write(timeGapTicks);
@@ -45,15 +46,23 @@ void dshotEnable(uint8_t enable)
 {
   enabled = enable;
 
-  if(enabled && timeGapTicks > 0)
+  if(timeGapTicks > 0)
   {
-    timer1_enable(TIM_DIV16, TIM_EDGE, TIM_SINGLE); // ticks every 0.2 us
-    timer1_write(timeGapTicks);
+    if(enabled)
+    {
+      timer1_enable(TIM_DIV16, TIM_EDGE, TIM_SINGLE); // ticks every 0.2 us
+      timer1_write(timeGapTicks);
+    }
+    else
+    {
+      timer1_disable();
+    }
   }
-  else if(!enabled)
-  {
-    timer1_disable();
-  }
+}
+
+uint8_t dshotIsEnabled()
+{
+  return enabled;
 }
 
 void dshotSetup(uint8_t pin1, uint8_t pin2, uint8_t pin3, uint8_t pin4, uint32_t timeGap)
@@ -85,7 +94,7 @@ void dshotSetup(uint8_t pin1, uint8_t pin2, uint8_t pin3, uint8_t pin4, uint32_t
     timeGapTicks = 0;
   }
 
-  dshotEnable(1);
+  //dshotEnable(1);
 }
 
 uint16_t createDshotPacket(uint16_t throttle)
@@ -213,7 +222,8 @@ void ICACHE_RAM_ATTR dshotWrite150()
   }
 }
 
-void ICACHE_RAM_ATTR dshotWrite300()
+//void ICACHE_RAM_ATTR dshotWrite300() // deprecated
+void IRAM_ATTR dshotWrite300()
 {
   volatile uint8_t i;
   volatile uint8_t j;

@@ -127,8 +127,8 @@ struct timer_regs {
 };
 static struct timer_regs* timer = (struct timer_regs*)(0x60000600);
 
-static void ICACHE_RAM_ATTR
-pwm_intr_handler(void)
+//static void ICACHE_RAM_ATTR // DEPRECATED
+static void IRAM_ATTR pwm_intr_handler(void)
 {
 	if ((pwm_state.current_set[pwm_state.current_phase].off_mask == 0) &&
 	    (pwm_state.current_set[pwm_state.current_phase].on_mask == 0)) {
@@ -200,7 +200,7 @@ pwm_intr_handler(void)
  * pwm_channel_num: number of channels to use
  * pin_info_list: array of pin_info
  */
-void ICACHE_FLASH_ATTR
+void
 pwm_init(uint32_t period, uint32_t *duty, uint32_t pwm_channel_num,
               uint32_t (*pin_info_list)[3])
 {
@@ -257,7 +257,7 @@ pwm_init(uint32_t period, uint32_t *duty, uint32_t pwm_channel_num,
 }
 
 __attribute__ ((noinline))
-static uint8_t ICACHE_FLASH_ATTR
+static uint8_t
 _pwm_phases_prep(struct pwm_phase* pwm)
 {
 	uint8_t n, phases;
@@ -422,7 +422,7 @@ _pwm_phases_prep(struct pwm_phase* pwm)
 	return phases;
 }
 
-void ICACHE_FLASH_ATTR
+void
 pwm_start(void)
 {
 	pwm_phase_array* pwm = &pwm_phases[0];
@@ -480,7 +480,7 @@ pwm_start(void)
 	pwm_state.next_set = *pwm;
 }
 
-void ICACHE_FLASH_ATTR
+void
 pwm_set_duty(uint32_t duty, uint8_t channel)
 {
 	if (channel > PWM_MAX_CHANNELS)
@@ -492,7 +492,7 @@ pwm_set_duty(uint32_t duty, uint8_t channel)
 	pwm_duty[channel] = duty;
 }
 
-uint32_t ICACHE_FLASH_ATTR
+uint32_t
 pwm_get_duty(uint8_t channel)
 {
 	if (channel > PWM_MAX_CHANNELS)
@@ -500,7 +500,7 @@ pwm_get_duty(uint8_t channel)
 	return pwm_duty[channel];
 }
 
-void ICACHE_FLASH_ATTR
+void
 pwm_set_period(uint32_t period)
 {
 	pwm_period = period;
@@ -511,19 +511,19 @@ pwm_set_period(uint32_t period)
 	pwm_period_ticks = PWM_PERIOD_TO_TICKS(period);
 }
 
-uint32_t ICACHE_FLASH_ATTR
+uint32_t
 pwm_get_period(void)
 {
 	return pwm_period;
 }
 
-uint32_t ICACHE_FLASH_ATTR
+uint32_t
 get_pwm_version(void)
 {
 	return 1;
 }
 
-void ICACHE_FLASH_ATTR
+void
 set_pwm_debug_en(uint8_t print_en)
 {
 	(void) print_en;

@@ -48,6 +48,14 @@ public:
     }
 
     void no_filter(float ax, float ay, float az, float gx, float gy, float gz, float mx, float my, float mz, float* q) {
+
+        (void)ax;
+        (void)ay;
+        (void)az;
+        (void)mx;
+        (void)my;
+        (void)mz;
+
         float q0 = q[0], q1 = q[1], q2 = q[2], q3 = q[3];  // variable for readability
         q[0] += 0.5f * (-q1 * gx - q2 * gy - q3 * gz) * deltaT;
         q[1] += 0.5f * (q0 * gx + q2 * gz - q3 * gy) * deltaT;
@@ -169,6 +177,11 @@ public:
     // with MPU-9250, angles start oscillating at Kp=40. Ki does not seem to help and is not required.
     // with MPU-6050, some instability observed at Kp=100 Now set to 30.
     void mahony(float ax, float ay, float az, float gx, float gy, float gz, float mx, float my, float mz, float* q) {
+
+        (void)mx;
+        (void)my;
+        (void)mz;
+
         float recipNorm;
         float vx, vy, vz;
         float ex, ey, ez;  //error terms

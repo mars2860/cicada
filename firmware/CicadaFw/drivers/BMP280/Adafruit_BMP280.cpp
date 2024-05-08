@@ -73,9 +73,9 @@ Adafruit_BMP280::Adafruit_BMP280(
  *         The I2C address to use (default = 0x77)
  *  @param chipid
  *         The expected chip ID (used to validate connection).
- *  @return True if the init was successful, otherwise false.
+ *  @return chipId.
  */
-bool Adafruit_BMP280::begin(uint8_t addr, uint8_t chipid)
+uint8_t Adafruit_BMP280::begin(uint8_t addr, uint8_t chipid)
 {
   if(_cs == -1)
   {
@@ -104,17 +104,18 @@ bool Adafruit_BMP280::begin(uint8_t addr, uint8_t chipid)
   return init(addr, chipid);
 }
 
-bool Adafruit_BMP280::init(uint8_t addr, uint8_t chipid)
+uint8_t Adafruit_BMP280::init(uint8_t addr, uint8_t chipid)
 {
   _i2caddr = addr;
+  uint8_t id = read8(BMP280_REGISTER_CHIPID);
 
-  if(read8(BMP280_REGISTER_CHIPID) != chipid)
-    return false;
+  if(id != chipid)
+    return id;
 
   setSampling();
   readCoefficients();
   // write8(BMP280_REGISTER_CONTROL, 0x3F); /* needed? */
-  return true;
+  return id;
 }
 
 /*!
@@ -415,6 +416,7 @@ void Adafruit_BMP280::update(float seaLevelhPa)
   p = ((p + pVar1 + pVar2) >> 8) + (((int64_t) _bmp280_calib.dig_P7) << 4);
   pressure = (float)p/25600.f;*/
 
+  /*
   float tVar1, tVar2, tAdc, digT1, digT2, digT3, t_fine;
   tAdc = adc_T;
   digT1 = _bmp280_calib.dig_T1;
@@ -455,6 +457,45 @@ void Adafruit_BMP280::update(float seaLevelhPa)
   pressure /= 100.f;
 
   altitude = 44330 * (1.0 - pow(pressure / seaLevelhPa, 0.1903));
+  */
+  // from last driver revision
+  int32_t tVar1, tVar2, t_fine;
+
+  tVar1 = ((((adc_T >> 3) - ((int32_t)_bmp280_calib.dig_T1 << 1))) *
+              ((int32_t)_bmp280_calib.dig_T2)) >> 11;
+
+  tVar2 = (((((adc_T >> 4) - ((int32_t)_bmp280_calib.dig_T1)) *
+              ((adc_T >> 4) - ((int32_t)_bmp280_calib.dig_T1))) >> 12) *
+              ((int32_t)_bmp280_calib.dig_T3)) >> 14;
+
+  t_fine = tVar1 + tVar2;
+
+  temperature = (float)((t_fine * 5 + 128) >> 8) / 100.f;
+
+  int64_t pVar1, pVar2, p;
+
+  pVar1 = ((int64_t)t_fine) - 128000;
+  pVar2 = pVar1 * pVar1 * (int64_t)_bmp280_calib.dig_P6;
+  pVar2 = pVar2 + ((pVar1 * (int64_t)_bmp280_calib.dig_P5) << 17);
+  pVar2 = pVar2 + (((int64_t)_bmp280_calib.dig_P4) << 35);
+  pVar1 = ((pVar1 * pVar1 * (int64_t)_bmp280_calib.dig_P3) >> 8) +
+           ((pVar1 * (int64_t)_bmp280_calib.dig_P2) << 12);
+  pVar1 = (((((int64_t)1) << 47) + pVar1)) * ((int64_t)_bmp280_calib.dig_P1) >> 33;
+
+  if(pVar1 == 0)
+  {
+    return; // avoid exception caused by division by zero
+  }
+  p = 1048576 - adc_P;
+  p = (((p << 31) - pVar2) * 3125) / pVar1;
+  pVar1 = (((int64_t)_bmp280_calib.dig_P9) * (p >> 13) * (p >> 13)) >> 25;
+  pVar2 = (((int64_t)_bmp280_calib.dig_P8) * p) >> 19;
+
+  p = ((p + pVar1 + pVar2) >> 8) + (((int64_t)_bmp280_calib.dig_P7) << 4);
+
+  pressure = (float)p / 25600.f;
+
+  altitude = 44330 * (1.0 - powf(pressure / seaLevelhPa, 0.1903f));
 }
 
 /*!

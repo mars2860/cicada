@@ -33,6 +33,18 @@ enum class FIFO_SAMPLE_RATE : uint8_t {
     SMPL_167HZ,
     SMPL_143HZ,
     SMPL_125HZ,
+    SMPL_111HZ,
+    SMPL_100HZ,
+    SMPL_91HZ,
+    SMPL_83HZ,
+    SMPL_77HZ,
+    SMPL_71HZ,
+    SMPL_67HZ,
+    SMPL_63HZ,
+    SMPL_59HZ,
+    SMPL_56HZ,
+    SMPL_53HZ,
+    SMPL_50HZ,
 };
 
 enum class GYRO_DLPF_CFG : uint8_t {
@@ -74,6 +86,7 @@ struct MPU9250Setting {
 
 template <typename WireType>
 class MPU9250_ {
+protected:
     static constexpr uint8_t MPU9250_DEFAULT_ADDRESS {0x68};  // Device address when ADO = 0
     static constexpr uint8_t AK8963_ADDRESS {0x0C};           //  Address of magnetometer
     static constexpr uint8_t AK8963_WHOAMI_DEFAULT_VALUE {0x48};
@@ -82,7 +95,7 @@ class MPU9250_ {
     // settings
     MPU9250Setting setting;
     // TODO: this should be configured!!
-    static constexpr uint8_t MAG_MODE {0x06};  // 0x02 for 8 Hz, 0x06 for 100 Hz continuous magnetometer data read
+    uint8_t MAG_MODE {0x06};  // 0x02 for 8 Hz, 0x06 for 100 Hz continuous magnetometer data read
     float acc_resolution {0.f};                // scale resolutions per LSB for the sensors
     float gyro_resolution {0.f};               // scale resolutions per LSB for the sensors
     float mag_resolution {0.f};                // scale resolutions per LSB for the sensors
@@ -98,9 +111,6 @@ class MPU9250_ {
     // Temperature
     int16_t temperature_count {0};  // temperature raw count output
     float temperature {0.f};        // Stores the real internal chip temperature in degrees Celsius
-
-    int16_t raw_acc_gyro_data[7];        // used to read all 14 bytes at once from the MPU9250 accel/gyro
-    int16_t mag_count[3] = {0, 0, 0};  // Stores the 16-bit signed magnetometer sensor output
 
     // Self Test
     float self_test_result[6] {0.f};  // holds results of gyro and accelerometer self test
@@ -131,12 +141,9 @@ public:
     bool setup(const uint8_t addr, const MPU9250Setting& mpu_setting = MPU9250Setting(), WireType& w = Wire) {
         // addr should be valid for MPU
         if ((addr < MPU9250_DEFAULT_ADDRESS) || (addr > MPU9250_DEFAULT_ADDRESS + 7)) {
-
-            if(b_verbose) {
-              Serial.print("I2C address 0x");
-              Serial.print(addr, HEX);
-              Serial.println(" is not valid for MPU. Please check your I2C address.");
-            }
+            Serial.print("I2C address 0x");
+            Serial.print(addr, HEX);
+            Serial.println(" is not valid for MPU. Please check your I2C address.");
             return false;
         }
         mpu_i2c_addr = addr;
@@ -150,8 +157,8 @@ public:
             else {
                 if (b_verbose)
                     Serial.println("Could not connect to AK8963");
-                has_connected = false;
-                return false;
+                //has_connected = false;
+                //return false;
             }
         } else {
             if (b_verbose)
@@ -298,24 +305,6 @@ public:
     float getLinearAccY() const { return lin_acc[1]; }
     float getLinearAccZ() const { return lin_acc[2]; }
 
-    int16_t getAccRaw(const uint8_t i) const { return (i < 3) ? raw_acc_gyro_data[i] : 0; }
-
-    int16_t getAccRawX() const {return raw_acc_gyro_data[0];}
-    int16_t getAccRawY() const {return raw_acc_gyro_data[1];}
-    int16_t getAccRawZ() const {return raw_acc_gyro_data[2];}
-
-    int16_t getGyroRaw(const uint8_t i) const { return (i < 3) ? raw_acc_gyro_data[i + 4] : 0; }
-
-    int16_t getGyroRawX() const {return raw_acc_gyro_data[4];}
-    int16_t getGyroRawY() const {return raw_acc_gyro_data[5];}
-    int16_t getGyroRawZ() const {return raw_acc_gyro_data[6];}
-
-    int16_t getMagRaw(const uint8_t i) const { return (i < 3) ? mag_count[i] : 0; }
-
-    int16_t getMagRawX() const {return mag_count[0];}
-    int16_t getMagRawY() const {return mag_count[1];}
-    int16_t getMagRawZ() const {return mag_count[2];}
-
     float getAccBias(const uint8_t i) const { return (i < 3) ? acc_bias[i] : 0.f; }
     float getGyroBias(const uint8_t i) const { return (i < 3) ? gyro_bias[i] : 0.f; }
     float getMagBias(const uint8_t i) const { return (i < 3) ? mag_bias[i] : 0.f; }
@@ -372,98 +361,7 @@ public:
         return self_test_impl();
     }
 
-    void writeAccelOffset(int16_t x, int16_t y, int16_t z)
-    {
-      int16_t acc_bias_reg[3] = {x,y,z};
-      uint8_t write_data[6] = {0};
-
-      write_data[0] = (acc_bias_reg[0] >> 8) & 0xFF;
-      write_data[1] = (acc_bias_reg[0]) & 0xFF;
-      write_data[2] = (acc_bias_reg[1] >> 8) & 0xFF;
-      write_data[3] = (acc_bias_reg[1]) & 0xFF;
-      write_data[4] = (acc_bias_reg[2] >> 8) & 0xFF;
-      write_data[5] = (acc_bias_reg[2]) & 0xFF;
-
-      // Push accelerometer biases to hardware registers
-      write_byte(mpu_i2c_addr, XA_OFFSET_H, write_data[0]);
-      write_byte(mpu_i2c_addr, XA_OFFSET_L, write_data[1]);
-      write_byte(mpu_i2c_addr, YA_OFFSET_H, write_data[2]);
-      write_byte(mpu_i2c_addr, YA_OFFSET_L, write_data[3]);
-      write_byte(mpu_i2c_addr, ZA_OFFSET_H, write_data[4]);
-      write_byte(mpu_i2c_addr, ZA_OFFSET_L, write_data[5]);
-    }
-
-    void readAccelOffset(int16_t *px, int16_t *py, int16_t *pz)
-    {
-      int16_t h,l;
-
-      h = read_byte(mpu_i2c_addr, XA_OFFSET_H);
-      l = read_byte(mpu_i2c_addr, XA_OFFSET_L);
-
-      *px = ((h & 0x00FF) << 8) | ( l & 0x00FF) ;
-
-      h = read_byte(mpu_i2c_addr, YA_OFFSET_H);
-      l = read_byte(mpu_i2c_addr, YA_OFFSET_L);
-
-      *py = ((h & 0x00FF) << 8) | ( l & 0x00FF) ;
-
-      h = read_byte(mpu_i2c_addr, ZA_OFFSET_H);
-      l = read_byte(mpu_i2c_addr, ZA_OFFSET_L);
-
-      *pz = ((h & 0x00FF) << 8) | ( l & 0x00FF) ;
-    }
-
-    void writeGyroOffset(int16_t x, int16_t y, int16_t z)
-    {
-      int16_t gyro_bias_reg[3] = {x,y,z};
-      uint8_t write_data[6] = {0};
-
-      write_data[0] = (gyro_bias_reg[0] >> 8) & 0xFF;
-      write_data[1] = (gyro_bias_reg[0]) & 0xFF;
-      write_data[2] = (gyro_bias_reg[1] >> 8) & 0xFF;
-      write_data[3] = (gyro_bias_reg[1]) & 0xFF;
-      write_data[4] = (gyro_bias_reg[2] >> 8) & 0xFF;
-      write_data[5] = (gyro_bias_reg[2]) & 0xFF;
-
-      // Push gyro biases to hardware registers
-      write_byte(mpu_i2c_addr, XG_OFFSET_H, write_data[0]);
-      write_byte(mpu_i2c_addr, XG_OFFSET_L, write_data[1]);
-      write_byte(mpu_i2c_addr, YG_OFFSET_H, write_data[2]);
-      write_byte(mpu_i2c_addr, YG_OFFSET_L, write_data[3]);
-      write_byte(mpu_i2c_addr, ZG_OFFSET_H, write_data[4]);
-      write_byte(mpu_i2c_addr, ZG_OFFSET_L, write_data[5]);
-    }
-
-    void readGyroOffset(int16_t *px, int16_t *py, int16_t *pz)
-    {
-      int16_t h,l;
-
-      h = read_byte(mpu_i2c_addr, XG_OFFSET_H);
-      l = read_byte(mpu_i2c_addr, XG_OFFSET_L);
-
-      *px = ((h & 0x00FF) << 8) | ( l & 0x00FF) ;
-
-      h = read_byte(mpu_i2c_addr, YG_OFFSET_H);
-      l = read_byte(mpu_i2c_addr, YG_OFFSET_L);
-
-      *py = ((h & 0x00FF) << 8) | ( l & 0x00FF) ;
-
-      h = read_byte(mpu_i2c_addr, ZG_OFFSET_H);
-      l = read_byte(mpu_i2c_addr, ZG_OFFSET_L);
-
-      *pz = ((h & 0x00FF) << 8) | ( l & 0x00FF) ;
-    }
-
-    void writeMagOffset(int16_t x, int16_t y, int16_t z)
-    {
-      float bias_resolution = get_mag_resolution(MAG_OUTPUT_BITS::M16BITS);
-
-      mag_bias[0] = (float)x * bias_resolution * mag_bias_factory[0];  // save mag biases in G for main program
-      mag_bias[1] = (float)y * bias_resolution * mag_bias_factory[1];
-      mag_bias[2] = (float)z * bias_resolution * mag_bias_factory[2];
-    }
-
-private:
+protected:
     void initMPU9250() {
         acc_resolution = get_acc_resolution(setting.accel_fs_sel);
         gyro_resolution = get_gyro_resolution(setting.gyro_fs_sel);
@@ -528,8 +426,11 @@ private:
         // Set interrupt pin active high, push-pull, hold interrupt pin level HIGH until interrupt cleared,
         // clear on read of INT_STATUS, and enable I2C_BYPASS_EN so additional chips
         // can join the I2C bus and all can be controlled by the Arduino as master
-        write_byte(mpu_i2c_addr, INT_PIN_CFG, 0x22);
-        write_byte(mpu_i2c_addr, INT_ENABLE, 0x01);  // Enable data ready (bit 0) interrupt
+        //write_byte(mpu_i2c_addr, INT_PIN_CFG, 0x22);  // this is wrong and causes FSYNC pin acts as INT, FSYNC connected to gnd in GY-91 module
+        //write_byte(mpu_i2c_addr, INT_ENABLE, 0x01);  // Enable data ready (bit 0) interrupt
+
+        write_byte(mpu_i2c_addr, INT_PIN_CFG, 0x12);
+
         delay(100);
     }
 
@@ -598,7 +499,7 @@ public:
     }
 
     void update_accel_gyro() {
-
+        int16_t raw_acc_gyro_data[7];        // used to read all 14 bytes at once from the MPU9250 accel/gyro
         read_accel_gyro(raw_acc_gyro_data);  // INT cleared on any read
 
         // Now we'll calculate the accleration value into actual g's
@@ -615,7 +516,7 @@ public:
         g[2] = (float)raw_acc_gyro_data[6] * gyro_resolution;
     }
 
-private:
+protected:
     void read_accel_gyro(int16_t* destination) {
         uint8_t raw_data[14];                                                 // x/y/z accel register data stored here
         read_bytes(mpu_i2c_addr, ACCEL_XOUT_H, 14, &raw_data[0]);             // Read the 14 raw data registers into data array
@@ -630,6 +531,8 @@ private:
 
 public:
     void update_mag() {
+        int16_t mag_count[3] = {0, 0, 0};  // Stores the 16-bit signed magnetometer sensor output
+
         // Read the x/y/z adc values
         if (read_mag(mag_count)) {
             // Calculate the magnetometer values in milliGauss
@@ -642,7 +545,7 @@ public:
         }
     }
 
-private:
+protected:
     bool read_mag(int16_t* destination) {
         const uint8_t st1 = read_byte(AK8963_ADDRESS, AK8963_ST1);
         if (st1 & 0x01) {                                                    // wait for magnetometer data ready bit to be set
@@ -1070,7 +973,7 @@ private:
             // 14 bit resolution (0) and 16 bit resolution (1)
             // Proper scale to return milliGauss
             case MAG_OUTPUT_BITS::M14BITS:
-                return 10. * 4912. / 8190.0;
+                return 10. * 4912. / 8190.0; // 1 uT = 10 mG
             case MAG_OUTPUT_BITS::M16BITS:
                 return 10. * 4912. / 32760.0;
             default:
@@ -1111,11 +1014,8 @@ private:
 
     void print_i2c_error() {
         if (i2c_err_ == 7) return;  // to avoid stickbreaker-i2c branch's error code
-        if(b_verbose)
-        {
-          Serial.print("I2C ERROR CODE : ");
-          Serial.println(i2c_err_);
-        }
+        Serial.print("I2C ERROR CODE : ");
+        Serial.println(i2c_err_);
     }
 };
 

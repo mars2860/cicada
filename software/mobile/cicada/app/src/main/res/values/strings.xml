@@ -1,0 +1,68 @@
+<resources>
+    <string name="app_name">cicada</string>
+
+    <string name="settings">Settings</string>
+    <string name="title_activity_gamepad">Gamepad</string>
+
+    <string name="connect">Connect</string>
+    <string name="disarmed">Disarmed</string>
+    <string name="armed">Armed</string>
+    <string name="receive">Receive</string>
+    <string name="send">Send</string>
+    <string name="save">Save</string>
+    <string name="save_as">Save As</string>
+    <string name="remove">Remove</string>
+    <string name="load_default">Load Default</string>
+    <string name="profile_name">Profile Name</string>
+    <string name="invalid_name">Invalid name</string>
+    <string name="saved_successfully">Saved successfully</string>
+    <string name="saving_failed">Saving is failed</string>
+    <string name="loaded_successfully">Loaded successfully</string>
+    <string name="loading_failed">Loading is failed</string>
+    <string name="settings_sent">Settings has been sent to a drone</string>
+    <string name="are_you_sure">Are you sure?</string>
+    <string name="confirm">Confirm</string>
+    <string name="apply">Apply</string>
+    <string name="cancel">Cancel</string>
+    <string name="ok">Ok</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="connecting">Try to connect</string>
+
+    <string name="disarm_motors">Disarm Motors</string>
+    <string name="turn_cw_ccw">Turn CCW/CW</string>
+    <string name="forward_backward">Forward/Backward</string>
+    <string name="left_right">Left/Right</string>
+    <string name="up_down">Lift Up/Down</string>
+    <string name="trick_mode">Trick Mode</string>
+    <string name="load1">Load1</string>
+    <string name="load2">Load2</string>
+    <string name="turtle">Anti-Turtle</string>
+    <string name="cam0">Cam0</string>
+    <string name="cam45">Cam45</string>
+    <string name="cam90">Cam90</string>
+    <string name="video_start_stop">Video Start/Stop</string>
+    <string name="photo">Photo</string>
+
+    <!-- KEYs to save parameters to storage-->
+    <string name="gamepad_file_key">ru.liftelectronica.cicada.gamepad_settings</string>
+    <string name="key_turn_cw">key_turn_cw</string>
+    <string name="key_turn_ccw">key_turn_ccw</string>
+    <string name="key_lift_up">key_up</string>
+    <string name="key_lift_down">key_down</string>
+    <string name="key_forward">key_forward</string>
+    <string name="key_backward">key_backward</string>
+    <string name="key_left">key_left</string>
+    <string name="key_right">key_right</string>
+    <string name="key_disarm_motors">key_disarm_motors</string>
+    <string name="key_trick">key_trick</string>
+    <string name="key_load1">key_load1</string>
+    <string name="key_load2">key_load2</string>
+    <string name="key_turtle">key_turtle</string>
+    <string name="key_cam0">key_cam0</string>
+    <string name="key_cam45">key_cam45</string>
+    <string name="key_cam90">key_cam90</string>
+    <string name="key_video">key_video</string>
+    <string name="key_photo">key_photo</string>
+
+</resources>

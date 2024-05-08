@@ -1,0 +1,31 @@
+<resources>
+
+    <!-- Declare custom theme attributes that allow changing which styles are
+         used for button bars depending on the API level.
+         ?android:attr/buttonBarStyle is new as of API 11 so this is
+         necessary to support previous API levels. -->
+    <declare-styleable name="ButtonBarContainerTheme">
+        <attr name="metaButtonBarStyle" format="reference" />
+        <attr name="metaButtonBarButtonStyle" format="reference" />
+    </declare-styleable>
+
+    <integer name="key_turn_ccw">21</integer>
+    <integer name="key_turn_cw">22</integer>
+    <integer name="key_lift_up">19</integer>
+    <integer name="key_lift_down">20</integer>
+    <integer name="key_forward">100</integer>
+    <integer name="key_backward">96</integer>
+    <integer name="key_left">99</integer>
+    <integer name="key_right">97</integer>
+    <integer name="key_disarm_motors">108</integer>
+    <integer name="key_trick">102</integer>
+    <integer name="key_load1">104</integer>
+    <integer name="key_load2">105</integer>
+    <integer name="key_turtle">103</integer>
+    <integer name="key_cam0">0</integer>
+    <integer name="key_cam45">0</integer>
+    <integer name="key_cam90">0</integer>
+    <integer name="key_video">0</integer>
+    <integer name="key_photo">0</integer>
+
+</resources>

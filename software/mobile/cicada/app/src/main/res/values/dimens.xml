@@ -1,0 +1,11 @@
+<resources>
+    <!-- Default screen margins, per the Android Design guidelines. -->
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+    <dimen name="status_icon_sz">24dp</dimen>
+    <dimen name="status_text_sz">18sp</dimen>
+    <dimen name="status_icon_margin">4dp</dimen>
+    <dimen name="gamepad_cfg_tv_width">110dp</dimen>
+    <dimen name="gamepad_cfg_btn_width">80dp</dimen>
+    <dimen name="gamepad_cfg_gap">50dp</dimen>
+</resources>

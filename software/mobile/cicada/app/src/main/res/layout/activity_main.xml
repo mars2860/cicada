@@ -1,0 +1,139 @@
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0099cc"
+    tools:context=".MainActivity">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/pnlButtons"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentRight="true"
+            android:layout_marginTop="5dp">
+            <ImageButton
+                android:id="@+id/btnConnect"
+                android:gravity="left"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@drawable/key"
+                android:paddingLeft="1dp"
+                android:paddingRight="1dp"
+                android:adjustViewBounds="true"
+                android:scaleType="fitCenter"
+                android:onClick="onBtnConnect"/>
+            <ImageButton
+                android:id="@+id/btnSettings"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_alignBottom="@+id/btnConnect"
+                android:layout_toEndOf="@+id/btnConnect"
+                android:src="@drawable/settings"
+                android:paddingLeft="1dp"
+                android:paddingRight="1dp"
+                android:adjustViewBounds="true"
+                android:scaleType="fitCenter"
+                android:onClick="onBtnSettings"/>
+
+            <ImageButton
+                android:id="@+id/btnGamepad"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_alignBottom="@+id/btnConnect"
+                android:layout_toEndOf="@+id/btnSettings"
+                android:src="@drawable/gamepad"
+                android:paddingLeft="1dp"
+                android:paddingRight="1dp"
+                android:adjustViewBounds="true"
+                android:scaleType="fitCenter"
+                android:onClick="onBtnGamepad"/>
+
+        </RelativeLayout>
+
+        <TextView
+            android:id="@+id/tvAlarm"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentLeft="true"
+            android:text="The drone is not found"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="5dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="5dp"
+            android:layout_toLeftOf="@id/pnlButtons"
+            />
+
+        <TextView
+            android:id="@+id/tvStatus1"
+            android:layout_below="@id/tvAlarm"
+            android:text="bat:0.0V/0%\nrrsi:-100 dbi\nflyTime: 00:00"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignLeft="@id/tvAlarm"
+            />
+
+        <TextView
+            android:id="@+id/tvStatus2"
+            android:layout_below="@id/tvAlarm"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="yaw:000\n\pitch:000\nroll:000\n"
+            android:layout_marginRight="5dp"
+            android:layout_alignTop="@id/tvStatus1"
+            android:layout_centerHorizontal="true"
+
+            />
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/pnlGamepad"
+            android:layout_alignParentBottom="true">
+
+            <io.github.controlwear.virtual.joystick.android.JoystickView
+                xmlns:custom="http://schemas.android.com/apk/res-auto"
+                android:id="@+id/joystickView_left"
+                android:layout_width="260dp"
+                android:layout_height="260dp"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentLeft="true"
+                custom:JV_borderWidth="8dp"
+                custom:JV_backgroundColor="#009688"
+                custom:JV_borderColor="#00796B"
+                custom:JV_buttonColor="#FF6E40"/>
+
+            <io.github.controlwear.virtual.joystick.android.JoystickView
+                xmlns:custom="http://schemas.android.com/apk/res-auto"
+                android:id="@+id/joystickView_right"
+                android:layout_width="260dp"
+                android:layout_height="260dp"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentRight="true"
+                custom:JV_borderWidth="8dp"
+                custom:JV_backgroundColor="#009688"
+                custom:JV_borderColor="#00796B"
+                custom:JV_buttonColor="#FF6E40"/>
+
+            <ToggleButton
+                android:id="@+id/btnDisarm"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
+                android:text="@string/armed"
+                android:layout_alignParentBottom="true"
+                android:layout_centerHorizontal="true"
+                android:layout_marginBottom="5dp"
+                android:textOn="@string/disarmed"
+                android:textOff="@string/armed"
+                android:onClick="onBtnDisarm"/>
+
+
+        </RelativeLayout>
+
+    </RelativeLayout>
+</FrameLayout>

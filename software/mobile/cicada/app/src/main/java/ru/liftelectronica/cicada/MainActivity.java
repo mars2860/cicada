@@ -100,7 +100,7 @@ public class MainActivity extends AppCompatActivity {
     private double pitchCtrl = 0;
     private double rotateCtrl = 0;
 
-    private static final double STICK_FLAT = 0.01;
+    private static final double STICK_FLAT = 0.09;
 
     private class OnAlarmUpdate implements Observer {
         @Override

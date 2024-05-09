@@ -12,7 +12,7 @@ The Cicada Project is the flight controller based on ESP8266 Wifi module. You ca
 |     |     |     |     |
 | --- | --- | --- | --- |
 |     | **Min** | **Typ** | **Max** |
-| **1\. Power voltage** | 3,4V |     | 5V  |
+| **1\. Supply voltage** | 3,4V |     | 5V  |
 | **2\. Update frequency** |     | 100 Hz |     |
 | **3\. Control from notebook or smartphone through WiFi net.** |     | 2.4 GHz |     |
 | **4\. Instant telemetry through WiFi net.** Charts of all parameters. BlackBox is stored on host. Telemetry packets is sent every 10ms. |     |     |     |

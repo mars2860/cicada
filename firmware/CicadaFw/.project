@@ -71,5 +71,10 @@
 			<type>2</type>
 			<locationURI>ECLIPSE_HOME/arduinoPlugin/packages/esp8266/hardware/esp8266/3.1.2/libraries/Wire</locationURI>
 		</link>
+		<link>
+			<name>libraries/ds3231-master</name>
+			<type>2</type>
+			<location>C:/Users/user/Documents/Arduino/libraries/ds3231-master</location>
+		</link>
 	</linkedResources>
 </projectDescription>

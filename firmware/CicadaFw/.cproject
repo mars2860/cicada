@@ -39,6 +39,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/RunningMedian}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/SoftwareSerial/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/ds3231-master}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.cpp.sketch.input.95334001" name="CPP source files" superClass="io.sloeber.compiler.cpp.sketch.input"/>
 							</tool>
@@ -64,6 +65,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/RunningMedian}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/SoftwareSerial/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/ds3231-master}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.c.sketch.input.764340330" name="C Source Files" superClass="io.sloeber.compiler.c.sketch.input"/>
 							</tool>
@@ -89,6 +91,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/RunningMedian}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/SoftwareSerial/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/ds3231-master}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.S.sketch.input.736617084" name="Assembly source files" superClass="io.sloeber.compiler.S.sketch.input"/>
 							</tool>
@@ -145,6 +148,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/RunningMedian}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/SoftwareSerial/src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/ds3231-master}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.cpp.sketch.input.911912672" name="CPP source files" superClass="io.sloeber.compiler.cpp.sketch.input"/>
 							</tool>
@@ -170,6 +174,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/RunningMedian}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/SoftwareSerial/src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/ds3231-master}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.c.sketch.input.1412834262" name="C Source Files" superClass="io.sloeber.compiler.c.sketch.input"/>
 							</tool>
@@ -195,6 +200,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/RunningMedian}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/SoftwareSerial/src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/ds3231-master}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.S.sketch.input.2093495950" name="Assembly source files" superClass="io.sloeber.compiler.S.sketch.input"/>
 							</tool>
@@ -248,8 +254,6 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/TFMINI-PLUS}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/HCSR04}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/GPS}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/MedianFilter}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/MovingAverageFilter}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/RunningMedian}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
 								</option>
@@ -274,8 +278,6 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/TFMINI-PLUS}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/HCSR04}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/GPS}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/MedianFilter}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/MovingAverageFilter}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/RunningMedian}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
 								</option>
@@ -300,8 +302,6 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/TFMINI-PLUS}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/HCSR04}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/GPS}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/MedianFilter}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/MovingAverageFilter}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/RunningMedian}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
 								</option>
@@ -357,8 +357,6 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/TFMINI-PLUS}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/HCSR04}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/GPS}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/MedianFilter}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/MovingAverageFilter}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/RunningMedian}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
 								</option>
@@ -383,8 +381,6 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/TFMINI-PLUS}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/HCSR04}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/GPS}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/MedianFilter}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/MovingAverageFilter}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/RunningMedian}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
 								</option>
@@ -409,8 +405,6 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/TFMINI-PLUS}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/HCSR04}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/GPS}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/MedianFilter}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/MovingAverageFilter}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/RunningMedian}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
 								</option>
@@ -466,8 +460,6 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/TFMINI-PLUS}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/HCSR04}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/GPS}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/MedianFilter}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/MovingAverageFilter}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/RunningMedian}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
 								</option>
@@ -492,8 +484,6 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/TFMINI-PLUS}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/HCSR04}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/GPS}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/MedianFilter}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/MovingAverageFilter}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/RunningMedian}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
 								</option>
@@ -518,8 +508,6 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/TFMINI-PLUS}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/HCSR04}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/GPS}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/MedianFilter}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/MovingAverageFilter}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/RunningMedian}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
 								</option>

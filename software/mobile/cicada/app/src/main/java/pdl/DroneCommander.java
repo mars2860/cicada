@@ -769,7 +769,7 @@ public class DroneCommander implements Runnable
 				if(ds.stabilizationEnabled == false)
 				{
 					//if(pwr > 0)	//stick up enables drone
-					if(pwr != 0)	//stick up or down enables drone
+					if(Math.abs(pwr) > 0.2)	//stick up or down enables drone
 					{
 						CmdEnableStabilization cmd = new CmdEnableStabilization(true);
 						DroneCommander.instance().addCmd(cmd);
@@ -810,7 +810,7 @@ public class DroneCommander implements Runnable
 				if(ds.stabilizationEnabled == false)
 				{
 					//if(pwr > 0)
-					if(pwr != 0)	// stick up or down enables drone
+					if(Math.abs(pwr) > 0.2)	// stick up or down enables drone
 					{
 						CmdEnableStabilization cmd = new CmdEnableStabilization(true);
 						DroneCommander.instance().addCmd(cmd);

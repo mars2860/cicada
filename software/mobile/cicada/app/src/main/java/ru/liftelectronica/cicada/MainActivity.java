@@ -45,7 +45,7 @@ import pdl.commands.CmdResetAltitude;
 
 public class MainActivity extends AppCompatActivity {
 
-    public static final int JOYSTICK_UPDATE_TIME = 20;
+    public static final int JOYSTICK_UPDATE_TIME = 40;
 
     Timer mtmDroneMoveUpdater;
 
@@ -659,7 +659,7 @@ public class MainActivity extends AppCompatActivity {
         loadGamepadSettings(this);
         // to implement acceleration/deceleration by key_down we need to poll key state
         mtmDroneMoveUpdater = new Timer("DroneMoveUpdater");
-        mtmDroneMoveUpdater.schedule(new OnUpdateDroneMove(),50, JOYSTICK_UPDATE_TIME);// FPS 50
+        mtmDroneMoveUpdater.schedule(new OnUpdateDroneMove(),50, JOYSTICK_UPDATE_TIME);
     }
 
     @Override
@@ -668,6 +668,16 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
 
+        // app version
+        try {
+            String versionName = getApplicationContext().
+                                    getPackageManager().
+                                        getPackageInfo(getApplicationContext().getPackageName(),0).versionName;
+            TextView tvAppVer = (TextView)findViewById(R.id.tvAppVersion);
+            tvAppVer.setText(versionName);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         // find widgets
         mtvAlarm = (TextView)findViewById(R.id.tvAlarm);
         mbtnDisarm = (ToggleButton)findViewById(R.id.btnDisarm);

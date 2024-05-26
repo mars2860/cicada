@@ -34,7 +34,7 @@ public class TextBundle extends ListResourceBundle
             
             // UI
             //{"APP_TITLE", "Cicada drone pult (C) Anton Sysoev (anton.sysoev.ru68@gmail.com)"},
-            {"APP_TITLE", "cicada drone pult v2 (C) www.liftelectronica.ru"},
+            {"APP_TITLE", "cicada drone pult v3 (C) www.liftelectronica.ru"},
             
             {"OK", "OK"},
             {"CANCEL", "Cancel"},

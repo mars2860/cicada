@@ -76,6 +76,11 @@ public class DroneCommander implements Runnable
 	public static final double CTRL_ERR = 0.001;
 	public static final boolean LOG_CTRL_CMD = true;
 	
+	/** Delay in milliseconds between commands.
+	 *  This delay is needed to a drone have time to process last received command
+	 */
+	public static final int DELAY_BTW_CMDS = 20;
+	
 	private static DroneCommander mSingleton;
 
 	public static DroneCommander instance()
@@ -228,7 +233,8 @@ public class DroneCommander implements Runnable
 				
 				if(mCmds.size() > 0)
 				{
-					cmdIdx = mCmds.size() - 1;
+					//cmdIdx = mCmds.size() - 1; // old code implements LIFO queue in this place
+					cmdIdx = 0; // FIFO queue
 					cmd = mCmds.get(cmdIdx);
 					mCmds.remove(cmdIdx);
 				}
@@ -255,8 +261,8 @@ public class DroneCommander implements Runnable
 				try
 				{
 					mSocket.send(packet);
-					// give time to copter to process a command
-					Thread.sleep(20);
+					// give time to the drone to process a command
+					Thread.sleep(DELAY_BTW_CMDS);
 				}
 				catch(IOException e)
 				{

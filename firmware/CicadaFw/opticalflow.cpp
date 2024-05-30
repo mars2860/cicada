@@ -132,6 +132,11 @@ bool isPmw3901Available()
 
 void pdlSetupOpticalFlow(pdlDroneState *ds)
 {
+  if(pOpticalFlow)  // reinit when load default config command is received
+  {
+    pOpticalFlow->setup();
+    return;
+  }
   // scan for pmw3901
   pOpticalFlow = new PMW3901Driver();
   if(pOpticalFlow->setup())

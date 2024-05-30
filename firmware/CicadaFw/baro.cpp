@@ -129,6 +129,11 @@ static float qnePressure = 0;
 
 void pdlSetupBaro(pdlDroneState *ds)
 {
+  if(pBaro) // reinit when load default config command is received
+  {
+    pBaro->setup();
+    return;
+  }
   // scan for bmp280
   pBaro = new Bmp280Driver();
   if(pBaro->setup())

@@ -225,6 +225,11 @@ static uint8_t stabCounter = 0;
 void pdlSetupLidar(pdlDroneState *ds)
 {
   ds->lidar.range = -1.f;
+  if(pLidar)  // reinit when load default config command is received
+  {
+    pLidar->setup();
+    return;
+  }
   // scan for tfmini-plus
   pLidar = new TFminiPlusDriver();
   if(pLidar->setup())

@@ -204,6 +204,11 @@ BatteryDriver *pBattery = 0;
 
 void pdlSetupBattery(pdlDroneState*)
 {
+  if(pBattery)  // reinit when load default config command is received
+  {
+    pBattery->setup();
+    return;
+  }
   // scan for two chl adc battery indicator
   pBattery = new TwoChlAdcBatteryDriver();
   if(pBattery->setup())

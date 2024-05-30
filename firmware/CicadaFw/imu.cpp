@@ -847,8 +847,8 @@ void pdlSetupGyro(pdlDroneState *ds)
 {
   if(pGyro)  // perform remote command to calibrate gyro
   {
-    if(pGyro->setupGyro(ds))
-      return;
+    pGyro->setupGyro(ds);
+    return;
   }
   delay(500); // wait for power up of imu module
   // scan for MPU9250
@@ -890,8 +890,8 @@ void pdlSetupAccel(pdlDroneState *ds)
 {
   if(pAccel)  // perform remote command to calibrate accel
   {
-    if(pAccel->setupAccel(ds))
-      return;
+    pAccel->setupAccel(ds);
+    return;
   }
   pdlSetError(ds,ERR_IMU_DATA_NOT_READY);
   LOG_INFO("Accelerometer is not found");
@@ -901,8 +901,8 @@ void pdlSetupMagneto(pdlDroneState* ds)
 {
   if(pMagneto)  // perform remote command to calibrate magneto
   {
-    if(pMagneto->setupMagneto(ds))
-      return;
+    pMagneto->setupMagneto(ds);
+    return;
   }
   // scan for QMC5883
   pMagneto = new QMC5883Driver();

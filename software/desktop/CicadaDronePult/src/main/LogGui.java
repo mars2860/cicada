@@ -76,6 +76,11 @@ public class LogGui extends JSavedFrame
 		
 		this.add(pnlLog);
 	}
+	
+	public void clearLog()
+	{
+		mViewer.setText("");
+	}
 
 	@Override
 	protected WndState loadWndState()

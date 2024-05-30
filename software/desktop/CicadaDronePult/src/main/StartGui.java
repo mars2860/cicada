@@ -205,6 +205,15 @@ public class StartGui extends JSavedFrame
 			
 			DroneAlarmCenter.instance().setAlarm(Alarm.ALARM_CONNECTING);
 			
+			if(DroneTelemetry.instance().isDroneConnected() == false)
+			{
+				DroneLog.instance().clearLog();
+				if(mLogGui != null)
+				{
+					mLogGui.clearLog();
+				}
+			}
+			
 			Thread thread = new Thread(new Runnable()
 			{
 				@Override

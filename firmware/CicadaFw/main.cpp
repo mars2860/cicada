@@ -24,7 +24,15 @@ uint32_t pdlMicros()
 
 //--------------------------------------------------------------
 
-#define FW_VERSION "2"
+/** Firmware version is not the same as PDL version.
+ *  You can add for example supporting new sensor.
+ *  This will be new firmware version and
+ *  old desktop and mobile software will work with this version.
+ *  But if you add new command or changed pdlDroneState
+ *  this will be new PDL version. In this case old desktop and
+ *  mobile software will not work with new firmware
+ */
+#define FW_VERSION "3"
 
 void setup()
 {

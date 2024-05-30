@@ -17,7 +17,7 @@
  * @{
  */
 
-#define PDL_VERSION 2
+#define PDL_VERSION 3
 
 #define PDL_X     0
 #define PDL_Y     1

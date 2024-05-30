@@ -47,8 +47,6 @@ void pdlSetup(pdlDroneState *ds)
 {
   memset(ds,0,sizeof(pdlDroneState));
 
-  ds->version = PDL_VERSION;
-
   pdlSetupTasks();
 
   ds->battery.minVoltage = 6.2f;
@@ -81,6 +79,7 @@ void pdlSetup(pdlDroneState *ds)
   ds->videoState = 0;
   ds->motorsEnabled = 0;
   ds->stabilizationEnabled = 0;
+  ds->version = PDL_VERSION;
   pdlSetupEsc(ds);
   pdlSetupRc(ds);
   pdlSetupTelemetry(ds);

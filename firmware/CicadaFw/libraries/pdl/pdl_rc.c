@@ -33,7 +33,7 @@ void pdlCmdSaveDefaultCfg(pdlDroneState *ds, uint8_t *packet)
 void pdlCmdLoadDefaultCfg(pdlDroneState *ds, uint8_t *packet)
 {
   (void)packet;
-  pdlLoadDefaultCfg(ds);
+  pdlSetup(ds); // it loads and applies default settings
 }
 
 void pdlCmdEnableMotors(pdlDroneState *ds, uint8_t *packet)

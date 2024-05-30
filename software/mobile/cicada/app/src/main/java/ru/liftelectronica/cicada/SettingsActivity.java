@@ -257,7 +257,7 @@ public class SettingsActivity extends AppCompatActivity {
                 updateSettingsView();
                 Toast.makeText(SettingsActivity.this, R.string.loaded_successfully, Toast.LENGTH_LONG).show();
             }
-        }, 3000);
+        }, 5000);
     }
 
     public static String loadCurProfileName(Context context) {

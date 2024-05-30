@@ -833,6 +833,11 @@ public class DroneState implements Cloneable
 		@Setting
 		@Expose
 		public static double takeoffErrSum;
+		
+		@NoChart
+		@Setting
+		@Expose
+		public float velUpOffset;
 	}
 	
 	@SettingGroup(name = "ALT_PID")
@@ -1408,8 +1413,8 @@ public class DroneState implements Cloneable
 		refPitchDeg = Math.toDegrees(refPitchRad);
 		refRollDeg = Math.toDegrees(refRollRad);
 		
-		// skip Reserved2
-		parser.getUint32t(packet);
+		// Now reserved2 is velUpOffset 
+		velocityZPid.velUpOffset = parser.getFloat(packet);
 		// skip Reserved3
 		parser.getUint32t(packet);
 		// skip Reserved4

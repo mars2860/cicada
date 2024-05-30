@@ -126,8 +126,10 @@
 #define PDL_CMD_START_STOP_VIDEO      153
 /// Take a photo, Format = {154}
 #define PDL_CMD_TAKE_PHOTO            154
-/// Enable dynamic ip, , Format = {155, uint8_t en}
+/// Enable dynamic ip, Format = {155, uint8_t en}
 #define PDL_CMD_ENABLE_DYNAMIC_IP     155
+/// Set velUpOffset, Format = {156, float velUpOffset}
+#define PDL_CMD_SET_VELUP_OFFSET      156
 
 /// @}
 

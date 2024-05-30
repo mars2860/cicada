@@ -357,6 +357,11 @@ void pdlCmdVeloZTakeoff(pdlDroneState *ds, uint8_t *packet)
   }
 }
 
+void pdlCmdSetVelUpOffset(pdlDroneState *ds, uint8_t *packet)
+{
+  memcpy(&ds->velUpOffset, &packet[1], sizeof(float));
+}
+
 void pdlParseCommand(pdlDroneState *ds, uint8_t *packet)
 {
   uint8_t cmd = packet[0];
@@ -531,6 +536,9 @@ void pdlParseCommand(pdlDroneState *ds, uint8_t *packet)
       break;
     case PDL_CMD_ENABLE_DYNAMIC_IP:
       pdlCmdEnableDynamicIp(ds,packet);
+      break;
+    case PDL_CMD_SET_VELUP_OFFSET:
+      pdlCmdSetVelUpOffset(ds,packet);
       break;
   }
 }

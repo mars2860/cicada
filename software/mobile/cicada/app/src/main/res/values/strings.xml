@@ -17,6 +17,7 @@
     <string name="invalid_name">Invalid name</string>
     <string name="saved_successfully">Saved successfully</string>
     <string name="saving_failed">Saving is failed</string>
+    <string name="loading_wait">Loading...Please wait</string>
     <string name="loaded_successfully">Loaded successfully</string>
     <string name="loading_failed">Loading is failed</string>
     <string name="settings_sent">Settings has been sent to a drone</string>

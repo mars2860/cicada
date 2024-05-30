@@ -357,6 +357,16 @@ public class SettingsGui extends JSavedFrame
 					"",
 					JOptionPane.INFORMATION_MESSAGE);
 			
+			// wait while the drone applies default settings
+			try
+			{
+				Thread.sleep(3000);
+			}
+			catch(Exception ex)
+			{
+				ex.printStackTrace();
+			}
+			
 			DroneState ds = DroneTelemetry.instance().getDroneState();
 			// Fill settings tree with received settings to be sure in settings we have really on drone
 			Profile.instance().setDroneSettings(ds);

@@ -247,6 +247,8 @@ public class SettingsActivity extends AppCompatActivity {
 
         DroneCommander.instance().loadDefaultCfg();
 
+        Toast.makeText(SettingsActivity.this, R.string.loading_wait, Toast.LENGTH_SHORT).show();
+
         v.postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -255,7 +257,7 @@ public class SettingsActivity extends AppCompatActivity {
                 updateSettingsView();
                 Toast.makeText(SettingsActivity.this, R.string.loaded_successfully, Toast.LENGTH_LONG).show();
             }
-        }, 500);
+        }, 3000);
     }
 
     public static String loadCurProfileName(Context context) {

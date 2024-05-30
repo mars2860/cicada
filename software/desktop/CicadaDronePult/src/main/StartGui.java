@@ -403,6 +403,14 @@ public class StartGui extends JSavedFrame
 			return;
 		}
 		
+		if(DroneAlarmCenter.instance().getAlarm(Alarm.ALARM_UNSUPPORTED_FIRMWARE))
+		{
+			mlbAlarmText.setText(ResBox.text("ALARM_UNSUPPORTED_FIRMWARE"));
+			mlbAlarmIcon.setIcon(ResBox.icon("ERROR"));
+			// don't show other Alarms if we have unsupported firmware
+			return;
+		}
+		
 		String alarmText = TextBox.get("SYSTEM_OK"); 
 		
 		if(alarm != null)

@@ -27,7 +27,8 @@ public class DroneState implements Cloneable
 		public String name();
 	}
 	
-	public static final int SUPPORTED_FIRMWARE_VERSION = 2;
+	/// Supported PDL library version
+	public static final int SUPPORTED_PDL_VERSION = 3;
 	
 	public static final String DEFAULT_SSID = "liftelectronica";
 	public static final String DEFAULT_PSK = "cosmos327";
@@ -1306,9 +1307,13 @@ public class DroneState implements Cloneable
 	{
 		version = parser.getUint8t(packet);
 		
-		if(version > SUPPORTED_FIRMWARE_VERSION)
+		if(version != SUPPORTED_PDL_VERSION)
 		{
 			DroneAlarmCenter.instance().setAlarm(Alarm.ALARM_UNSUPPORTED_FIRMWARE);
+		}
+		else
+		{
+			DroneAlarmCenter.instance().clearAlarm(Alarm.ALARM_UNSUPPORTED_FIRMWARE);
 		}
 		
 		motorsEnabled = parser.getBool(packet);

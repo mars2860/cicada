@@ -1094,6 +1094,11 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
+        if(DroneAlarmCenter.instance().getAlarm(Alarm.ALARM_UNSUPPORTED_FIRMWARE)) {
+            mtvAlarm.setText(TextBox.get("ALARM_UNSUPPORTED_FIRMWARE"));
+            mtvAlarm.setTextColor(Color.RED);
+        }
+
         if (alarm == null) {
             mtvAlarm.setText(TextBox.get("SYSTEM_OK"));
             mtvAlarm.setTextColor(Color.GREEN);

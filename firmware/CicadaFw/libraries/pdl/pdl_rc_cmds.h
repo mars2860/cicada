@@ -128,8 +128,8 @@
 #define PDL_CMD_TAKE_PHOTO            154
 /// Enable dynamic ip, Format = {155, uint8_t en}
 #define PDL_CMD_ENABLE_DYNAMIC_IP     155
-/// Set velUpOffset, Format = {156, float velUpOffset}
-#define PDL_CMD_SET_VELUP_OFFSET      156
+/// Set accUpOffset, Format = {156, float accUpOffset}
+#define PDL_CMD_SET_ACCUP_OFFSET      156
 
 /// @}
 

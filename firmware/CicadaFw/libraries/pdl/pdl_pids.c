@@ -389,13 +389,6 @@ void pdlUpdateAltPid(pdlDroneState *ds, float dt)
     }
   }
 
-  // some bad accelerometers give wrong values at flight time
-  // that a drone gets down or up when stick is not moved by user
-  // we can try to correct this wrong value by adding offset
-  // this offset parameter is set by user config
-
-  velZ += ds->velUpOffset;
-
   if(pdlUpdatePid(ds,&ds->velocityZPid,velZ,dt,0))
   {
     pdlSetBaseGas(ds,ds->velocityZPid.out);

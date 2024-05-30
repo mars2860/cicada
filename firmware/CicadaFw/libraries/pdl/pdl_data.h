@@ -395,8 +395,8 @@ typedef struct s_pdlDroneState
   float refPitch;
   /// Roll from other AHRS to compare with used AHRS (this value is not used by PDL)
   float refRoll;
-  /// Used by velocityZPid to offset veloctiyZPid.input by this value. It can be used in systems have bad accelerometer
-  float velUpOffset;
+  /// Additional offset for accel.up. It can be used in systems have bad accelerometer
+  float accUpOffset;
   /// Reserved3
   uint32_t reserved3;
   /// Reserved4

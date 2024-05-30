@@ -43,7 +43,7 @@ import pdl.commands.CmdSetRoll;
 import pdl.commands.CmdSetRollRate;
 import pdl.commands.CmdSetSsid;
 import pdl.commands.CmdSetSubnet;
-import pdl.commands.CmdSetVelUpOffset;
+import pdl.commands.CmdSetAccUpOffset;
 import pdl.commands.CmdSetVelocityX;
 import pdl.commands.CmdSetVelocityY;
 import pdl.commands.CmdSetVelocityZ;
@@ -464,8 +464,8 @@ public class DroneCommander implements Runnable
 		addCmd(enDynIp);
 		
 		// velupOffset
-		CmdSetVelUpOffset cmdVelUpOffset = new CmdSetVelUpOffset(ds.velocityZPid.velUpOffset);
-		addCmd(cmdVelUpOffset);
+		CmdSetAccUpOffset cmdAccUpOffset = new CmdSetAccUpOffset(ds.velocityZPid.accUpOffset);
+		addCmd(cmdAccUpOffset);
 	}
 
 	/** Sets new target of pitchRatePid,pitchPid,velocityXPid, etc

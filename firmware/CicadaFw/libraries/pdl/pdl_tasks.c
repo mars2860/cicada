@@ -504,6 +504,11 @@ void pdlNewAccelData(pdlDroneState *ds, int16_t rawX, int16_t rawY, int16_t rawZ
         ds->nav[PDL_X].accBias = linearAccOffsetX / LINEAR_ACC_COUNTS;
         ds->nav[PDL_Y].accBias = linearAccOffsetY / LINEAR_ACC_COUNTS;
         ds->nav[PDL_Z].accBias = linearAccOffsetZ / LINEAR_ACC_COUNTS;
+        // if drone gets down or up when velocityZPid is enabled and user control stick is not moved
+        // this problem can be caused by bad accelerometer
+        // some bad accelerometers give wrong values along Z axis in flight time
+        // try to compensate this by adding additional offset
+        ds->nav[PDL_Z].accBias += ds->accUpOffset;
       }
     }
   }
@@ -518,19 +523,19 @@ void pdlNewAccelData(pdlDroneState *ds, int16_t rawX, int16_t rawY, int16_t rawZ
       //                                   ds->kfSettings.accVariance);
       // model with control input is better
       pdlNavKF_Predict_ControlInput(&navKf[i], &ds->nav[i], ds->accel.world[i], dt);
-     }
-   }
+    }
+  }
 
-   // reset linear acc bias
-   if(ds->motorsEnabled && !oldMotorsEnabled)
-   {
-     linearStabCounter = 0;
-     linearAccOffsetX = 0.f;
-     linearAccOffsetY = 0.f;
-     linearAccOffsetZ = 0.f;
-   }
+  // reset linear acc bias
+  if(ds->motorsEnabled && !oldMotorsEnabled)
+  {
+    linearStabCounter = 0;
+    linearAccOffsetX = 0.f;
+    linearAccOffsetY = 0.f;
+    linearAccOffsetZ = 0.f;
+  }
 
-   oldMotorsEnabled = ds->motorsEnabled;
+  oldMotorsEnabled = ds->motorsEnabled;
 }
 
 void pdlNewMagnetoData(pdlDroneState *ds, int16_t rawX, int16_t rawY, int16_t rawZ, float pureX, float pureY, float pureZ)

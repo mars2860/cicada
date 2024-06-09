@@ -764,12 +764,23 @@ public class DroneCommander implements Runnable
 				//double middleGas = (double)(DroneState.rc.maxGas - DroneState.rc.minGas) / 2.0;
 			case LIFT_BY_GAS_FORSAGE:
 				double middleGas = (double)DroneState.rc.middleGas;
+				double maxMiddleGas = (double)DroneState.rc.maxMiddleGas;
 				double gas = 0;
-				
+				double gasAddon = 0;
+								
 				if(pwr > 0)
 					gas = pwr*((double)DroneState.rc.maxGas - middleGas) + middleGas;
 				else
 					gas = -pwr*((double)DroneState.rc.minGas - middleGas) + middleGas;
+				
+				// when battery gets low middle gas have to be bigger
+				// to correct this we use linear approximation of
+				// dependency middle gas from battery voltage
+				
+				if(maxMiddleGas > middleGas)
+					gasAddon = (maxMiddleGas - middleGas) * (ds.battery.maxVoltage - ds.battery.voltage) / (ds.battery.maxVoltage - ds.battery.minVoltage);
+				
+				gas += gasAddon;
 
 				if(ds.velocityZPid.enabled && ds.trickModeEnabled == false)
 				{

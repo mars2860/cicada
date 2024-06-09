@@ -376,6 +376,10 @@ public class DroneState implements Cloneable
 		@Setting
 		@NoChart
 		public int middleGas;
+		@Setting
+		@NoChart
+		@Expose
+		public int maxMiddleGas;
 		@Expose
 		@Setting
 		@NoChart

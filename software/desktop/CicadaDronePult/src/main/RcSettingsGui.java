@@ -54,6 +54,7 @@ public class RcSettingsGui extends JSavedFrame
 	private JTextField tfLiftDelta;
 	private JTextField tfForsageUpGas;
 	private JTextField tfForsageMiddleGas;
+	private JTextField tfForsageMaxMiddleGas;
 	private JTextField tfForsageDownGas;
 	private JTextField tfTrickAngRate;
 	private JTextField tfLiftAccelTime;
@@ -515,10 +516,11 @@ public class RcSettingsGui extends JSavedFrame
 		
 		NumericDocument numDoc4 = new NumericDocument(0, false);
 		NumericDocument numDoc5 = new NumericDocument(0, false);
+		NumericDocument numDoc55 = new NumericDocument(0, false);
 		NumericDocument numDoc6 = new NumericDocument(0, false);
 		NumericDocument numDoc66 = new NumericDocument(0, false);
 
-		JPanel pnlForsageCtrl = new JPanel(new MigLayout("", "[][][][][][][][]"));
+		JPanel pnlForsageCtrl = new JPanel(new MigLayout("", "[][][][][][][][][]"));
 		pnlForsageCtrl.setBorder(new TitledBorder(ResBox.text("FORSAGE")));
 
 		tfForsageUpGas = new JTextField();
@@ -526,6 +528,9 @@ public class RcSettingsGui extends JSavedFrame
 		
 		tfForsageMiddleGas = new JTextField();
 		tfForsageMiddleGas.setDocument(numDoc5);
+		
+		tfForsageMaxMiddleGas = new JTextField();
+		tfForsageMaxMiddleGas.setDocument(numDoc55);
 
 		tfForsageDownGas = new JTextField();
 		tfForsageDownGas.setDocument(numDoc6);
@@ -538,6 +543,8 @@ public class RcSettingsGui extends JSavedFrame
 		pnlForsageCtrl.add(tfForsageUpGas, "w 40px");
 		pnlForsageCtrl.add(new JLabel(ResBox.text("FORSAGE_MIDDLE_GAS")));
 		pnlForsageCtrl.add(tfForsageMiddleGas, "w 40px");
+		pnlForsageCtrl.add(new JLabel(ResBox.text("FORSAGE_MAX_MIDDLE_GAS")));
+		pnlForsageCtrl.add(tfForsageMaxMiddleGas, "w 40px");
 		pnlForsageCtrl.add(new JLabel(ResBox.text("FORSAGE_DOWN_GAS")));
 		pnlForsageCtrl.add(tfForsageDownGas, "w 40px");
 		pnlForsageCtrl.add(new JLabel(ResBox.text("TRICK_ANG_RATE")));
@@ -640,6 +647,7 @@ public class RcSettingsGui extends JSavedFrame
 		
 		tfForsageUpGas.setText(numFmt.format(rc.maxGas));
 		tfForsageMiddleGas.setText(numFmt.format(rc.middleGas));
+		tfForsageMaxMiddleGas.setText(numFmt.format(rc.maxMiddleGas));
 		tfForsageDownGas.setText(numFmt.format(rc.minGas));
 		
 		tfTrickAngRate.setText(numFmt.format(rc.trickDelta));
@@ -701,6 +709,7 @@ public class RcSettingsGui extends JSavedFrame
 		
 		rc.maxGas = Integer.parseInt(tfForsageUpGas.getText());
 		rc.middleGas = Integer.parseInt(tfForsageMiddleGas.getText());
+		rc.maxMiddleGas = Integer.parseInt(tfForsageMaxMiddleGas.getText());
 		rc.minGas = Integer.parseInt(tfForsageDownGas.getText());
 		
 		rc.trickDelta = Integer.parseInt(tfTrickAngRate.getText());

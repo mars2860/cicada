@@ -221,6 +221,7 @@ public class TextBundle extends ListResourceBundle
             {"ALT","Alt"},
             {"FORSAGE_UP_GAS","Up gas"},
             {"FORSAGE_MIDDLE_GAS","Middle gas"},
+            {"FORSAGE_MAX_MIDDLE_GAS","Max Mid gas"},
             {"FORSAGE_DOWN_GAS","Down gas"},
             {"LIFT","Lift"},
             {"MOVE","Move"},

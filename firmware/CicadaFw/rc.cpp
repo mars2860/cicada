@@ -161,22 +161,21 @@ void pdlSetupRc(pdlDroneState*)
   subnet.fromString(strSubnet);
 
   WiFi.mode(WIFI_STA);
-  if(strcmp(strUseDhcp,"n") == 0)
-  {
-    WiFi.config(ip, gateway, subnet);
-  }
-  WiFi.begin(strSsid, strPsk);
 
   // Try to connect USER wifi
   for(uint8_t i = 0; i < 5; i++)
   {
-    connectionResult = WiFi.waitForConnectResult();
+    if(strcmp(strUseDhcp,"n") == 0)
+    {
+      WiFi.config(ip, gateway, subnet);
+    }
+    WiFi.begin(strSsid, strPsk);
+    connectionResult = WiFi.waitForConnectResult(5000);
     if(connectionResult == WL_CONNECTED)
     {
       break;
     }
     LOG_ERROR("Connection to %s is failed", strSsid);
-    delay(1000);
   }
   // Try to connect default wifi
   if(connectionResult != WL_CONNECTED)
@@ -184,17 +183,17 @@ void pdlSetupRc(pdlDroneState*)
     ip.fromString(DEFAULT_IP_ADDRESS);
     gateway.fromString(DEFAULT_GATEWAY_ADDRESS);
     subnet.fromString(DEFAULT_SUBNET);
-    WiFi.config(ip, gateway, subnet);
-    WiFi.begin(DEFAULT_STASSID, DEFAULT_STAPSK);
+
     for(uint8_t i = 0; i < 5; i++)
     {
-      connectionResult = WiFi.waitForConnectResult();
+      WiFi.config(ip, gateway, subnet);
+      WiFi.begin(DEFAULT_STASSID, DEFAULT_STAPSK);
+      connectionResult = WiFi.waitForConnectResult(5000);
       if(connectionResult == WL_CONNECTED)
       {
         break;
       }
       LOG_ERROR("Connection to %s is failed", DEFAULT_STASSID);
-      delay(1000);
     }
   }
   // Check connection

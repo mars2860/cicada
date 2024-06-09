@@ -40,6 +40,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/SoftwareSerial/src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/ds3231-master}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/BMP280_DEV}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.cpp.sketch.input.95334001" name="CPP source files" superClass="io.sloeber.compiler.cpp.sketch.input"/>
 							</tool>
@@ -66,6 +67,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/SoftwareSerial/src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/ds3231-master}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/BMP280_DEV}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.c.sketch.input.764340330" name="C Source Files" superClass="io.sloeber.compiler.c.sketch.input"/>
 							</tool>
@@ -92,6 +94,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/SoftwareSerial/src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/ds3231-master}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/BMP280_DEV}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.S.sketch.input.736617084" name="Assembly source files" superClass="io.sloeber.compiler.S.sketch.input"/>
 							</tool>
@@ -149,6 +152,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/SoftwareSerial/src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/ds3231-master}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/BMP280_DEV}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.cpp.sketch.input.911912672" name="CPP source files" superClass="io.sloeber.compiler.cpp.sketch.input"/>
 							</tool>
@@ -175,6 +179,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/SoftwareSerial/src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/ds3231-master}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/BMP280_DEV}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.c.sketch.input.1412834262" name="C Source Files" superClass="io.sloeber.compiler.c.sketch.input"/>
 							</tool>
@@ -201,6 +206,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/SoftwareSerial/src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/ds3231-master}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/BMP280_DEV}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.S.sketch.input.2093495950" name="Assembly source files" superClass="io.sloeber.compiler.S.sketch.input"/>
 							</tool>
@@ -256,6 +262,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/GPS}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/RunningMedian}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/BMP280_DEV}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.cpp.sketch.input.226708292" name="CPP source files" superClass="io.sloeber.compiler.cpp.sketch.input"/>
 							</tool>
@@ -280,6 +287,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/GPS}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/RunningMedian}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/BMP280_DEV}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.c.sketch.input.727960399" name="C Source Files" superClass="io.sloeber.compiler.c.sketch.input"/>
 							</tool>
@@ -304,6 +312,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/GPS}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/RunningMedian}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/BMP280_DEV}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.S.sketch.input.1682677998" name="Assembly source files" superClass="io.sloeber.compiler.S.sketch.input"/>
 							</tool>
@@ -359,6 +368,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/GPS}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/RunningMedian}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/BMP280_DEV}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.cpp.sketch.input.977073268" name="CPP source files" superClass="io.sloeber.compiler.cpp.sketch.input"/>
 							</tool>
@@ -383,6 +393,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/GPS}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/RunningMedian}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/BMP280_DEV}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.c.sketch.input.169010874" name="C Source Files" superClass="io.sloeber.compiler.c.sketch.input"/>
 							</tool>
@@ -407,6 +418,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/GPS}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/RunningMedian}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/BMP280_DEV}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.S.sketch.input.1843586954" name="Assembly source files" superClass="io.sloeber.compiler.S.sketch.input"/>
 							</tool>
@@ -462,6 +474,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/GPS}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/RunningMedian}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/BMP280_DEV}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.cpp.sketch.input.1908382636" name="CPP source files" superClass="io.sloeber.compiler.cpp.sketch.input"/>
 							</tool>
@@ -486,6 +499,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/GPS}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/RunningMedian}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/BMP280_DEV}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.c.sketch.input.1613033679" name="C Source Files" superClass="io.sloeber.compiler.c.sketch.input"/>
 							</tool>
@@ -510,6 +524,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/GPS}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/RunningMedian}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/BMP280_DEV}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.S.sketch.input.1448432260" name="Assembly source files" superClass="io.sloeber.compiler.S.sketch.input"/>
 							</tool>

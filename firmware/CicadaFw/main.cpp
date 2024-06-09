@@ -145,6 +145,8 @@ void pdlLoadDefaultCfg(pdlDroneState *ds)
 void loop()
 {
   pdlUpdate(&droneState);
+  if(WiFi.status() != WL_CONNECTED)
+    droneState.rc.rssi = -150;
   pdlPreventFlyAway(  &droneState,
                       -85,  // min RSSI
                       3.f,  // safe alt

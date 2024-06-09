@@ -243,6 +243,8 @@ void pdlPreventFlyAway(pdlDroneState *ds, int32_t rssiMinLevel, float safeAlt, f
         ds->motorsEnabled = 0;
     }
   }
+
+  old_rssi = ds->rc.rssi;
 }
 
 void pdlSetPitchTarget(pdlDroneState* ds, float target)

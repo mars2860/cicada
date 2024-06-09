@@ -1072,18 +1072,18 @@ public class MainActivity extends AppCompatActivity {
         fmtLatLon.setMinimumFractionDigits(6);
         fmtLatLon.setMaximumFractionDigits(6);
         if(DroneState.widgets.lat) {
-            String lat = "lat: " + fmtLatLon.format(ds.gps.lat);
+            String lat = "lat: " + fmtLatLon.format(ds.gps.lat) + "\n";
             rowCount = appendState(lat,rowCount);
         }
 
         if(DroneState.widgets.lon) {
-            String lon = "lon: " + fmtLatLon.format(ds.gps.lon);
+            String lon = "lon: " + fmtLatLon.format(ds.gps.lon) + "\n";
             rowCount = appendState(lon,rowCount);
         }
 
         if(DroneState.widgets.sattels) {
-            String lon = "sat: " + fmt2.format(ds.gps.numSV);
-            rowCount = appendState(lon,rowCount);
+            String sat = "sat: " + fmt2.format(ds.gps.numSV) + "\n";
+            rowCount = appendState(sat,rowCount);
         }
     }
 

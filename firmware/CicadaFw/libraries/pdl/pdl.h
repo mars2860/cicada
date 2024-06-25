@@ -129,6 +129,8 @@ void pdlResetPid(pdlPidState *pid);
 
 /// Applies XYZ-Pids output values to motors of a cross-frame quadcopter
 void pdlPidsToCrossFrame(pdlDroneState*);
+/// Applies XYZ-Pids output values to motors of a reversed cross-frame quadcopter
+void pdlPidsToCrossFrameReversed(pdlDroneState*);
 /// Applies XYZ-Pids output values to motors of a x-frame quadcopter
 void pdlPidsToXFrame(pdlDroneState*);
 /// Applies XYZ-Pids output values to motors of a reversed x-frame quadcopter

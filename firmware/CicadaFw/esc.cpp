@@ -49,9 +49,10 @@ extern "C"
 #define M4_PWM_PIN              16
 #define PWM_OE_PIN              12
 
-#define CICADA_X_FRAME_REVERSED   0
-#define CICADA_X_FRAME            1
-#define CICADA_CROSS_FRAME        2
+#define CICADA_X_FRAME_REVERSED       0
+#define CICADA_X_FRAME                1
+#define CICADA_CROSS_FRAME            2
+#define CICADA_CROSS_FRAME_REVERSED   3
 
 /// to convert motor index to pwm channel
 uint8_t pwmMotorToChannel[PDL_MOTOR_COUNT];
@@ -259,6 +260,9 @@ void pdlPidsToMotors(pdlDroneState* ds)
   case CICADA_CROSS_FRAME:
     pdlPidsToCrossFrame(ds);
     break;
+  case CICADA_CROSS_FRAME_REVERSED:
+      pdlPidsToCrossFrameReversed(ds);
+      break;
   case CICADA_X_FRAME:
     pdlPidsToXFrame(ds);
     break;

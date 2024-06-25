@@ -537,6 +537,24 @@ void pdlPidsToCrossFrame(pdlDroneState *ds)
     pdlSetMotorGas(ds, i, dg[i]);
 }
 
+void pdlPidsToCrossFrameReversed(pdlDroneState *ds)
+{
+  float dg[4];
+
+  dg[0] = ds->baseGas;
+  dg[1] = ds->baseGas;
+  dg[2] = ds->baseGas;
+  dg[3] = ds->baseGas;
+
+  dg[0] += ds->zRatePid.out + ds->yRatePid.out;
+  dg[1] += -ds->zRatePid.out + ds->xRatePid.out;
+  dg[2] += ds->zRatePid.out - ds->yRatePid.out;
+  dg[3] += -ds->zRatePid.out - ds->xRatePid.out;
+
+  for(uint8_t i = 0; i < PDL_MOTOR_COUNT; i++)
+    pdlSetMotorGas(ds, i, dg[i]);
+}
+
 void pdlPidsToXFrame(pdlDroneState *ds)
 {
   float dg[4];

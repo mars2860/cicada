@@ -98,6 +98,18 @@ public class DroneLog extends java.util.Observable implements Runnable
 		return log;
 	}
 	
+	public void clearLog()
+	{
+		synchronized(objDataSync)
+		{
+			mLog = "";
+			
+			this.setChanged();
+			this.notifyObservers("");
+			this.clearChanged();
+		}
+	}
+	
 	@Override
 	public void run()
 	{	

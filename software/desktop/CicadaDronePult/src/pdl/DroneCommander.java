@@ -649,7 +649,8 @@ public class DroneCommander implements Runnable
 		DroneState.RemoteCtrl.RotateBy rotateBy = DroneState.rc.rotateBy;
 		float rotateDelta = DroneState.rc.rotateDelta;
 		
-		if(ds.trickModeEnabled)
+		if(	ds.trickModeEnabled &&
+			rotateBy != DroneState.RemoteCtrl.RotateBy.ROTATE_BY_YAW_RATE )
 		{
 			rotateBy = DroneState.RemoteCtrl.RotateBy.ROTATE_BY_YAW_RATE;
 			rotateDelta = DroneState.rc.trickDelta;

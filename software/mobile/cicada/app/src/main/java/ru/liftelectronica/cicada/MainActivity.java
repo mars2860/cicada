@@ -405,8 +405,8 @@ public class MainActivity extends AppCompatActivity {
             DroneCommander.instance().addCmd(cmd2);
         }
 
-        if(keyCode == keyTrick) {
-            DroneCommander.instance().setTrickMode(pressed);
+        if(keyCode == keyTrick && pressed) {
+            DroneCommander.instance().setTrickMode(!ds.trickModeEnabled);
         }
 
         if(keyCode == keyTurtle) {

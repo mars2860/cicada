@@ -123,6 +123,7 @@ public class RemoteControlGui extends JSavedFrame
 		
 		boolean oldBtnPhotoState;
 		boolean oldBtnVideoState;
+		boolean oldReqTrickMode;
 
 		@Override
 		public void run()
@@ -468,12 +469,17 @@ public class RemoteControlGui extends JSavedFrame
 				}
 			}
 			
-			DroneCommander.instance().setTrickMode(requestTrickMode);;
 			DroneCommander.instance().liftDrone(liftCtrl);
 			DroneCommander.instance().rotateDrone(rotateCtrl);
 			DroneCommander.instance().moveDrone(pitchCtrl,rollCtrl);
 			
 			DroneState ds = DroneTelemetry.instance().getDroneState();
+			
+			if(requestTrickMode && !oldReqTrickMode)
+			{
+				DroneCommander.instance().setTrickMode(!ds.trickModeEnabled);
+			}
+			oldReqTrickMode = requestTrickMode;
 			
 			// LOAD1
 			if(btnLoad1.getModel().isPressed() && ds.load1.enabled == false)

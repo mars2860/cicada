@@ -10,8 +10,6 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Observable;
 import java.util.Observer;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -191,7 +189,7 @@ public class StartGui extends JSavedFrame
 				return;
 			}
 			
-			speechState(ds);
+			DroneTelemetry.instance().speakDroneState(ds, pdlSoundProvider);
 		}
 	}
 	
@@ -281,9 +279,14 @@ public class StartGui extends JSavedFrame
 	private JButton mbtnLog;
 	private JButton mbtnInfo;
 	
+	private PDLSoundProvider pdlSoundProvider;
+	
 	public StartGui()
 	{
 		super("Start", 536, 176);
+		
+		pdlSoundProvider = new PDLSoundProvider();
+		
 		this.createUI();
 		
 		DroneAlarmCenter.instance().addObserver(new OnAlarmUpdate());
@@ -438,178 +441,5 @@ public class StartGui extends JSavedFrame
 			break;
 			
 		}
-	}
-	
-	private int speechAlt;
-	private boolean speechBat15;	// to say bat15 one time
-	
-	private boolean oldMotorsEnabled;
-	private boolean oldStabilizationEnabled;
-	private boolean oldTrickModeEnabled;
-	private boolean oldVideoState;
-	
-	private void speechState(DroneState ds)
-	{
-		if(DroneState.misc.sounds == false)
-		{
-			return;
-		}
-		
-		if(ds.altitude < 1.5)
-		{
-			speechAlt = 0;
-		}
-		// it annoys when flying indoor
-		/*if(ds.altitude < 0.5)
-		{
-			speechAlt = 0;
-		}
-				
-		if(ds.altitude >= 1.0 && ds.altitude <= 1.5 && speechAlt != 1)
-		{
-			speechAlt = 1;
-			ResBox.sound("ALT_1M").play();
-		}
-		if(ds.altitude >= 2.0 && ds.altitude <= 2.5 && speechAlt != 2)
-		{
-			speechAlt = 2;
-			ResBox.sound("ALT_2M").play();
-		}
-		else*/if(ds.altitude >= 3.0 && ds.altitude <= 3.5 && speechAlt != 3)
-		{
-			speechAlt = 3;
-			ResBox.sound("ALT_3M").play();
-		}
-		else if(ds.altitude >= 5.0 && ds.altitude <= 5.5 && speechAlt != 5)
-		{
-			speechAlt = 5;
-			ResBox.sound("ALT_5M").play();
-		}
-		else if(ds.altitude >= 7.0 && ds.altitude <= 7.5 && speechAlt != 7)
-		{
-			speechAlt = 7;
-			ResBox.sound("ALT_7M").play();
-		}
-		else if(ds.altitude >= 10.0 && ds.altitude <= 10.5 && speechAlt != 10)
-		{
-			speechAlt = 10;
-			ResBox.sound("ALT_10M").play();
-		}
-		else if(ds.altitude >= 15.0 && ds.altitude <= 15.5 && speechAlt != 15)
-		{
-			speechAlt = 15;
-			ResBox.sound("ALT_15M").play();
-		}
-		else if(ds.altitude >= 20.0 && ds.altitude <= 22.0 && speechAlt != 20)
-		{
-			speechAlt = 20;
-			ResBox.sound("ALT_20M").play();
-		}
-		else if(ds.altitude >= 30.0 && ds.altitude <= 32.0 && speechAlt != 30)
-		{
-			speechAlt = 30;
-			ResBox.sound("ALT_30M").play();
-		}
-		else if(ds.altitude >= 40.0 && ds.altitude <= 42.0 && speechAlt != 40)
-		{
-			speechAlt = 40;
-			ResBox.sound("ALT_40M").play();
-		}
-		else if(ds.altitude >= 50.0 && ds.altitude <= 52.0 && speechAlt != 50)
-		{
-			speechAlt = 50;
-			ResBox.sound("ALT_50M").play();
-		}
-					
-		if(ds.motorsEnabled && !oldMotorsEnabled)
-		{
-			ResBox.sound("MOTORS_ENABLED").play();
-					
-			// play these sounds in other thread with some delay from motors_enabled sound
-			// to prevent motors_enabled and these sounds simultaneously
-			Timer tm = new Timer();
-			tm.schedule(new TimerTask()
-			{
-				@Override
-				public void run()
-				{
-					if(DroneAlarmCenter.instance().getAlarm() != null)
-					{
-						ResBox.sound("SYSTEM_BAD").play();
-					}
-					else
-					{
-						ResBox.sound("SYSTEM_OK").play();
-					}	
-				}
-						
-			}, 2000);
-		}
-		else if(!ds.motorsEnabled && oldMotorsEnabled)
-		{
-			ResBox.sound("MOTORS_DISABLED").play();
-		}
-					
-		oldMotorsEnabled = ds.motorsEnabled;
-				
-		if(ds.stabilizationEnabled && !oldStabilizationEnabled)
-		{
-			ResBox.sound("STABILIZATION_ENABLED").play();
-		}
-		else if(!ds.stabilizationEnabled && oldStabilizationEnabled)
-		{
-			ResBox.sound("STABILIZATION_DISABLED").play();
-		}
-					
-		oldStabilizationEnabled = ds.stabilizationEnabled;
-					
-		if(ds.trickModeEnabled && !oldTrickModeEnabled)
-		{
-			ResBox.sound("TRICK_MODE_ENABLED").play();
-		}
-		else if(!ds.trickModeEnabled && oldTrickModeEnabled)
-		{
-			ResBox.sound("TRICK_MODE_DISABLED").play();
-		}
-					
-		oldTrickModeEnabled = ds.trickModeEnabled;
-							
-		if(ds.baseGas > DroneState.Motors.maxGas /8 )
-		{
-			if(	ds.battery.percent > 10.0 &&
-				ds.battery.percent <= 15.0 && 
-				speechBat15 == false)	// we say bat15 one time
-			{
-				ResBox.sound("BAT15").play();
-				speechBat15 = true;
-			}
-			else if(ds.battery.percent > 5.0 && ds.battery.percent <= 10.0)
-			{
-				ResBox.sound("BAT10").play();
-			}
-			else if(ds.battery.percent <= 5.0)
-			{
-				ResBox.sound("BAT5").play();
-			}
-		}
-		else
-		{
-			speechBat15 = false;
-		}
-			
-		if(ds.rssi <= DroneAlarmCenter.WIFI_LOW_LEVEL)
-		{
-			ResBox.sound("LOW_RADIO_SIGNAL").play();
-		}
-		
-		if(ds.videoState && !oldVideoState)
-		{
-			ResBox.sound("VIDEO_STARTED").play();
-		}
-		else if(!ds.videoState && oldVideoState)
-		{
-			ResBox.sound("VIDEO_STOPED").play();
-		}
-		oldVideoState = ds.videoState;
 	}
 }

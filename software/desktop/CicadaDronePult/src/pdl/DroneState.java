@@ -9,7 +9,12 @@ import java.net.DatagramPacket;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-/** @note all types are double for fast processing in charts */
+/** This class represents current drone state and drone settings simultaneously,
+ *  also it represents some ground station app settings as Widgets,
+ *  Sounds, RemoteControl and other settings. We have some ground app settings
+ *  inside this class because it is comfortable to build settings GUI by
+ *  java reflection
+ * @note all types are double for fast processing in charts */
 public class DroneState implements Cloneable
 {	
 	@Retention(RetentionPolicy.RUNTIME)
@@ -106,12 +111,7 @@ public class DroneState implements Cloneable
 	public static Net net = new Net();
 	
 	public static class Misc implements Cloneable
-	{
-		@Setting
-		@NoChart
-		@Expose
-		public boolean sounds = true;
-		
+	{		
 		@Setting
 		@NoChart
 		@Expose
@@ -257,6 +257,45 @@ public class DroneState implements Cloneable
 	@SettingGroup(name = "WIDGETS")
 	@SerializedName("widgets")
 	public static Widgets widgets = new Widgets();
+	
+	public static class Sounds implements Cloneable
+	{
+		@Setting
+		@NoChart
+		@Expose
+		public boolean enabled = true;
+
+		@Setting
+		@NoChart
+		@Expose
+		public boolean altitude = true;
+
+		@Setting
+		@NoChart
+		@Expose
+		public boolean battery = true;
+
+		@Setting
+		@NoChart
+		@Expose
+		public boolean radio = true;
+		
+		@Setting
+		@NoChart
+		@Expose
+		public boolean system = true;
+			
+		@Override
+		public Object clone() throws CloneNotSupportedException
+		{
+			return super.clone();
+		}
+	}
+	
+	@Expose
+	@SettingGroup(name = "SOUNDS")
+	@SerializedName("sounds")
+	public static Sounds sounds = new Sounds();
 	
 	public static class Motors implements Cloneable
 	{

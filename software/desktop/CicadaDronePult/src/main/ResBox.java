@@ -103,6 +103,7 @@ public class ResBox
 	
 	private static void loadSounds()
 	{
+		sounds.put("BAT1", loadSound("sounds/bat1.wav"));
 		sounds.put("BAT5", loadSound("sounds/bat5.wav"));
 		sounds.put("BAT10", loadSound("sounds/bat10.wav"));
 		sounds.put("BAT15", loadSound("sounds/bat15.wav"));

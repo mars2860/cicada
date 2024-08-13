@@ -16,6 +16,10 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    sourceSets {
+        main.java.srcDirs += 'src/main/../../../../../libs/pdlJavaClasses'
+    }
+
     buildTypes {
         release {
             minifyEnabled false

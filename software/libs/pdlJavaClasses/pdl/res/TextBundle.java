@@ -97,6 +97,7 @@ public class TextBundle extends ListResourceBundle
             {"NET", "Net"},
             {"MISC","Misc"},
             {"WIDGETS","Widgets"},
+            {"SOUNDS","Sounds"},
             {"BATTERY", "Battery"},
             {"CALIBRATION", "Calibration"},
             {"UPDATE_PERIODS", "Update Periods"},

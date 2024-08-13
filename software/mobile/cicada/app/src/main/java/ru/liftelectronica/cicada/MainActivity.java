@@ -811,7 +811,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void speechDroneState(DroneState ds) {
-        if(DroneState.misc.sounds == false) {
+        if(DroneState.sounds.enabled == false) {
             return;
         }
 

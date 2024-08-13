@@ -468,7 +468,7 @@ public class DroneTelemetry extends java.util.Observable implements Runnable
 		}
 		else if(!ds.stabilizationEnabled && oldStabilizationEnabled)
 		{
-			sp.play("STABILIZATION_DISABLED");
+			sp.playLater("STABILIZATION_DISABLED",2000);
 		}
 				
 		oldStabilizationEnabled = ds.stabilizationEnabled;

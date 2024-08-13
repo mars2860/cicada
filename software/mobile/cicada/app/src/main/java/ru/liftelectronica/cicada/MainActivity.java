@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
-import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.InputDevice;
@@ -55,32 +54,7 @@ public class MainActivity extends AppCompatActivity {
 
     ToggleButton mbtnDisarm;
 
-    MediaPlayer mSndBat15;
-    MediaPlayer mSndBat10;
-    MediaPlayer mSndBat5;
-    MediaPlayer mSndLowRadio;
-    MediaPlayer mSndAlt1m;
-    MediaPlayer mSndAlt2m;
-    MediaPlayer mSndAlt3m;
-    MediaPlayer mSndAlt5m;
-    MediaPlayer mSndAlt7m;
-    MediaPlayer mSndAlt10m;
-    MediaPlayer mSndAlt15m;
-    MediaPlayer mSndAlt20m;
-    MediaPlayer mSndAlt30m;
-    MediaPlayer mSndAlt40m;
-    MediaPlayer mSndAlt50m;
-    MediaPlayer mSndMotorsEnabled;
-    MediaPlayer mSndMotorsDisabled;
-    MediaPlayer mSndStabilizationEnabled;
-    MediaPlayer mSndStabilizationDisabled;
-    MediaPlayer mSndSystemBad;
-    MediaPlayer mSndSystemOk;
-    MediaPlayer mSndTrickModeEnabled;
-    MediaPlayer mSndTrickModeDisabled;
-    MediaPlayer mSndVideoStarted;
-    MediaPlayer mSndVideoStoped;
-    MediaPlayer mSndPhotoTaken;
+    PDLSoundProvider pdlSoundProvider;
 
     DPad dpad = new DPad();
 
@@ -125,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
                 public void run() {
                     DroneState ds = DroneTelemetry.instance().getDroneState();
                     printDroneState(ds);
-                    speechDroneState(ds);
+                    DroneTelemetry.instance().speakDroneState(ds,pdlSoundProvider);
                     mbtnDisarm.setChecked(DroneTelemetry.instance().getDroneState().motorsEnabled);
                 }
             });
@@ -453,7 +427,7 @@ public class MainActivity extends AppCompatActivity {
 
         if(keyCode == keyPhoto && pressed) {
             DroneCommander.instance().takePhoto();
-            playSound(mSndPhotoTaken);
+            pdlSoundProvider.play("PHOTO_TAKEN");
         }
 
         if(keyCode == keyVideo && pressed) {
@@ -467,86 +441,11 @@ public class MainActivity extends AppCompatActivity {
 
     protected void myResDestroy() {
         mtmDroneMoveUpdater.cancel();
-/*
-        mSndBat15.stop();
-        mSndBat10.stop();
-        mSndBat5.stop();
-        mSndLowRadio.stop();
-        mSndAlt1m.stop();
-        mSndAlt2m.stop();
-        mSndAlt3m.stop();
-        mSndAlt5m.stop();
-        mSndAlt7m.stop();
-        mSndAlt10m.stop();
-        mSndAlt15m.stop();
-        mSndAlt20m.stop();
-        mSndAlt30m.stop();
-        mSndAlt40m.stop();
-        mSndAlt50m.stop();
-        mSndMotorsEnabled.stop();
-        mSndMotorsDisabled.stop();
-        mSndStabilizationEnabled.stop();
-        mSndStabilizationDisabled.stop();
-        mSndSystemBad.stop();
-        mSndSystemOk.stop();
-        mSndTrickModeEnabled.stop();
-        mSndTrickModeDisabled.stop();
-*/
-        // TODO It needs some sound resource manager
-        mSndBat15.release();
-        mSndBat10.release();
-        mSndBat5.release();
-        mSndLowRadio.release();
-        mSndAlt1m.release();
-        mSndAlt2m.release();
-        mSndAlt3m.release();
-        mSndAlt5m.release();
-        mSndAlt7m.release();
-        mSndAlt10m.release();
-        mSndAlt15m.release();
-        mSndAlt20m.release();
-        mSndAlt30m.release();
-        mSndAlt40m.release();
-        mSndAlt50m.release();
-        mSndMotorsEnabled.release();
-        mSndMotorsDisabled.release();
-        mSndStabilizationEnabled.release();
-        mSndStabilizationDisabled.release();
-        mSndSystemBad.release();
-        mSndSystemOk.release();
-        mSndTrickModeEnabled.release();
-        mSndTrickModeDisabled.release();
-        mSndVideoStarted.release();
-        mSndVideoStoped.release();
-        mSndPhotoTaken.release();
 
-        mSndBat15 = null;
-        mSndBat10 = null;
-        mSndBat5 = null;
-        mSndLowRadio = null;
-        mSndAlt1m = null;
-        mSndAlt2m = null;
-        mSndAlt3m = null;
-        mSndAlt5m = null;
-        mSndAlt7m = null;
-        mSndAlt10m = null;
-        mSndAlt15m = null;
-        mSndAlt20m = null;
-        mSndAlt30m = null;
-        mSndAlt40m = null;
-        mSndAlt50m = null;
-        mSndMotorsEnabled = null;
-        mSndMotorsDisabled = null;
-        mSndStabilizationEnabled = null;
-        mSndStabilizationDisabled = null;
-        mSndSystemBad = null;
-        mSndSystemOk = null;
-        mSndTrickModeEnabled = null;
-        mSndTrickModeDisabled = null;
-        mSndVideoStarted = null;
-        mSndVideoStoped = null;
-        mSndPhotoTaken = null;
-
+        if(pdlSoundProvider != null) {
+            pdlSoundProvider.deinit();
+            pdlSoundProvider = null;
+        }
         // if I stop it here SettingsActivity can't run new services
         // because this code can be performed after SettingsActivity restart services
         //DroneCommander.instance().stop();
@@ -557,34 +456,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void myResCreate() {
-        mSndBat15 = MediaPlayer.create(this, R.raw.bat15);
-        mSndBat10 = MediaPlayer.create(this, R.raw.bat10);
-        mSndBat5 = MediaPlayer.create(this, R.raw.bat5);
-        mSndLowRadio = MediaPlayer.create(this, R.raw.low_radio_signal);
-        mSndAlt1m = MediaPlayer.create(this,R.raw.alt1m);
-        mSndAlt2m = MediaPlayer.create(this,R.raw.alt2m);
-        mSndAlt3m = MediaPlayer.create(this,R.raw.alt3m);
-        mSndAlt5m = MediaPlayer.create(this,R.raw.alt5m);
-        mSndAlt7m = MediaPlayer.create(this,R.raw.alt7m);
-        mSndAlt10m = MediaPlayer.create(this,R.raw.alt10m);
-        mSndAlt15m = MediaPlayer.create(this,R.raw.alt15m);
-        mSndAlt20m = MediaPlayer.create(this,R.raw.alt20m);
-        mSndAlt30m = MediaPlayer.create(this,R.raw.alt30m);
-        mSndAlt40m = MediaPlayer.create(this,R.raw.alt40m);
-        mSndAlt50m = MediaPlayer.create(this,R.raw.alt50m);
-        mSndMotorsEnabled = MediaPlayer.create(this,R.raw.motors_enabled);
-        mSndMotorsDisabled = MediaPlayer.create(this,R.raw.motors_disabled);
-        mSndStabilizationEnabled = MediaPlayer.create(this,R.raw.stabilization_enabled);
-        mSndStabilizationDisabled = MediaPlayer.create(this,R.raw.stabilization_disabled);
-        mSndSystemBad = MediaPlayer.create(this,R.raw.system_bad);
-        mSndSystemOk = MediaPlayer.create(this,R.raw.system_ok);
-        mSndTrickModeEnabled = MediaPlayer.create(this,R.raw.trick_mode_enabled);
-        mSndTrickModeDisabled = MediaPlayer.create(this,R.raw.trick_mode_disabled);
-        mSndVideoStarted = MediaPlayer.create(this,R.raw.video_started);
-        mSndVideoStoped = MediaPlayer.create(this,R.raw.video_stoped);
-        mSndPhotoTaken = MediaPlayer.create(this,R.raw.photo_taken);
 
         Context context = this.getApplicationContext();
+
+        if(pdlSoundProvider == null)
+        {
+            pdlSoundProvider = new PDLSoundProvider(context);
+            pdlSoundProvider.init();
+        }
 
         // get profile name
         String profile = SettingsActivity.loadCurProfileName(this.getApplicationContext());
@@ -786,157 +665,6 @@ public class MainActivity extends AppCompatActivity {
     public void onBtnGamepad(View v) {
         Intent intent = new Intent(v.getContext(), GamepadActivity.class);
         v.getContext().startActivity(intent);
-    }
-
-    private int speechAlt;
-    private boolean speechBat15;	// to say bat15 one time
-
-    private boolean oldMotorsEnabled;
-    private boolean oldStabilizationEnabled;
-    private boolean oldTrickModeEnabled;
-    private boolean oldVideoState;
-
-    private void playSound(MediaPlayer snd) {
-
-        try {
-            if (snd.isPlaying() == true) {
-                return;
-            }
-            snd.setLooping(false);
-            snd.start();
-        }
-        catch(IllegalStateException ex) {
-            System.out.println("Can't play sound");
-        }
-    }
-
-    private void speechDroneState(DroneState ds) {
-        if(DroneState.sounds.enabled == false) {
-            return;
-        }
-
-        if(ds.altitude < 0.5) {
-            speechAlt = 0;
-        }
-
-        if(ds.altitude >= 1.0 && ds.altitude <= 1.5 && speechAlt != 1) {
-            speechAlt = 1;
-            playSound(mSndAlt1m);
-        }
-        if(ds.altitude >= 2.0 && ds.altitude <= 2.5 && speechAlt != 2) {
-            speechAlt = 2;
-            playSound(mSndAlt2m);
-        }
-        else if(ds.altitude >= 3.0 && ds.altitude <= 3.5 && speechAlt != 3) {
-            speechAlt = 3;
-            playSound(mSndAlt3m);
-        }
-        else if(ds.altitude >= 5.0 && ds.altitude <= 5.5 && speechAlt != 5) {
-            speechAlt = 5;
-            playSound(mSndAlt5m);
-        }
-        else if(ds.altitude >= 7.0 && ds.altitude <= 7.5 && speechAlt != 7) {
-            speechAlt = 7;
-            playSound(mSndAlt7m);
-        }
-        else if(ds.altitude >= 10.0 && ds.altitude <= 10.5 && speechAlt != 10) {
-            speechAlt = 10;
-            playSound(mSndAlt10m);
-        }
-        else if(ds.altitude >= 15.0 && ds.altitude <= 15.5 && speechAlt != 15) {
-            speechAlt = 15;
-            playSound(mSndAlt15m);
-        }
-        else if(ds.altitude >= 20.0 && ds.altitude <= 22.0 && speechAlt != 20) {
-            speechAlt = 20;
-            playSound(mSndAlt20m);
-        }
-        else if(ds.altitude >= 30.0 && ds.altitude <= 32.0 && speechAlt != 30) {
-            speechAlt = 30;
-            playSound(mSndAlt30m);
-        }
-        else if(ds.altitude >= 40.0 && ds.altitude <= 42.0 && speechAlt != 40) {
-            speechAlt = 40;
-            playSound(mSndAlt40m);
-        }
-        else if(ds.altitude >= 50.0 && ds.altitude <= 52.0 && speechAlt != 50) {
-            speechAlt = 50;
-            playSound(mSndAlt50m);
-        }
-
-        if(ds.motorsEnabled && !oldMotorsEnabled) {
-            playSound(mSndMotorsEnabled);
-
-            // play these sounds in other thread with some delay from motors_enabled sound
-            // to prevent motors_enabled and these sounds simultaneously
-            Timer tm = new Timer();
-            tm.schedule(new TimerTask() {
-                @Override
-                public void run() {
-                    if(DroneAlarmCenter.instance().getAlarm() != null) {
-                        playSound(mSndSystemBad);
-                    }
-                    else {
-                        playSound(mSndSystemOk);
-                    }
-                }
-            }, 2000);
-        }
-        else if(!ds.motorsEnabled && oldMotorsEnabled) {
-            playSound(mSndMotorsDisabled);
-        }
-
-        oldMotorsEnabled = ds.motorsEnabled;
-
-        if(ds.stabilizationEnabled && !oldStabilizationEnabled) {
-            playSound(mSndStabilizationEnabled);
-        }
-        else if(!ds.stabilizationEnabled && oldStabilizationEnabled) {
-            playSound(mSndStabilizationDisabled);
-        }
-
-        oldStabilizationEnabled = ds.stabilizationEnabled;
-
-        if(ds.trickModeEnabled && !oldTrickModeEnabled) {
-            playSound(mSndTrickModeEnabled);
-        }
-        else if(!ds.trickModeEnabled && oldTrickModeEnabled) {
-            playSound(mSndTrickModeDisabled);
-        }
-
-        oldTrickModeEnabled = ds.trickModeEnabled;
-
-        if(ds.baseGas > DroneState.Motors.maxGas /8 ) {
-            if(	ds.battery.percent > 10.0 &&
-                    ds.battery.percent <= 15.0 &&
-                    speechBat15 == false)	// we say bat15 one time
-            {
-                playSound(mSndBat15);
-                speechBat15 = true;
-            }
-            else if(ds.battery.percent > 5.0 && ds.battery.percent <= 10.0) {
-                playSound(mSndBat10);
-            }
-            else if(ds.battery.percent <= 5.0) {
-                playSound(mSndBat5);
-            }
-        }
-        else {
-            speechBat15 = false;
-        }
-
-        if(ds.rssi <= DroneAlarmCenter.WIFI_LOW_LEVEL) {
-            playSound(mSndLowRadio);
-        }
-
-        if(ds.videoState && oldVideoState == false) {
-            playSound(mSndVideoStarted);
-        }
-        else if(ds.videoState == false && oldVideoState == true) {
-            playSound(mSndVideoStoped);
-        }
-
-        oldVideoState = ds.videoState;
     }
 
     private int appendState(String text, int rowCount) {

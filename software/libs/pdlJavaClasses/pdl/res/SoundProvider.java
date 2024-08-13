@@ -23,6 +23,7 @@ public abstract class SoundProvider
 	public static String TRICK_MODE_DISABLED = "TRICK_MODE_DISABLED";
 	public static String VIDEO_STARTED = "VIDEO_STARTED";
 	public static String VIDEO_STOPED = "VIDEO_STOPED";
+	public static String PHOTO_TAKEN = "PHOTO_TAKEN";
 	public static String BAT15 = "BAT15";
 	public static String BAT10 = "BAT10";
 	public static String BAT5 = "BAT5";

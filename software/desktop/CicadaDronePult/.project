@@ -14,4 +14,11 @@
 	<natures>
 		<nature>org.eclipse.jdt.core.javanature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>pdlJavaClasses</name>
+			<type>2</type>
+			<location>D:/Projects/Devices/MyCopter/software/libs/pdlJavaClasses</location>
+		</link>
+	</linkedResources>
 </projectDescription>

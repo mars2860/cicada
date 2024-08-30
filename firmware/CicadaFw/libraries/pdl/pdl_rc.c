@@ -203,11 +203,9 @@ void pdlCmdSetEulerTargets(pdlDroneState *ds, uint8_t *packet)
 
 void pdlCmdSetTelemetryPeriod(pdlDroneState *ds, uint8_t *packet)
 {
-  (void)ds;
-
   uint32_t ut0;
   memcpy(&ut0, &packet[1], sizeof(ut0));
-  pdlSetTelemetryUpdatePeriod(ut0);
+  pdlSetTelemetryUpdatePeriod(ds,ut0);
 }
 
 void pdlCmdResetAltitude(pdlDroneState *ds, uint8_t *packet)

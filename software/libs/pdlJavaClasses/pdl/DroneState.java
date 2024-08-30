@@ -90,13 +90,6 @@ public class DroneState implements Cloneable
 		@NoChart
 		@Expose
 		public int logPort = DEFAULT_LOG_PORT;
-		@Setting
-		@NoChart
-		@Expose
-		public int telemetryPeriod = DEFAULT_TELEMETRY_PERIOD;
-
-		@NoChart
-		public int curTelemetryPeriod;
 		
 		@Override
 		public Object clone() throws CloneNotSupportedException
@@ -109,6 +102,25 @@ public class DroneState implements Cloneable
 	@SettingGroup(name = "NET")
 	@SerializedName("net")
 	public static Net net = new Net();
+	
+	public static class Telemetry implements Cloneable
+	{
+		@Setting
+		@NoChart
+		@Expose
+		public int period = DEFAULT_TELEMETRY_PERIOD;
+		
+		@Override
+		public Object clone() throws CloneNotSupportedException
+		{
+			return super.clone();
+		}
+	}
+	
+	@Expose
+	@SettingGroup(name = "TELEMETRY")
+	@SerializedName("telemetry")
+	public Telemetry telemetry = new Telemetry();
 	
 	public static class Misc implements Cloneable
 	{		
@@ -1463,8 +1475,8 @@ public class DroneState implements Cloneable
 		
 		// Now reserved2 is accUpOffset 
 		velocityZPid.accUpOffset = parser.getFloat(packet);
-		// skip Reserved3
-		parser.getUint32t(packet);
+		// Now Reserved3 is telemetry.period
+		telemetry.period = (int)parser.getUint32t(packet);
 		// skip Reserved4
 		parser.getUint32t(packet);
 		// skip Reserved5
@@ -1479,8 +1491,6 @@ public class DroneState implements Cloneable
 		
 		load1.parse(parser, packet);
 		load2.parse(parser, packet);
-		
-		net.curTelemetryPeriod = (int)parser.getUint32t(packet);
 		
 		//--------------------------------------------------
 		

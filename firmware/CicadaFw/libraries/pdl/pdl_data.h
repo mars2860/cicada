@@ -341,13 +341,13 @@ typedef struct s_pdlDroneState
   uint32_t gpsTaskTime;
   /// Executing time of load task
   uint32_t loadTaskTime;
-  /// Yaw angular rate target in rad (ignored in current version)
+  /// Yaw angular rate target in rad
   /// We need this variable because bodyRatePid works in body frame
   /// but all levels PID output angular rate in world frame
   float yawRateTarget;
-  /// Pitch angular rate target in rad (ignored in current version)
+  /// Pitch angular rate target in rad
   float pitchRateTarget;
-  /// Roll angular rate target in rad (ignored in current version)
+  /// Roll angular rate target in rad
   float rollRateTarget;
   /// Temperature of air
   float temperature;
@@ -397,8 +397,8 @@ typedef struct s_pdlDroneState
   float refRoll;
   /// Additional offset for accel.up. It can be used in systems have bad accelerometer
   float accUpOffset;
-  /// Reserved3
-  uint32_t reserved3;
+  /// Telemetry period
+  uint32_t telemetryPeriod;
   /// Reserved4
   uint32_t reserved4;
   /// Reserved5

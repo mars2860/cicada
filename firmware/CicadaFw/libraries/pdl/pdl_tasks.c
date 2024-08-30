@@ -62,8 +62,9 @@ void pdlResetKalman(pdlDroneState *ds)
   }
 }
 
-void pdlSetTelemetryUpdatePeriod(uint32_t t)
+void pdlSetTelemetryUpdatePeriod(pdlDroneState *ds, uint32_t t)
 {
+  ds->telemetryPeriod = t;
   pdlTelemetryTS.period = t;
 }
 

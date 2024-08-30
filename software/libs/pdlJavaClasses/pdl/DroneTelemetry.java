@@ -136,18 +136,6 @@ public class DroneTelemetry extends java.util.Observable implements Runnable
 		return state;
 	}
 	
-	public int getTelemetryPeriod()
-	{
-		int result;
-		
-		synchronized(objDataSync)
-		{
-			result = DroneState.net.telemetryPeriod;
-		}
-		
-		return result;
-	}
-	
 	public long droneStateSize;
 
 	@Override
@@ -325,7 +313,7 @@ public class DroneTelemetry extends java.util.Observable implements Runnable
 	public DroneState[] getBlackBox(int range)
 	{
 		DroneState[] result = new DroneState[0];
-		int telemetryPeriod = DroneState.net.telemetryPeriod;
+		int telemetryPeriod = this.getDroneState().telemetry.period;
 		
 		if(range > 0 && telemetryPeriod > 0)
 		{

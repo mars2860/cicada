@@ -137,7 +137,7 @@ void pdlPidsToXFrame(pdlDroneState*);
 void pdlPidsToXFrameReversed(pdlDroneState*);
 
 /** Allows for user to change telemetry period or fully disable telemetry if he set this period as long as it possible */
-void pdlSetTelemetryUpdatePeriod(uint32_t);
+void pdlSetTelemetryUpdatePeriod(pdlDroneState*, uint32_t);
 uint32_t pdlGetTelemetryUpdatePeriod(void);
 
 /// Parses binary packet with command from remote control and applies result to drone state

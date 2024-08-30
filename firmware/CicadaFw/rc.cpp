@@ -266,7 +266,6 @@ void pdlUpdateTelemetry(pdlDroneState *ds)
     return;
 
   uint16_t pos = 0;
-  uint32_t telemetryPeriod = pdlGetTelemetryUpdatePeriod();
   size_t sz = sizeof(pdlDroneState);
 
   ds->timestamp = pdlMicros();
@@ -276,8 +275,6 @@ void pdlUpdateTelemetry(pdlDroneState *ds)
   pos = writeTelemetryPacket(pos, udpPacket, &sz, sizeof(sz));
   // DroneState
   pos = writeTelemetryPacket(pos, udpPacket, ds, sz);
-  // Telemetry Period
-  pos = writeTelemetryPacket(pos, udpPacket, &telemetryPeriod, sizeof(telemetryPeriod));
 
   udp.beginPacket(host, telemetryPort);
   udp.write(udpPacket, pos);

@@ -35,7 +35,7 @@ import pdl.commands.CmdSetLoad;
 import pdl.commands.CmdSetMagneto;
 import pdl.commands.CmdSetMotorsDir;
 import pdl.commands.CmdSetMotorsGas;
-import pdl.commands.CmdSetPeriods;
+import pdl.commands.CmdSetTelemetryPeriod;
 import pdl.commands.CmdSetPitch;
 import pdl.commands.CmdSetPitchPid;
 import pdl.commands.CmdSetPitchRate;
@@ -417,7 +417,7 @@ public class DroneCommander implements Runnable
 		sendSetupCmd(cmd);
 		
 		// setup telemetry period
-		cmd = new CmdSetPeriods(DroneState.net.telemetryPeriod,0);
+		cmd = new CmdSetTelemetryPeriod(ds.telemetry.period);
 		sendSetupCmd(cmd);
 		
 		// setup battery

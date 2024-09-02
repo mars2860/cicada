@@ -238,6 +238,8 @@ public class TextBundle extends ListResourceBundle
             {"LIFT_BY_ALT","alt pid"},
             {"LIFT_BY_GAS_FORSAGE","gas forsage"},
             {"LIFT_BY_GAS","gas"},
+            {"PITCH_AUTO_LEVEL","pitchAutoLevel"},
+            {"ROLL_AUTO_LEVEL","rollAutoLevel"},
             
             {"SETTINGS_RECEIVED","Settings has been received from a drone"},
             {"SETTINGS_SENT","New settings has been sent to a drone"},

@@ -12,6 +12,7 @@ import java.util.TimerTask;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -61,6 +62,8 @@ public class RcSettingsGui extends JSavedFrame
 	private JTextField tfMoveAccelTime;
 	private JTextField tfRotateAccelTime;
 	private JComboBox<String> cbGamepad;
+	private JCheckBox cbPitchAutoLevel;
+	private JCheckBox cbRollAutoLevel;
 	
 	private CtrlGuiBundle cgb[];
 	
@@ -456,7 +459,7 @@ public class RcSettingsGui extends JSavedFrame
 		// ---------------------------------------------------------------------
 		// Move ctrl
 
-		JPanel pnlMoveCtrl = new JPanel(new MigLayout("", "[][][][grow][][]"));
+		JPanel pnlMoveCtrl = new JPanel(new MigLayout("", "[][][][][][grow][][]"));
 		pnlMoveCtrl.setBorder(new TitledBorder(ResBox.text("MOVE_BY")));
 
 		rbMoveByRate = new JRadioButton(ResBox.text("PITCH_ROLL_RATE"));
@@ -472,9 +475,14 @@ public class RcSettingsGui extends JSavedFrame
 		tfMoveDelta = new JTextField();
 		tfMoveDelta.setDocument(numDoc2);
 		
+		cbPitchAutoLevel = new JCheckBox(ResBox.text("PITCH_AUTO_LEVEL"));
+		cbRollAutoLevel = new JCheckBox(ResBox.text("ROLL_AUTO_LEVEL"));
+		
 		pnlMoveCtrl.add(rbMoveByRate);
 		pnlMoveCtrl.add(rbMoveByAng);
 		pnlMoveCtrl.add(rbMoveByVel);
+		pnlMoveCtrl.add(cbPitchAutoLevel);
+		pnlMoveCtrl.add(cbRollAutoLevel);
 		pnlMoveCtrl.add(new JLabel(), "grow");
 		pnlMoveCtrl.add(new JLabel(ResBox.text("DELTA")));
 		pnlMoveCtrl.add(tfMoveDelta, "w 40px");
@@ -656,6 +664,9 @@ public class RcSettingsGui extends JSavedFrame
 		tfMoveAccelTime.setText(numFmt.format(rc.moveAccelTime));
 		tfRotateAccelTime.setText(numFmt.format(rc.rotateAccelTime));
 		
+		cbPitchAutoLevel.setSelected(rc.pitchAutoLevel);
+		cbRollAutoLevel.setSelected(rc.rollAutoLevel);
+		
 		searchForGamepads();
 		
 		for(int i = 0; i < AppSettings.InputMap.INPUT_CONTROL_COUNT; i++)
@@ -717,6 +728,9 @@ public class RcSettingsGui extends JSavedFrame
 		rc.liftAccelTime = Float.parseFloat(tfLiftAccelTime.getText());
 		rc.moveAccelTime = Float.parseFloat(tfMoveAccelTime.getText());
 		rc.rotateAccelTime = Float.parseFloat(tfRotateAccelTime.getText());
+		
+		rc.pitchAutoLevel = cbPitchAutoLevel.isSelected();
+		rc.rollAutoLevel = cbRollAutoLevel.isSelected();
 		
 		return rc;
 	}

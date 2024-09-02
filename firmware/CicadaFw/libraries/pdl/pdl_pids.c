@@ -292,7 +292,7 @@ void pdlUpdateLevelsPid(pdlDroneState *ds, float dt)
     else
     {
       pdlResetPid(&ds->pitchPid);
-      ds->pitchPid.target = 0;
+      ds->pitchPid.target = ds->pose[PDL_PITCH].pos;
     }
   }
 
@@ -306,7 +306,7 @@ void pdlUpdateLevelsPid(pdlDroneState *ds, float dt)
     else
     {
       pdlResetPid(&ds->rollPid);
-      ds->rollPid.target = 0;
+      ds->rollPid.target = ds->pose[PDL_ROLL].pos;
     }
   }
 }

@@ -13,7 +13,7 @@ import com.google.gson.annotations.SerializedName;
  *  also it represents some ground station app settings as Widgets,
  *  Sounds, RemoteControl and other settings. We have some ground app settings
  *  inside this class because it is comfortable to build settings GUI by
- *  java reflection
+ *  java reflection. These settings is stored in the static fields of this class.
  * @note all types are double for fast processing in charts */
 public class DroneState implements Cloneable
 {	
@@ -124,11 +124,6 @@ public class DroneState implements Cloneable
 	
 	public static class Misc implements Cloneable
 	{		
-		@Setting
-		@NoChart
-		@Expose
-		public boolean virtualGamepad = true;
-		
 		@Setting
 		@NoChart
 		@Expose
@@ -447,6 +442,10 @@ public class DroneState implements Cloneable
 		@Setting
 		@NoChart
 		public float rotateAccelTime;
+		@Setting
+		@NoChart
+		@Expose
+		public boolean virtualGamepad;
 		@Expose
 		@Setting
 		@NoChart
@@ -455,6 +454,14 @@ public class DroneState implements Cloneable
 		@Setting
 		@NoChart
 		public boolean rightJoystickAutoCenter;
+		@Setting
+		@NoChart
+		@Expose
+		public boolean pitchAutoLevel;
+		@Setting
+		@NoChart
+		@Expose
+		public boolean rollAutoLevel;
 
 		public RemoteCtrl()
 		{
@@ -471,8 +478,11 @@ public class DroneState implements Cloneable
 			liftAccelTime = 1.0f;
 			moveAccelTime = 0.2f;
 			rotateAccelTime = 0.3f;
+			virtualGamepad = true;
 			leftJoystickAutoCenter = true;
 			rightJoystickAutoCenter = true;
+			pitchAutoLevel = true;
+			rollAutoLevel = true;
 		}
 
 		@Override

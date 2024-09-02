@@ -511,7 +511,19 @@ public class DroneCommander implements Runnable
 
 				if(pitchRateTarget == 0 && ds.pitchPid.enabled && ds.pitchPidFlag > 0)
 				{
-					; 	// prevent to send discontinuous pitchRate = 0 if pitchPid is allowed
+					if(DroneState.rc.pitchAutoLevel) 
+					{
+						if(Math.abs(ds.pitchPid.target) > CTRL_ERR)
+						{
+							CmdSetPitch cmd = new CmdSetPitch(0);
+							DroneCommander.instance().addCmd(cmd);
+
+							if(LOG_CTRL_CMD)
+							{
+								System.out.println("pitchAutoLevel");
+							}
+						}
+					}
 				}
 				else if( Math.abs(ds.pitchRateTarget - pitchRateTarget) > CTRL_ERR)
 				{
@@ -527,7 +539,19 @@ public class DroneCommander implements Runnable
 
 				if(rollRateTarget == 0 && ds.rollPid.enabled && ds.rollPidFlag > 0)
 				{
-					; 	// prevent to send discontinuous rollRate = 0 if rollPid is allowed
+					if(DroneState.rc.rollAutoLevel) 
+					{
+						if(Math.abs(ds.rollPid.target) > CTRL_ERR)
+						{
+							CmdSetRoll cmd = new CmdSetRoll(0);
+							DroneCommander.instance().addCmd(cmd);
+
+							if(LOG_CTRL_CMD)
+							{
+								System.out.println("rollAutoLevel");
+							}
+						}
+					}
 				}
 				else if(Math.abs(ds.rollRateTarget - rollRateTarget) > CTRL_ERR)
 				{

@@ -188,48 +188,42 @@ void pdlResetPid(pdlPidState *pid)
 
 void pdlUpdateAngularRatePids(pdlDroneState *ds, float dt)
 {
-  /* yaw/pitch/roll rates != gyro rates
+  /* yaw/pitch/roll rates is not gyro rates
   pdlUpdatePid(ds,&ds->yawRatePid,ds->gyro.pure[PDL_Z],dt,0);
   pdlUpdatePid(ds,&ds->pitchRatePid,ds->gyro.pure[PDL_Y],dt,0);
   pdlUpdatePid(ds,&ds->rollRatePid,ds->gyro.pure[PDL_X],dt,0);
   */
 
-  // convert euler rates to body rates
+  pdlVector3 target;
 
-  pdlVector3 target = pdlEulerRateToBodyRate( ds->pose[PDL_YAW].pos,
-                                              ds->pose[PDL_PITCH].pos,
-                                              ds->pose[PDL_ROLL].pos,
-                                              ds->yawRateTarget,
-                                              ds->pitchRateTarget,
-                                              ds->rollRateTarget );
+  // if we need to control the drone by body angular rates
+  // we have to reset targets of euler angular rates and disable up-level PIDs
+  // see the code of pdlSetZRateTarget
 
-  // don't use converted euler rates if trickMode is enabled or we control drone by body rates
-  if(ds->trickModeEnabled || !pdlGetPidHeadingFlag(ds))
+  target.x = ds->xRatePid.target;
+  target.y = ds->yRatePid.target;
+  target.z = ds->zRatePid.target;
+
+  if( ds->yawRateTarget != 0   ||     // if we have the control request by body angular rates all these conditions is reseted in pdlSetZRateTarget
+      ds->pitchRateTarget != 0 ||
+      ds->rollRateTarget != 0  ||
+      pdlGetPidHeadingFlag(ds) ||
+      pdlGetPidPitchFlag(ds)   ||
+      pdlGetPidRollFlag(ds) )
   {
-    ds->zRatePid.target = ds->yawRateTarget;
-  }
-  else
-  {
-    ds->zRatePid.target = target.z;
+    // if we have the control request by euler angles or euler angular rates
+    // we need to convert euler angular rates targets to body angular rates
+    target = pdlEulerRateToBodyRate( ds->pose[PDL_YAW].pos,
+                                     ds->pose[PDL_PITCH].pos,
+                                     ds->pose[PDL_ROLL].pos,
+                                     ds->yawRateTarget,
+                                     ds->pitchRateTarget,
+                                     ds->rollRateTarget );
   }
 
-  if(ds->trickModeEnabled || !pdlGetPidPitchFlag(ds))
-  {
-    ds->yRatePid.target = ds->pitchRateTarget;
-  }
-  else
-  {
-    ds->yRatePid.target = target.y;
-  }
-
-  if(ds->trickModeEnabled || !pdlGetPidRollFlag(ds))
-  {
-    ds->xRatePid.target = ds->rollRateTarget;
-  }
-  else
-  {
-    ds->xRatePid.target = target.x;
-  }
+  ds->zRatePid.target = target.z;
+  ds->yRatePid.target = target.y;
+  ds->xRatePid.target = target.x;
 
   // there is noise in gyro data
   // but it can be reduced by lower cut-off frequency of gyro DLPF
@@ -277,7 +271,7 @@ void pdlUpdateLevelsPid(pdlDroneState *ds, float dt)
     }
     else
     {
-      pdlResetPid(&ds->headingPid);
+      //pdlResetPid(&ds->headingPid);
       ds->headingPid.target = ds->pose[PDL_YAW].pos;
     }
   }
@@ -291,7 +285,7 @@ void pdlUpdateLevelsPid(pdlDroneState *ds, float dt)
     }
     else
     {
-      pdlResetPid(&ds->pitchPid);
+      //pdlResetPid(&ds->pitchPid);
       ds->pitchPid.target = ds->pose[PDL_PITCH].pos;
     }
   }
@@ -305,7 +299,7 @@ void pdlUpdateLevelsPid(pdlDroneState *ds, float dt)
     }
     else
     {
-      pdlResetPid(&ds->rollPid);
+      //pdlResetPid(&ds->rollPid);
       ds->rollPid.target = ds->pose[PDL_ROLL].pos;
     }
   }
@@ -384,7 +378,7 @@ void pdlUpdateAltPid(pdlDroneState *ds, float dt)
     }
     else
     {
-      pdlResetPid(&ds->altPid);
+      //pdlResetPid(&ds->altPid);
       ds->altPid.target = altitude;
     }
   }

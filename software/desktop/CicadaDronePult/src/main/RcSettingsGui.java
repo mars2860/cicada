@@ -41,10 +41,12 @@ public class RcSettingsGui extends JSavedFrame
 {
 	private static final long serialVersionUID = -296860419559339671L;
 	
-	private JRadioButton rbRotateByRate;
+	private JRadioButton rbRotateByZRate;
+	private JRadioButton rbRotateByYawRate;
 	private JRadioButton rbRotateByHeading;
 	private JTextField tfRotateDelta;
-	private JRadioButton rbMoveByRate;
+	private JRadioButton rbMoveByBodyRate;
+	private JRadioButton rbMoveByEulerRate;
 	private JRadioButton rbMoveByAng;
 	private JRadioButton rbMoveByVel;
 	private JTextField tfMoveDelta;
@@ -388,20 +390,23 @@ public class RcSettingsGui extends JSavedFrame
 		// ---------------------------------------------------------------------
 		// Rotate ctrl
 
-		JPanel pnlRotateCtrl = new JPanel(new MigLayout("", "[][][grow][][]"));
+		JPanel pnlRotateCtrl = new JPanel(new MigLayout("", "[][][][grow][][]"));
 		pnlRotateCtrl.setBorder(new TitledBorder(ResBox.text("ROTATE_BY")));
 
-		rbRotateByRate = new JRadioButton(ResBox.text("YAW_RATE"));
+		rbRotateByZRate = new JRadioButton(ResBox.text("Z_RATE"));
+		rbRotateByYawRate = new JRadioButton(ResBox.text("YAW_RATE"));
 		rbRotateByHeading = new JRadioButton(ResBox.text("HEADING"));
 		tfRotateDelta = new JTextField();
 
 		ButtonGroup grp1 = new ButtonGroup();
-		grp1.add(rbRotateByRate);
+		grp1.add(rbRotateByZRate);
+		grp1.add(rbRotateByYawRate);
 		grp1.add(rbRotateByHeading);
 		
 		tfRotateDelta.setDocument(numDoc1);
 
-		pnlRotateCtrl.add(rbRotateByRate);
+		pnlRotateCtrl.add(rbRotateByZRate);
+		pnlRotateCtrl.add(rbRotateByYawRate);
 		pnlRotateCtrl.add(rbRotateByHeading);
 		pnlRotateCtrl.add(new JLabel(), "grow");
 		pnlRotateCtrl.add(new JLabel(ResBox.text("DELTA")));
@@ -459,17 +464,19 @@ public class RcSettingsGui extends JSavedFrame
 		// ---------------------------------------------------------------------
 		// Move ctrl
 
-		JPanel pnlMoveCtrl = new JPanel(new MigLayout("", "[][][][][][grow][][]"));
+		JPanel pnlMoveCtrl = new JPanel(new MigLayout("", "[][][][][grow][][]"));
 		pnlMoveCtrl.setBorder(new TitledBorder(ResBox.text("MOVE_BY")));
 
-		rbMoveByRate = new JRadioButton(ResBox.text("PITCH_ROLL_RATE"));
+		rbMoveByBodyRate = new JRadioButton(ResBox.text("X_Y_RATE"));
+		rbMoveByEulerRate = new JRadioButton(ResBox.text("PITCH_ROLL_RATE"));
 		rbMoveByAng = new JRadioButton(ResBox.text("PITCH_ROLL"));
 		rbMoveByVel = new JRadioButton(ResBox.text("VELOCITY"));
 
 		ButtonGroup grp2 = new ButtonGroup();
 
+		grp2.add(rbMoveByBodyRate);
 		grp2.add(rbMoveByAng);
-		grp2.add(rbMoveByRate);
+		grp2.add(rbMoveByEulerRate);
 		grp2.add(rbMoveByVel);
 
 		tfMoveDelta = new JTextField();
@@ -478,14 +485,15 @@ public class RcSettingsGui extends JSavedFrame
 		cbPitchAutoLevel = new JCheckBox(ResBox.text("PITCH_AUTO_LEVEL"));
 		cbRollAutoLevel = new JCheckBox(ResBox.text("ROLL_AUTO_LEVEL"));
 		
-		pnlMoveCtrl.add(rbMoveByRate);
+		pnlMoveCtrl.add(rbMoveByBodyRate);
+		pnlMoveCtrl.add(rbMoveByEulerRate);
 		pnlMoveCtrl.add(rbMoveByAng);
 		pnlMoveCtrl.add(rbMoveByVel);
-		pnlMoveCtrl.add(cbPitchAutoLevel);
-		pnlMoveCtrl.add(cbRollAutoLevel);
 		pnlMoveCtrl.add(new JLabel(), "grow");
 		pnlMoveCtrl.add(new JLabel(ResBox.text("DELTA")));
-		pnlMoveCtrl.add(tfMoveDelta, "w 40px");
+		pnlMoveCtrl.add(tfMoveDelta, "w 40px,wrap");
+		pnlMoveCtrl.add(cbPitchAutoLevel,"spanx 2");
+		pnlMoveCtrl.add(cbRollAutoLevel,"spanx 2");
 
 		this.add(pnlMoveCtrl, "spanx 2,grow,wrap");
 
@@ -612,11 +620,14 @@ public class RcSettingsGui extends JSavedFrame
 		
 		switch(rc.rotateBy)
 		{
+			case ROTATE_BY_Z_RATE:
+				rbRotateByZRate.setSelected(true);
+				break;
 			case ROTATE_BY_HEADING:
 				rbRotateByHeading.setSelected(true);
 				break;
-			default:
-				rbRotateByRate.setSelected(true);
+			case ROTATE_BY_YAW_RATE:
+				rbRotateByYawRate.setSelected(true);
 				break;
 		}
 
@@ -628,8 +639,11 @@ public class RcSettingsGui extends JSavedFrame
 			case MOVE_BY_VELOCITY:
 				rbMoveByVel.setSelected(true);
 				break;
-			default:
-				rbMoveByRate.setSelected(true);
+			case MOVE_BY_PITCH_ROLL_RATE:
+				rbMoveByEulerRate.setSelected(true);
+				break;
+			case MOVE_BY_X_Y_RATE:
+				rbMoveByBodyRate.setSelected(true);
 				break;
 		}
 
@@ -693,8 +707,10 @@ public class RcSettingsGui extends JSavedFrame
 		
 		if(rbRotateByHeading.isSelected())
 			rc.rotateBy = DroneState.RemoteCtrl.RotateBy.ROTATE_BY_HEADING;
-		else
+		else if(rbRotateByYawRate.isSelected())
 			rc.rotateBy = DroneState.RemoteCtrl.RotateBy.ROTATE_BY_YAW_RATE;
+		else
+			rc.rotateBy = DroneState.RemoteCtrl.RotateBy.ROTATE_BY_Z_RATE;
 		
 		rc.rotateDelta = Float.parseFloat(tfRotateDelta.getText());
 		
@@ -702,8 +718,10 @@ public class RcSettingsGui extends JSavedFrame
 			rc.moveBy = DroneState.RemoteCtrl.MoveBy.MOVE_BY_PITCH_ROLL;
 		else if(rbMoveByVel.isSelected())
 			rc.moveBy = DroneState.RemoteCtrl.MoveBy.MOVE_BY_VELOCITY;
-		else
+		else if(rbMoveByEulerRate.isSelected())
 			rc.moveBy = DroneState.RemoteCtrl.MoveBy.MOVE_BY_PITCH_ROLL_RATE;
+		else
+			rc.moveBy = DroneState.RemoteCtrl.MoveBy.MOVE_BY_X_Y_RATE;
 		
 		rc.moveDelta = Float.parseFloat(tfMoveDelta.getText());
 		

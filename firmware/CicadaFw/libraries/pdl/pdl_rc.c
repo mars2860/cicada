@@ -288,6 +288,27 @@ void pdlCmdSetRollRateTarget(pdlDroneState *ds, uint8_t *packet)
   pdlSetRollRateTarget(ds,roll);
 }
 
+void pdlCmdSetZRateTarget(pdlDroneState *ds, uint8_t *packet)
+{
+  float yaw;
+  memcpy(&yaw, &packet[1], sizeof(yaw));
+  pdlSetZRateTarget(ds,yaw);
+}
+
+void pdlCmdSetYRateTarget(pdlDroneState *ds, uint8_t *packet)
+{
+  float pitch;
+  memcpy(&pitch, &packet[1], sizeof(pitch));
+  pdlSetYRateTarget(ds,pitch);
+}
+
+void pdlCmdSetXRateTarget(pdlDroneState *ds, uint8_t *packet)
+{
+  float roll;
+  memcpy(&roll, &packet[1], sizeof(roll));
+  pdlSetXRateTarget(ds,roll);
+}
+
 void pdlCmdSetKalman(pdlDroneState *ds, uint8_t *packet)
 {
   memcpy(&ds->kfSettings.navModelNoise,    &packet[1], sizeof(float));
@@ -537,6 +558,15 @@ void pdlParseCommand(pdlDroneState *ds, uint8_t *packet)
       break;
     case PDL_CMD_SET_ACCUP_OFFSET:
       pdlCmdSetAccUpOffset(ds,packet);
+      break;
+    case PDL_CMD_SET_Z_RATE:
+      pdlCmdSetZRateTarget(ds, packet);
+      break;
+    case PDL_CMD_SET_Y_RATE:
+      pdlCmdSetYRateTarget(ds, packet);
+      break;
+    case PDL_CMD_SET_X_RATE:
+      pdlCmdSetXRateTarget(ds, packet);
       break;
   }
 }

@@ -24,4 +24,9 @@ public abstract class AbstractCmdSetPidTarget extends AbstractDroneCmd
 	{
 		return target;
 	}
+	
+	public void setTarget(float v)
+	{
+		target = v;
+	}
 }

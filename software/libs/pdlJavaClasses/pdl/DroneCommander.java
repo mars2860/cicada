@@ -9,6 +9,9 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.concurrent.Semaphore;
 
+import pdl.DroneState.RemoteCtrl.MoveBy;
+import pdl.DroneState.RemoteCtrl.RotateBy;
+import pdl.commands.AbstractCmdSetPidTarget;
 import pdl.commands.AbstractDroneCmd;
 import pdl.commands.CmdEnableDynamicIp;
 import pdl.commands.CmdEnableStabilization;
@@ -48,16 +51,19 @@ import pdl.commands.CmdSetVelocityX;
 import pdl.commands.CmdSetVelocityY;
 import pdl.commands.CmdSetVelocityZ;
 import pdl.commands.CmdSetYRatePid;
+import pdl.commands.CmdSetYRate;
 import pdl.commands.CmdSetPosNorthPid;
 import pdl.commands.CmdSetPsk;
 import pdl.commands.CmdSetPosEastPid;
 import pdl.commands.CmdSetRollPid;
 import pdl.commands.CmdSetXRatePid;
+import pdl.commands.CmdSetXRate;
 import pdl.commands.CmdSetVelocityXPid;
 import pdl.commands.CmdSetVelocityYPid;
 import pdl.commands.CmdSetVelocityZPid;
 import pdl.commands.CmdSetYawRate;
 import pdl.commands.CmdSetZRatePid;
+import pdl.commands.CmdSetZRate;
 import pdl.commands.CmdSetup;
 import pdl.commands.CmdStartStopVideo;
 import pdl.commands.CmdSwitchMotors;
@@ -495,9 +501,26 @@ public class DroneCommander implements Runnable
 
 		switch(moveBy)
 		{
+			case MOVE_BY_X_Y_RATE:
 			case MOVE_BY_PITCH_ROLL_RATE:
 				double pitchRateTarget = Math.toRadians(-pwrFwd * moveDelta);
 				double rollRateTarget = Math.toRadians(pwrRight * moveDelta);
+				double curPitchRateTarget = ds.pitchRateTarget;
+				double curRollRateTarget = ds.rollRateTarget;
+				String pitchRateLog = "set pitchRate = ";
+				String rollRateLog = "set rollRate = ";
+				AbstractCmdSetPidTarget cmdPitchRate = new CmdSetPitchRate(0);
+				AbstractCmdSetPidTarget cmdRollRate = new CmdSetRollRate(0);
+				
+				if(moveBy == MoveBy.MOVE_BY_X_Y_RATE)
+				{
+					curPitchRateTarget = ds.yRatePid.target;
+					curRollRateTarget = ds.xRatePid.target;
+					cmdPitchRate = new CmdSetYRate(0);
+					cmdRollRate = new CmdSetXRate(0);
+					pitchRateLog = "set yRate = ";
+					rollRateLog = "set xRate = ";
+				}
 
 				if(Math.abs(pitchRateTarget) < Math.toRadians(MIN_PITCH_ROLL_RATE))
 				{
@@ -525,14 +548,14 @@ public class DroneCommander implements Runnable
 						}
 					}
 				}
-				else if( Math.abs(ds.pitchRateTarget - pitchRateTarget) > CTRL_ERR)
+				else if( Math.abs(curPitchRateTarget - pitchRateTarget) > CTRL_ERR)
 				{
-					CmdSetPitchRate cmd = new CmdSetPitchRate((float)pitchRateTarget);
-					DroneCommander.instance().addCmd(cmd);
+					cmdPitchRate.setTarget((float)pitchRateTarget);
+					DroneCommander.instance().addCmd(cmdPitchRate);
 
 					if(LOG_CTRL_CMD)
 					{
-						System.out.print("set pitchRate = ");
+						System.out.print(pitchRateLog);
 						System.out.println(Math.toDegrees(pitchRateTarget));
 					}
 				}
@@ -553,14 +576,14 @@ public class DroneCommander implements Runnable
 						}
 					}
 				}
-				else if(Math.abs(ds.rollRateTarget - rollRateTarget) > CTRL_ERR)
+				else if(Math.abs(curRollRateTarget - rollRateTarget) > CTRL_ERR)
 				{
-					CmdSetRollRate cmd = new CmdSetRollRate((float)rollRateTarget);
-					DroneCommander.instance().addCmd(cmd);
+					cmdRollRate.setTarget((float)rollRateTarget);
+					DroneCommander.instance().addCmd(cmdRollRate);
 
 					if(LOG_CTRL_CMD)
 					{
-						System.out.print("set rollRate = ");
+						System.out.print(rollRateLog);
 						System.out.println(Math.toDegrees(rollRateTarget));
 					}
 				}
@@ -580,11 +603,13 @@ public class DroneCommander implements Runnable
 					rollTarget = 0;
 				}
 
-				if(pitchTarget == 0 && ds.velocityXPid.enabled && ds.veloXPidFlag > 0)
+				if(	pitchTarget == 0 && 
+					ds.velocityXPid.enabled &&
+					ds.veloXPidFlag > 0)
 				{
 					; 	// prevent to send discontinuous pitch = 0 if veloPid is allowed
 				}
-				else if( Math.abs(ds.pitchPid.target - pitchTarget) > CTRL_ERR)
+				else if( Math.abs(ds.pitchPid.target - pitchTarget) > CTRL_ERR && ds.pitchPid.enabled && ds.pitchPidFlag > 0)
 				{
 					CmdSetPitch cmd = new CmdSetPitch((float)pitchTarget);
 					DroneCommander.instance().addCmd(cmd);
@@ -599,7 +624,7 @@ public class DroneCommander implements Runnable
 				{
 					; 	// prevent to send discontinuous roll = 0 if veloPid is allowed
 				}
-				else if( Math.abs(ds.rollPid.target - rollTarget) > CTRL_ERR)
+				else if( Math.abs(ds.rollPid.target - rollTarget) > CTRL_ERR && ds.rollPid.enabled && ds.rollPidFlag > 0)
 				{
 					CmdSetRoll cmd = new CmdSetRoll((float)rollTarget);
 					DroneCommander.instance().addCmd(cmd);
@@ -624,7 +649,7 @@ public class DroneCommander implements Runnable
 				{
 					; 	// prevent to send discontinuous velo = 0 if posPid is allowed
 				}
-				else if( Math.abs(ds.velocityXPid.target - veloXTarget) > CTRL_ERR)
+				else if( Math.abs(ds.velocityXPid.target - veloXTarget) > CTRL_ERR && ds.velocityXPid.enabled && ds.veloXPidFlag > 0)
 				{
 					CmdSetVelocityX cmd = new CmdSetVelocityX((float)veloXTarget);
 					DroneCommander.instance().addCmd(cmd);
@@ -640,7 +665,7 @@ public class DroneCommander implements Runnable
 				{
 					; 	// prevent to send discontinuous velo = 0 if posPid is allowed
 				}
-				else if( Math.abs(ds.velocityYPid.target - veloYTarget) > CTRL_ERR)
+				else if( Math.abs(ds.velocityYPid.target - veloYTarget) > CTRL_ERR && ds.velocityYPid.enabled && ds.veloYPidFlag > 0)
 				{
 					CmdSetVelocityY cmd = new CmdSetVelocityY((float)veloYTarget);
 					DroneCommander.instance().addCmd(cmd);
@@ -682,8 +707,19 @@ public class DroneCommander implements Runnable
 
 		switch(rotateBy)
 		{
+			case ROTATE_BY_Z_RATE:
 			case ROTATE_BY_YAW_RATE:
 				double yawRateTarget = Math.toRadians(pwr * rotateDelta);
+				double curYawRateTarget = ds.yawRateTarget;
+				String yawRateLog = "set yawRate = ";
+				AbstractCmdSetPidTarget cmdYawRate = new CmdSetYawRate(0);
+				
+				if(rotateBy == RotateBy.ROTATE_BY_Z_RATE)
+				{
+					curYawRateTarget = ds.zRatePid.target;
+					yawRateLog = "set zRate = ";
+					cmdYawRate = new CmdSetZRate(0);
+				}
 
 				if(Math.abs(yawRateTarget) < Math.toRadians(MIN_YAW_RATE))
 				{
@@ -694,14 +730,14 @@ public class DroneCommander implements Runnable
 				{
 					;    // prevent to send discontinuous yawRate = 0 if headingPid is allowed
 				}
-				else if( Math.abs(ds.yawRateTarget - yawRateTarget) > CTRL_ERR )
+				else if( Math.abs(curYawRateTarget - yawRateTarget) > CTRL_ERR )
 				{
-					CmdSetYawRate cmd = new CmdSetYawRate((float)yawRateTarget);
-					DroneCommander.instance().addCmd(cmd);
+					cmdYawRate.setTarget((float)yawRateTarget);
+					DroneCommander.instance().addCmd(cmdYawRate);
 
 					if(LOG_CTRL_CMD)
 					{
-						System.out.print("set yawRate = ");
+						System.out.print(yawRateLog);
 						System.out.println(Math.toDegrees(yawRateTarget));
 					}
 				}
@@ -714,13 +750,16 @@ public class DroneCommander implements Runnable
 				else if(heading > 360.f)
 					heading -= 360.f;
 					
-				CmdSetHeading cmd = new CmdSetHeading((float)Math.toRadians(heading));
-				DroneCommander.instance().addCmd(cmd);
-					
-				if(LOG_CTRL_CMD)
+				if(ds.headingPid.enabled && ds.headingPidFlag > 0)
 				{
-					System.out.print("set heading = ");
-					System.out.println(heading);
+					CmdSetHeading cmd = new CmdSetHeading((float)Math.toRadians(heading));
+					DroneCommander.instance().addCmd(cmd);
+					
+					if(LOG_CTRL_CMD)
+					{
+						System.out.print("set heading = ");
+						System.out.println(heading);
+					}
 				}
 				break;
 		}

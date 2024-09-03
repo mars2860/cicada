@@ -194,9 +194,11 @@ public class TextBundle extends ListResourceBundle
             
             {"ROTATE_BY","Rotate by"},
             {"YAW_RATE","Yaw Rate"},
+            {"Z_RATE","Z Rate"},
             {"DELTA","\u0394"},
             {"MOVE_BY","Move by"},
-            {"PITCH_ROLL_RATE","Ang.Rate"},
+            {"PITCH_ROLL_RATE","Pitch/Roll Rate"},
+            {"X_Y_RATE","X/Y Rate"},
             {"PITCH_ROLL","Level"},
             {"VELOCITY","Velocity"},
             {"LIFT_BY","Lift by"},

@@ -251,8 +251,6 @@ void pdlSetPitchTarget(pdlDroneState* ds, float target)
 {
   ds->pitchPid.target = target;
 
-  pdlSetPidPitchFlag(ds,1);
-
   if(target == 0)
   {
     pdlSetPidVeloXFlag(ds,1);
@@ -270,8 +268,6 @@ void pdlSetRollTarget(pdlDroneState* ds, float target)
 {
   ds->rollPid.target = target;
 
-  pdlSetPidRollFlag(ds,1);
-
   if(target == 0)
   {
     pdlSetPidVeloYFlag(ds,1);
@@ -287,29 +283,15 @@ void pdlSetRollTarget(pdlDroneState* ds, float target)
 
 void pdlSetYawRateTarget(pdlDroneState* ds, float target)
 {
-  //ds->yawRatePid.target = target;
   ds->yawRateTarget = target;
 
   if(target == 0)
   {
     pdlSetPidHeadingFlag(ds,1);
-    //pdlSetPidVeloXFlag(ds,1);
-    //pdlSetPidVeloYFlag(ds,1);
   }
   else
   {
     pdlSetPidHeadingFlag(ds,0);
-    // commented because it doesnt prevent
-    /*if(ds->velocityXPid.target == 0)
-    {
-      pdlSetPidVeloXFlag(ds,0); // prevent from shaking when rotating
-      ds->pitchPid.target = 0;
-    }
-    if(ds->velocityYPid.target == 0)
-    {
-      pdlSetPidVeloYFlag(ds,0);
-      ds->rollPid.target = 0;
-    }*/
   }
 }
 
@@ -320,7 +302,6 @@ void pdlSetHeadingTarget(pdlDroneState *ds, float target)
 
 void pdlSetPitchRateTarget(pdlDroneState *ds, float target)
 {
-  //ds->pitchRatePid.target = target;
   ds->pitchRateTarget = target;
 
   if(target == 0)
@@ -340,7 +321,6 @@ void pdlSetPitchRateTarget(pdlDroneState *ds, float target)
 
 void pdlSetRollRateTarget(pdlDroneState *ds, float target)
 {
-  //ds->rollRatePid.target = target;
   ds->rollRateTarget = target;
 
   if(target == 0)
@@ -356,6 +336,129 @@ void pdlSetRollRateTarget(pdlDroneState *ds, float target)
     pdlSetPidPosEastFlag(ds,0);
     pdlSetPidPosNorthFlag(ds,0);
   }
+}
+
+void pdlSetZRateTarget(pdlDroneState *ds, float target)
+{
+  uint8_t flag = 0;
+
+  ds->zRatePid.target = target;
+
+  // we can't control the drone by body angular rates and euler angular rates simultaneously
+  // to prevent it we reset targets of euler angular rates
+  ds->yawRateTarget = 0;
+  ds->pitchRateTarget = 0;
+  ds->rollRateTarget = 0;
+  // the user could send the request to control the drone by x or y body rate previously
+  // if pitchPid/rollPid is not reseted then there was not the control request of the body-y rate
+  // thus we can reset angular body rates
+  // note: we loose the control by pitch/roll at this time if it is chosen the control by pitch/roll
+  // thus it is not recommended to set the control by z-rate and pitch/roll simultaneously
+  if(pdlGetPidPitchFlag(ds))
+  {
+    ds->yRatePid.target = 0;
+  }
+  if(pdlGetPidRollFlag(ds))
+  {
+    ds->xRatePid.target = 0;
+  }
+
+  // disable up-level PIDs because they disturb to control the drone by the angular rate
+  // and enable back when there isn't the control request from user
+
+  if( ds->zRatePid.target == 0 &&
+      ds->xRatePid.target == 0 &&
+      ds->yRatePid.target == 0 )
+  {
+    flag = 1;
+  }
+  else
+  {
+    pdlSetPidPosNorthFlag(ds,0);
+    pdlSetPidPosEastFlag(ds,0);
+  }
+
+  pdlSetPidHeadingFlag(ds,flag);
+  pdlSetPidPitchFlag(ds,flag);
+  pdlSetPidRollFlag(ds,flag);
+  pdlSetPidVeloXFlag(ds,flag);
+  pdlSetPidVeloYFlag(ds,flag);
+}
+
+void pdlSetXRateTarget(pdlDroneState *ds, float target)
+{
+  uint8_t flag = 0;
+
+  ds->xRatePid.target = target;
+
+  ds->yawRateTarget = 0;
+  ds->pitchRateTarget = 0;
+  ds->rollRateTarget = 0;
+
+  if(pdlGetPidPitchFlag(ds))
+  {
+    ds->yRatePid.target = 0;
+  }
+  if(pdlGetPidHeadingFlag(ds))
+  {
+    ds->zRatePid.target = 0;
+  }
+
+  if( ds->zRatePid.target == 0 &&
+      ds->xRatePid.target == 0 &&
+      ds->yRatePid.target == 0 )
+  {
+    flag = 1;
+  }
+  else
+  {
+    pdlSetPidPosNorthFlag(ds,0);
+    pdlSetPidPosEastFlag(ds,0);
+  }
+
+  pdlSetPidHeadingFlag(ds,flag);
+  pdlSetPidPitchFlag(ds,flag);
+  pdlSetPidRollFlag(ds,flag);
+  pdlSetPidVeloXFlag(ds,flag);
+  pdlSetPidVeloYFlag(ds,flag);
+}
+
+void pdlSetYRateTarget(pdlDroneState *ds, float target)
+{
+  uint8_t flag = 0;
+
+  ds->yRatePid.target = target;
+
+  ds->yawRateTarget = 0;
+  ds->pitchRateTarget = 0;
+  ds->rollRateTarget = 0;
+
+  if(pdlGetPidRollFlag(ds))
+  {
+    ds->xRatePid.target = 0;
+  }
+  if(pdlGetPidHeadingFlag(ds))
+  {
+    ds->zRatePid.target = 0;
+  }
+
+  if( ds->zRatePid.target == 0 &&
+      ds->xRatePid.target == 0 &&
+      ds->yRatePid.target == 0 )
+  {
+    flag = 1;
+  }
+  else
+  {
+    pdlSetPidPosNorthFlag(ds,0);
+    pdlSetPidPosEastFlag(ds,0);
+  }
+
+  pdlSetPidHeadingFlag(ds,flag);
+  pdlSetPidPitchFlag(ds,flag);
+  pdlSetPidRollFlag(ds,flag);
+  pdlSetPidVeloXFlag(ds,flag);
+  pdlSetPidVeloYFlag(ds,flag);
 }
 
 void pdlSetVelocityXTarget(pdlDroneState *ds, float t)

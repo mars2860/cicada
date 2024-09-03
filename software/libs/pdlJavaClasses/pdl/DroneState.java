@@ -367,14 +367,16 @@ public class DroneState implements Cloneable
 		public static enum RotateBy
 		{
 			ROTATE_BY_YAW_RATE,
-			ROTATE_BY_HEADING
+			ROTATE_BY_HEADING,
+			ROTATE_BY_Z_RATE
 		}
 
 		public static enum MoveBy
 		{
 			MOVE_BY_PITCH_ROLL_RATE,
 			MOVE_BY_PITCH_ROLL,
-			MOVE_BY_VELOCITY
+			MOVE_BY_VELOCITY,
+			MOVE_BY_X_Y_RATE
 		}
 
 		public static enum LiftBy

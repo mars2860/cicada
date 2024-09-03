@@ -130,6 +130,12 @@
 #define PDL_CMD_ENABLE_DYNAMIC_IP     155
 /// Set accUpOffset, Format = {156, float accUpOffset}
 #define PDL_CMD_SET_ACCUP_OFFSET      156
+/// Sets target for zRate. Format = {157, float}
+#define PDL_CMD_SET_Z_RATE            157
+/// Sets target for xRate. Format = {158, float}
+#define PDL_CMD_SET_X_RATE            158
+/// Sets target for yRate. Format = {159, float}
+#define PDL_CMD_SET_Y_RATE            159
 
 /// @}
 

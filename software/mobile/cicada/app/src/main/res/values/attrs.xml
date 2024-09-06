@@ -18,7 +18,8 @@
     <integer name="key_left">99</integer>
     <integer name="key_right">97</integer>
     <integer name="key_disarm_motors">108</integer>
-    <integer name="key_trick">102</integer>
+    <integer name="key_trick_gyro">102</integer>
+    <integer name="key_trick_acro">0</integer>
     <integer name="key_load1">104</integer>
     <integer name="key_load2">105</integer>
     <integer name="key_turtle">103</integer>

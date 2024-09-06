@@ -94,8 +94,8 @@
 #define PDL_CMD_SET_BATTERY           137
 /// Sets GPS. Format = {138,uin8_t}
 #define PDL_CMD_SET_GPS               138
-/// Enables/Disables trick mode, Format = {139, uint8_t enabled}
-#define PDL_CMD_ENABLE_TRICK_MODE     139
+/// Set trick mode, Format = {139, uint8_t mode}
+#define PDL_CMD_SET_TRICK_MODE        139
 /// Set load, Format = {140, uint8_t num, uint8_t enabled, uint16_t freq}
 #define PDL_CMD_ENABLE_LOAD           140
 /// Set ESC mode, Format = {141, uint8_t mode}

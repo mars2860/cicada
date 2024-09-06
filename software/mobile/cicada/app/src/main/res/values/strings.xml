@@ -35,7 +35,8 @@
     <string name="forward_backward">Forward/Backward</string>
     <string name="left_right">Left/Right</string>
     <string name="up_down">Lift Up/Down</string>
-    <string name="trick_mode">Trick Mode</string>
+    <string name="trick_mode_gyro">Tricks Gyro</string>
+    <string name="trick_mode_acro">Tricks Acro</string>
     <string name="load1">Load1</string>
     <string name="load2">Load2</string>
     <string name="turtle">Anti-Turtle</string>
@@ -56,7 +57,8 @@
     <string name="key_left">key_left</string>
     <string name="key_right">key_right</string>
     <string name="key_disarm_motors">key_disarm_motors</string>
-    <string name="key_trick">key_trick</string>
+    <string name="key_trick_gyro">key_trick_gyro</string>
+    <string name="key_trick_acro">key_trick_acro</string>
     <string name="key_load1">key_load1</string>
     <string name="key_load2">key_load2</string>
     <string name="key_turtle">key_turtle</string>

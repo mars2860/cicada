@@ -46,9 +46,9 @@ void pdlCmdEnableStabilization(pdlDroneState *ds, uint8_t *packet)
   pdlEnableStabilization(ds, packet[1]);
 }
 
-void pdlCmdEnableTrickMode(pdlDroneState *ds, uint8_t *packet)
+void pdlCmdSetTrickMode(pdlDroneState *ds, uint8_t *packet)
 {
-  pdlEnableTrickMode(ds, packet[1]);
+  pdlSetTrickMode(ds, packet[1]);
 }
 
 void pdlCmdSetMotorsDir(pdlDroneState *ds, uint8_t *packet)
@@ -452,8 +452,8 @@ void pdlParseCommand(pdlDroneState *ds, uint8_t *packet)
     case PDL_CMD_ENABLE_STABILIZATION:
       pdlCmdEnableStabilization(ds,packet);
       break;
-    case PDL_CMD_ENABLE_TRICK_MODE:
-      pdlCmdEnableTrickMode(ds,packet);
+    case PDL_CMD_SET_TRICK_MODE:
+      pdlCmdSetTrickMode(ds,packet);
       break;
     case PDL_CMD_SET_ESC:
       pdlCmdSetEsc(ds,packet);

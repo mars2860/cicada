@@ -77,6 +77,8 @@ public class TextBundle extends ListResourceBundle
             {"HOLD_POS_ENABLED", "Hold position"},
             {"GAS", "Gas"},
             {"TRICK_MODE","Trick mode"},
+            {"TRICK_MODE_GYRO","Trick Gyro"},
+            {"TRICK_MODE_ACRO","Trick Acro"},
             
             {"CONNECT", "Connect"},
             {"CONNECTED", "Connected"},

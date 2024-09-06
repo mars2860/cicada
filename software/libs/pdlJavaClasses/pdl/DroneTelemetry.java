@@ -421,10 +421,10 @@ public class DroneTelemetry extends java.util.Observable implements Runnable
 		}
 	}
 	
-	private boolean oldMotorsEnabled;
-	private boolean oldStabilizationEnabled;
-	private boolean oldTrickModeEnabled;
-	private boolean oldVideoState;
+	private boolean oldMotorsEnabled = false;
+	private boolean oldStabilizationEnabled = false;
+	private DroneState.TrickMode oldTrickMode = DroneState.TrickMode.DISABLED;
+	private boolean oldVideoState = false;
 	
 	public void speakSystemState(DroneState ds, SoundProvider sp)
 	{
@@ -461,16 +461,18 @@ public class DroneTelemetry extends java.util.Observable implements Runnable
 				
 		oldStabilizationEnabled = ds.stabilizationEnabled;
 				
-		if(ds.trickModeEnabled && !oldTrickModeEnabled)
+		if(	ds.trickMode != DroneState.TrickMode.DISABLED &&
+			ds.trickMode != oldTrickMode)
 		{
 			sp.play("TRICK_MODE_ENABLED");
 		}
-		else if(!ds.trickModeEnabled && oldTrickModeEnabled)
+		else if(ds.trickMode == DroneState.TrickMode.DISABLED &&
+				ds.trickMode != oldTrickMode)
 		{
 			sp.play("TRICK_MODE_DISABLED");
 		}
 				
-		oldTrickModeEnabled = ds.trickModeEnabled;
+		oldTrickMode = ds.trickMode;
 		
 		if(ds.videoState && !oldVideoState)
 		{

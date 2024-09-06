@@ -26,7 +26,8 @@ public class GamepadActivity extends AppCompatActivity {
     ToggleButton mbtnDown;
 
     ToggleButton mbtnDisarm;
-    ToggleButton mbtnTrick;
+    ToggleButton mbtnTrickGyro;
+    ToggleButton mbtnTrickAcro;
     ToggleButton mbtnTurtle;
     ToggleButton mbtnLoad1;
     ToggleButton mbtnLoad2;
@@ -58,7 +59,8 @@ public class GamepadActivity extends AppCompatActivity {
         mbtnDown = (ToggleButton)findViewById(R.id.btnDown);
 
         mbtnDisarm = (ToggleButton)findViewById(R.id.btnDisarm);
-        mbtnTrick = (ToggleButton)findViewById(R.id.btnTrick);
+        mbtnTrickGyro = (ToggleButton)findViewById(R.id.btnTrickGyro);
+        mbtnTrickAcro = (ToggleButton)findViewById(R.id.btnTrickAcro);
         mbtnTurtle = (ToggleButton)findViewById(R.id.btnTurtle);
         mbtnLoad1 = (ToggleButton)findViewById(R.id.btnLoad1);
         mbtnLoad2 = (ToggleButton)findViewById(R.id.btnLoad2);
@@ -167,7 +169,8 @@ public class GamepadActivity extends AppCompatActivity {
         mbtnForward.setChecked(false);
         mbtnBackward.setChecked(false);
         mbtnDisarm.setChecked(false);
-        mbtnTrick.setChecked(false);
+        mbtnTrickGyro.setChecked(false);
+        mbtnTrickAcro.setChecked(false);
         mbtnTurtle.setChecked(false);
         mbtnLoad1.setChecked(false);
         mbtnLoad2.setChecked(false);
@@ -217,8 +220,12 @@ public class GamepadActivity extends AppCompatActivity {
             MainActivity.keyDisarm = resetValue;
         }
 
-        if(mbtnTrick.isChecked()) {
-            MainActivity.keyTrick = resetValue;
+        if(mbtnTrickGyro.isChecked()) {
+            MainActivity.keyTrickGyro = resetValue;
+        }
+
+        if(mbtnTrickAcro.isChecked()) {
+            MainActivity.keyTrickAcro = resetValue;
         }
 
         if(mbtnTurtle.isChecked()) {
@@ -306,9 +313,13 @@ public class GamepadActivity extends AppCompatActivity {
         mbtnDisarm.setTextOn(keyCodeToString(MainActivity.keyDisarm));
         mbtnDisarm.setTextOff(keyCodeToString(MainActivity.keyDisarm));
 
-        mbtnTrick.setText(keyCodeToString(MainActivity.keyTrick));
-        mbtnTrick.setTextOn(keyCodeToString(MainActivity.keyTrick));
-        mbtnTrick.setTextOff(keyCodeToString(MainActivity.keyTrick));
+        mbtnTrickGyro.setText(keyCodeToString(MainActivity.keyTrickGyro));
+        mbtnTrickGyro.setTextOn(keyCodeToString(MainActivity.keyTrickGyro));
+        mbtnTrickGyro.setTextOff(keyCodeToString(MainActivity.keyTrickGyro));
+
+        mbtnTrickAcro.setText(keyCodeToString(MainActivity.keyTrickAcro));
+        mbtnTrickAcro.setTextOn(keyCodeToString(MainActivity.keyTrickAcro));
+        mbtnTrickAcro.setTextOff(keyCodeToString(MainActivity.keyTrickAcro));
 
         mbtnTurtle.setText(keyCodeToString(MainActivity.keyTurtle));
         mbtnTurtle.setTextOn(keyCodeToString(MainActivity.keyTurtle));

@@ -1245,8 +1245,40 @@ public class DroneState implements Cloneable
 	public boolean motorsEnabled;
 	@NoChart
 	public boolean stabilizationEnabled;
+	
+	public static enum TrickMode 
+	{
+		DISABLED(0),
+		ACRO(10),
+		GYRO(20),
+		UNKNOWN(255);
+
+		private int mCode;
+		
+		private TrickMode(int code)
+		{
+			mCode = code;
+		}
+		
+		public int toInt()
+		{
+			return mCode;
+		}
+		
+		public static TrickMode fromInt(int code)
+		{
+			if(code == DISABLED.toInt())
+				return DISABLED;
+			else if(code == ACRO.toInt())
+				return ACRO;
+			else if(code == GYRO.toInt())
+				return GYRO;
+			return UNKNOWN;
+		}
+	}
+	
 	@NoChart
-	public boolean trickModeEnabled;
+	public TrickMode trickMode;
 	
 	public double pidFlags;
 	public double headingPidFlag;
@@ -1403,7 +1435,7 @@ public class DroneState implements Cloneable
 		
 		videoState = (parser.getUint8t(packet) > 0)?true:false;
 		
-		trickModeEnabled = (parser.getUint8t(packet) > 0)?true:false;
+		trickMode = TrickMode.fromInt(parser.getUint8t(packet));
 		
 		errors = parser.getUint32t(packet);
 		

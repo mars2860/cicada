@@ -44,6 +44,11 @@
 #define PDL_PID_ROLL_FLAG        128
 #define PDL_PID_ALL_FLAG (PDL_PID_HEADING_FLAG | PDL_PID_VELOX_FLAG | PDL_PID_VELOY_FLAG | PDL_PID_ALT_FLAG | PDL_PID_POS_NORTH_FLAG | PDL_PID_POS_EAST_FLAG | PDL_PID_PITCH_FLAG | PDL_PID_ROLL_FLAG)
 
+#define PDL_TRICK_MODE_DISABLED   0
+#define PDL_TRICK_MODE_ACRO       10
+#define PDL_TRICK_MODE_GYRO       20
+
+
 /// Battery state takes 24 bytes
 typedef struct s_pdlBatteryState
 {
@@ -296,7 +301,7 @@ typedef struct s_pdlDroneState
   /// Video record state
   uint8_t videoState;
   /// Trick Mode
-  uint8_t trickModeEnabled;
+  uint8_t trickMode;
   /// System errors. And-mask of error flags. The flags are depended from your platform
   uint32_t errors;
   /// Base gas. This value is output of altitude PID. If altitude PID is disabled you have to control this value yourself

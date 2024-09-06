@@ -60,7 +60,7 @@ public class AppSettings
 		public static final int TURN_CW = 6;
 		public static final int TURN_CCW = 7;
 		public static final int ARM_DISARM = 8;
-		public static final int TRICK_MODE = 9;
+		public static final int TRICK_MODE_GYRO = 9;
 		public static final int LOAD1 = 10;
 		public static final int LOAD2 = 11;
 		public static final int ANTITURTLE = 12;
@@ -69,8 +69,9 @@ public class AppSettings
 		public static final int CAMERA_ANGLE_90 = 15;
 		public static final int PHOTO = 16;
 		public static final int VIDEO = 17;
+		public static final int TRICK_MODE_ACRO = 18;
 				
-		public static final int INPUT_CONTROL_COUNT = 18;
+		public static final int INPUT_CONTROL_COUNT = 19;
 		
 		@Expose
 		public String gamepad = "";
@@ -135,9 +136,14 @@ public class AppSettings
 					controls[i].btn2 = "G_7";
 					controls[i].stick = "no stick";
 					break;
-				case TRICK_MODE:
-					controls[i].btn1 = " ";
+				case TRICK_MODE_GYRO:
+					controls[i].btn1 = "";
 					controls[i].btn2 = "G_4";
+					controls[i].stick = "no stick";
+					break;
+				case TRICK_MODE_ACRO:
+					controls[i].btn1 = "";
+					controls[i].btn2 = "";
 					controls[i].stick = "no stick";
 					break;
 				case LOAD1:

@@ -108,7 +108,7 @@ public class RemoteControlGui extends JSavedFrame
 		private Accelerator mPitchAccelerator;
 		private Accelerator mRollAccelerator;
 		private Accelerator mRotateAccelerator;
-		private boolean requestTrickMode;
+		private DroneState.TrickMode requestTrickMode = DroneState.TrickMode.DISABLED;
 		
 		double liftCtrl;
 		double rollCtrl;
@@ -121,9 +121,9 @@ public class RemoteControlGui extends JSavedFrame
 		boolean stickPitchActive;
 		boolean stickRollActive;
 		
-		boolean oldBtnPhotoState;
-		boolean oldBtnVideoState;
-		boolean oldReqTrickMode;
+		boolean oldBtnPhotoState = false;
+		boolean oldBtnVideoState = false;
+		DroneState.TrickMode oldReqTrickMode = DroneState.TrickMode.DISABLED;
 
 		@Override
 		public void run()
@@ -309,7 +309,7 @@ public class RemoteControlGui extends JSavedFrame
 				        			btnCcw.getModel().setPressed(btnState);
 				        			break;
 				        		case AppSettings.InputMap.ARM_DISARM:
-				        			if( Float.compare(comp.getPollData(),0) == 0 &&	// arm/disarm button released
+				        			if( Float.compare(comp.getPollData(),0) != 0 &&	// arm/disarm button pressed
 				        			    DroneTelemetry.instance().isDroneConnected() ) 
 				        			{
 				        				DroneState ds = DroneTelemetry.instance().getDroneState();
@@ -323,14 +323,22 @@ public class RemoteControlGui extends JSavedFrame
 				        				}
 				        			}
 				        			break;
-				        		case AppSettings.InputMap.TRICK_MODE:
-				        			if(Float.compare(comp.getPollData(),0) == 0)
+				        		case AppSettings.InputMap.TRICK_MODE_GYRO:
+				        			if(Float.compare(comp.getPollData(),0) != 0)
 				        			{
-				        				requestTrickMode = false;
+				        				if(oldReqTrickMode != DroneState.TrickMode.GYRO)
+				        					requestTrickMode = DroneState.TrickMode.GYRO;
+				        				else
+				        					requestTrickMode = DroneState.TrickMode.DISABLED; 
 				        			}
-				        			else
+				        			break;
+				        		case AppSettings.InputMap.TRICK_MODE_ACRO:
+				        			if(Float.compare(comp.getPollData(),0) != 0)
 				        			{
-				        				requestTrickMode = true;
+				        				if(oldReqTrickMode != DroneState.TrickMode.ACRO)
+				        					requestTrickMode = DroneState.TrickMode.ACRO;
+				        				else
+				        					requestTrickMode = DroneState.TrickMode.DISABLED; 
 				        			}
 				        			break;
 				        		case AppSettings.InputMap.LOAD1:
@@ -475,9 +483,9 @@ public class RemoteControlGui extends JSavedFrame
 			
 			DroneState ds = DroneTelemetry.instance().getDroneState();
 			
-			if(requestTrickMode && !oldReqTrickMode)
+			if(requestTrickMode != oldReqTrickMode)
 			{
-				DroneCommander.instance().setTrickMode(!ds.trickModeEnabled);
+				DroneCommander.instance().setTrickMode(requestTrickMode);
 			}
 			oldReqTrickMode = requestTrickMode;
 			

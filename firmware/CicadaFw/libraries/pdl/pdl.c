@@ -80,6 +80,7 @@ void pdlSetup(pdlDroneState *ds)
   ds->motorsEnabled = 0;
   ds->stabilizationEnabled = 0;
   ds->version = PDL_VERSION;
+  ds->trickMode = PDL_TRICK_MODE_DISABLED;
   pdlSetupEsc(ds);
   pdlSetupRc(ds);
   pdlSetupTelemetry(ds);
@@ -556,9 +557,9 @@ void pdlEnableStabilization(pdlDroneState *ds, uint8_t enable)
   }
 }
 
-void pdlEnableTrickMode(pdlDroneState *ds, uint8_t enable)
+void pdlSetTrickMode(pdlDroneState *ds, uint8_t mode)
 {
-  ds->trickModeEnabled = enable;
+  ds->trickMode = mode;
 }
 
 void pdlSetEscMode(pdlDroneState *ds, uint8_t mode)

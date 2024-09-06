@@ -140,7 +140,7 @@ public class MotorsGui extends JSavedFrame
 			mcbMotorsEnabled.setSelected(droneState.motorsEnabled);
 			mcbStabilizationEnabled.setSelected(droneState.stabilizationEnabled);
 			mcbHoldPosEnabled.setSelected((droneState.pidFlags > 0.f)?true:false);
-			mcbTrickMode.setSelected(droneState.trickModeEnabled);
+			mcbTrickMode.setSelected((droneState.trickMode != DroneState.TrickMode.DISABLED)?true:false);
 		}
 	}
 

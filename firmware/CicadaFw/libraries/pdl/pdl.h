@@ -126,6 +126,7 @@ int32_t pdlGetMotorMinGas();
  */
 uint8_t pdlUpdatePid(pdlDroneState *ds, pdlPidState *pid, float input, float dt, uint8_t angVal);
 void pdlResetPid(pdlPidState *pid);
+void pdlResetPid2(pdlPidState *pid, float input);
 
 /// Applies XYZ-Pids output values to motors of a cross-frame quadcopter
 void pdlPidsToCrossFrame(pdlDroneState*);
@@ -261,7 +262,11 @@ void pdlSetVelocityZTarget(pdlDroneState *ds, float target);
 
 void pdlEnableMotors(pdlDroneState *ds, uint8_t enable);
 void pdlEnableStabilization(pdlDroneState *ds, uint8_t enable);
-void pdlEnableTrickMode(pdlDroneState *ds, uint8_t enable);
+/**
+ * @param ds current DroneState
+ * @param mode PDL_TRICK_MODE_GYRO or PDL_TRICK_MODE_ACRO or 0 to disable
+ */
+void pdlSetTrickMode(pdlDroneState *ds, uint8_t mode);
 void pdlSetEscMode(pdlDroneState *ds, uint8_t mode);
 void pdlSetFrameType(pdlDroneState *ds, uint8_t frame);
 

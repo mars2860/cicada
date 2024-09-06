@@ -379,8 +379,18 @@ public class MainActivity extends AppCompatActivity {
             DroneCommander.instance().addCmd(cmd2);
         }
 
-        if(keyCode == keyTrick && pressed) {
-            DroneCommander.instance().setTrickMode(!ds.trickModeEnabled);
+        if(keyCode == keyTrickGyro && pressed) {
+            if(ds.trickMode == DroneState.TrickMode.DISABLED)
+                DroneCommander.instance().setTrickMode(DroneState.TrickMode.GYRO);
+            else
+                DroneCommander.instance().setTrickMode(DroneState.TrickMode.DISABLED);
+        }
+
+        if(keyCode == keyTrickAcro && pressed) {
+            if(ds.trickMode == DroneState.TrickMode.DISABLED)
+                DroneCommander.instance().setTrickMode(DroneState.TrickMode.ACRO);
+            else
+                DroneCommander.instance().setTrickMode(DroneState.TrickMode.DISABLED);
         }
 
         if(keyCode == keyTurtle) {
@@ -599,7 +609,7 @@ public class MainActivity extends AppCompatActivity {
         leftJoystick.setOnMoveListener(new OnLeftJoystick(), JOYSTICK_UPDATE_TIME);
         rightJoystick.setOnMoveListener(new OnRightJoystick(), JOYSTICK_UPDATE_TIME);
 
-        if(DroneState.misc.virtualGamepad) {
+        if(DroneState.rc.virtualGamepad) {
             leftJoystick.setEnabled(true);
             leftJoystick.setVisibility(View.VISIBLE);
             rightJoystick.setEnabled(true);
@@ -848,7 +858,8 @@ public class MainActivity extends AppCompatActivity {
     public static int keyDisarm;
     public static int keyLoad1;
     public static int keyLoad2;
-    public static int keyTrick;
+    public static int keyTrickGyro;
+    public static int keyTrickAcro;
     public static int keyTurtle;
     public static int keyCam0;
     public static int keyCam45;
@@ -893,8 +904,11 @@ public class MainActivity extends AppCompatActivity {
         int defKeyLoad2 = context.getResources().getInteger(R.integer.key_load2);
         keyLoad2 = sharedPref.getInt(context.getString(R.string.key_load2), defKeyLoad2);
 
-        int defKeyTrick = context.getResources().getInteger(R.integer.key_trick);
-        keyTrick = sharedPref.getInt(context.getString(R.string.key_trick), defKeyTrick);
+        int defKeyTrickGyro = context.getResources().getInteger(R.integer.key_trick_gyro);
+        keyTrickGyro = sharedPref.getInt(context.getString(R.string.key_trick_gyro), defKeyTrickGyro);
+
+        int defKeyTrickAcro = context.getResources().getInteger(R.integer.key_trick_acro);
+        keyTrickAcro = sharedPref.getInt(context.getString(R.string.key_trick_gyro), defKeyTrickAcro);
 
         int defKeyTurtle = context.getResources().getInteger(R.integer.key_turtle);
         keyTurtle = sharedPref.getInt(context.getString(R.string.key_turtle), defKeyTurtle);
@@ -930,7 +944,8 @@ public class MainActivity extends AppCompatActivity {
         editor.putInt(context.getString(R.string.key_disarm_motors), keyDisarm);
         editor.putInt(context.getString(R.string.key_load1), keyLoad1);
         editor.putInt(context.getString(R.string.key_load2), keyLoad2);
-        editor.putInt(context.getString(R.string.key_trick), keyTrick);
+        editor.putInt(context.getString(R.string.key_trick_gyro), keyTrickGyro);
+        editor.putInt(context.getString(R.string.key_trick_acro), keyTrickAcro);
         editor.putInt(context.getString(R.string.key_turtle), keyTurtle);
         editor.putInt(context.getString(R.string.key_cam0), keyCam0);
         editor.putInt(context.getString(R.string.key_cam45), keyCam45);

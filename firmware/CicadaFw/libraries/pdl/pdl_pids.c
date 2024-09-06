@@ -17,7 +17,9 @@ void pdlSetPidFlag(pdlDroneState *ds, uint8_t flag, uint8_t en)
 
 uint8_t pdlGetPidVeloXFlag(pdlDroneState *ds)
 {
-  return (ds->velocityXPid.enabled && (ds->pidFlags & PDL_PID_VELOX_FLAG))?1:0;
+  uint8_t trickFlag = (ds->trickMode == PDL_TRICK_MODE_DISABLED)?1:0;
+  uint8_t veloXFlag = (ds->pidFlags & PDL_PID_VELOX_FLAG)?1:0;
+  return (ds->velocityXPid.enabled && veloXFlag && trickFlag)?1:0;
 }
 
 void pdlSetPidVeloXFlag(pdlDroneState *ds, uint8_t en)
@@ -27,7 +29,9 @@ void pdlSetPidVeloXFlag(pdlDroneState *ds, uint8_t en)
 
 uint8_t pdlGetPidVeloYFlag(pdlDroneState *ds)
 {
-  return (ds->velocityYPid.enabled && (ds->pidFlags & PDL_PID_VELOY_FLAG))?1:0;
+  uint8_t trickFlag = (ds->trickMode == PDL_TRICK_MODE_DISABLED)?1:0;
+  uint8_t veloYFlag = (ds->pidFlags & PDL_PID_VELOY_FLAG)?1:0;
+  return (ds->velocityYPid.enabled && veloYFlag && trickFlag)?1:0;
 }
 
 void pdlSetPidVeloYFlag(pdlDroneState *ds, uint8_t en)
@@ -37,7 +41,9 @@ void pdlSetPidVeloYFlag(pdlDroneState *ds, uint8_t en)
 
 uint8_t pdlGetPidAltFlag(pdlDroneState *ds)
 {
-  return (ds->altPid.enabled && (ds->pidFlags & PDL_PID_ALT_FLAG))?1:0;
+  uint8_t trickFlag = (ds->trickMode == PDL_TRICK_MODE_DISABLED)?1:0;
+  uint8_t altFlag = (ds->pidFlags & PDL_PID_ALT_FLAG)?1:0;
+  return (ds->altPid.enabled && altFlag && trickFlag)?1:0;
 }
 
 void pdlSetPidAltFlag(pdlDroneState *ds, uint8_t en)
@@ -47,7 +53,9 @@ void pdlSetPidAltFlag(pdlDroneState *ds, uint8_t en)
 
 uint8_t pdlGetPidHeadingFlag(pdlDroneState *ds)
 {
-  return (ds->headingPid.enabled && (ds->pidFlags & PDL_PID_HEADING_FLAG))?1:0;
+  uint8_t trickFlag = (ds->trickMode <= PDL_TRICK_MODE_ACRO)?1:0;
+  uint8_t headingFlag = (ds->pidFlags & PDL_PID_HEADING_FLAG)?1:0;
+  return (ds->headingPid.enabled && headingFlag && trickFlag)?1:0;
 }
 
 void pdlSetPidHeadingFlag(pdlDroneState *ds, uint8_t en)
@@ -57,7 +65,9 @@ void pdlSetPidHeadingFlag(pdlDroneState *ds, uint8_t en)
 
 uint8_t pdlGetPidPosNorthFlag(pdlDroneState *ds)
 {
-  return (ds->posNorthPid.enabled && (ds->pidFlags & PDL_PID_POS_NORTH_FLAG))?1:0;
+  uint8_t trickFlag = (ds->trickMode == PDL_TRICK_MODE_DISABLED)?1:0;
+  uint8_t posNorthFlag = (ds->pidFlags & PDL_PID_POS_NORTH_FLAG)?1:0;
+  return (ds->posNorthPid.enabled && posNorthFlag && trickFlag)?1:0;
 }
 
 void pdlSetPidPosNorthFlag(pdlDroneState *ds, uint8_t en)
@@ -67,7 +77,9 @@ void pdlSetPidPosNorthFlag(pdlDroneState *ds, uint8_t en)
 
 uint8_t pdlGetPidPosEastFlag(pdlDroneState *ds)
 {
-  return (ds->posEastPid.enabled && (ds->pidFlags & PDL_PID_POS_EAST_FLAG))?1:0;
+  uint8_t trickFlag = (ds->trickMode == PDL_TRICK_MODE_DISABLED)?1:0;
+  uint8_t posEastFlag = (ds->pidFlags & PDL_PID_POS_EAST_FLAG)?1:0;
+  return (ds->posEastPid.enabled && posEastFlag && trickFlag)?1:0;
 }
 
 void pdlSetPidPosEastFlag(pdlDroneState *ds, uint8_t en)
@@ -77,7 +89,9 @@ void pdlSetPidPosEastFlag(pdlDroneState *ds, uint8_t en)
 
 uint8_t pdlGetPidPitchFlag(pdlDroneState *ds)
 {
-  return (ds->pitchPid.enabled && (ds->pidFlags & PDL_PID_PITCH_FLAG))?1:0;
+  uint8_t trickFlag = (ds->trickMode <= PDL_TRICK_MODE_ACRO)?1:0;
+  uint8_t pitchFlag = (ds->pidFlags & PDL_PID_PITCH_FLAG)?1:0;
+  return (ds->pitchPid.enabled && pitchFlag && trickFlag)?1:0;
 }
 
 void pdlSetPidPitchFlag(pdlDroneState *ds, uint8_t en)
@@ -87,7 +101,9 @@ void pdlSetPidPitchFlag(pdlDroneState *ds, uint8_t en)
 
 uint8_t pdlGetPidRollFlag(pdlDroneState *ds)
 {
-  return (ds->rollPid.enabled && (ds->pidFlags & PDL_PID_ROLL_FLAG))?1:0;
+  uint8_t trickFlag = (ds->trickMode <= PDL_TRICK_MODE_ACRO)?1:0;
+  uint8_t rollFlag = (ds->pidFlags & PDL_PID_ROLL_FLAG)?1:0;
+  return (ds->rollPid.enabled && rollFlag && trickFlag)?1:0;
 }
 
 void pdlSetPidRollFlag(pdlDroneState *ds, uint8_t en)
@@ -186,6 +202,13 @@ void pdlResetPid(pdlPidState *pid)
   pid->out = 0;
 }
 
+void pdlResetPid2(pdlPidState *pid, float input)
+{
+  pdlResetPid(pid);
+  pid->target = input;
+  pid->input = input;
+}
+
 void pdlUpdateAngularRatePids(pdlDroneState *ds, float dt)
 {
   /* yaw/pitch/roll rates is not gyro rates
@@ -248,73 +271,50 @@ void pdlUpdateAngularRatePids(pdlDroneState *ds, float dt)
 
 void pdlUpdateLevelsPid(pdlDroneState *ds, float dt)
 {
-  if(ds->trickModeEnabled)
+  float heading = ds->pose[PDL_YAW].pos;
+  float pitch = ds->pose[PDL_PITCH].pos;
+  float roll = ds->pose[PDL_ROLL].pos;
+  // apply level pids to angular rate pids
+  if( pdlGetPidHeadingFlag(ds) &&
+      pdlUpdatePid(ds,&ds->headingPid,heading,dt,2) )
   {
-    pdlResetPid(&ds->headingPid);
-    ds->headingPid.target = ds->pose[PDL_YAW].pos;
-
-    pdlResetPid(&ds->pitchPid);
-    ds->pitchPid.target = 0;
-
-    pdlResetPid(&ds->rollPid);
-    ds->rollPid.target = 0;
-    return;
+    ds->yawRateTarget = ds->headingPid.out;
+  }
+  else
+  {
+    pdlResetPid2(&ds->headingPid,heading);
   }
 
-  if(pdlUpdatePid(ds,&ds->headingPid,ds->pose[PDL_YAW].pos,dt,2))
+  if( pdlGetPidPitchFlag(ds) &&
+      pdlUpdatePid(ds,&ds->pitchPid,pitch,dt,1) )
   {
-    // apply level pids to angular rate pids
-    if(pdlGetPidHeadingFlag(ds))
-    {
-      //ds->yawRatePid.target = ds->headingPid.out;
-      ds->yawRateTarget = ds->headingPid.out;
-    }
-    else
-    {
-      //pdlResetPid(&ds->headingPid);
-      ds->headingPid.target = ds->pose[PDL_YAW].pos;
-    }
+    ds->pitchRateTarget = ds->pitchPid.out;
+  }
+  else
+  {
+    pdlResetPid2(&ds->pitchPid,pitch);
   }
 
-  if(pdlUpdatePid(ds,&ds->pitchPid,ds->pose[PDL_PITCH].pos,dt,1))
+  if( pdlGetPidRollFlag(ds) &&
+      pdlUpdatePid(ds,&ds->rollPid,roll,dt,1) )
   {
-    if(pdlGetPidPitchFlag(ds))
-    {
-      //ds->pitchRatePid.target = ds->pitchPid.out;
-      ds->pitchRateTarget = ds->pitchPid.out;
-    }
-    else
-    {
-      //pdlResetPid(&ds->pitchPid);
-      ds->pitchPid.target = ds->pose[PDL_PITCH].pos;
-    }
+    ds->rollRateTarget = ds->rollPid.out;
   }
-
-  if(pdlUpdatePid(ds,&ds->rollPid,ds->pose[PDL_ROLL].pos,dt,1))
+  else
   {
-    if(pdlGetPidRollFlag(ds))
-    {
-      //ds->rollRatePid.target = ds->rollPid.out;
-      ds->rollRateTarget = ds->rollPid.out;
-    }
-    else
-    {
-      //pdlResetPid(&ds->rollPid);
-      ds->rollPid.target = ds->pose[PDL_ROLL].pos;
-    }
+    pdlResetPid2(&ds->rollPid,roll);
   }
 }
 
 void pdlUpdateAltPid(pdlDroneState *ds, float dt)
 {
   //static float old_range = 0.f;
-  float velZ = ds->nav[PDL_Z].vel;
-  float altitude = ds->nav[PDL_Z].pos;
+  float velZ = ds->nav[PDL_UP].vel;
+  float altitude = ds->nav[PDL_UP].pos;
 
-  if(ds->trickModeEnabled)
+  if(ds->trickMode != PDL_TRICK_MODE_DISABLED)
   {
-    pdlResetPid(&ds->altPid);
-    ds->altPid.target = altitude;
+    pdlResetPid2(&ds->altPid,altitude);
 
     ds->velocityZPid.target = 0;
     // don't reset velocity-z because we lose errSum if we reset it
@@ -369,18 +369,14 @@ void pdlUpdateAltPid(pdlDroneState *ds, float dt)
   old_range = ds->lidar.range;
   */
 
-  if(pdlUpdatePid(ds,&ds->altPid,altitude,dt,0))
+  if( pdlGetPidAltFlag(ds) &&
+      pdlUpdatePid(ds,&ds->altPid,altitude,dt,0) )
   {
-    // apply alt pid
-    if(pdlGetPidAltFlag(ds))
-    {
-      ds->velocityZPid.target = ds->altPid.out;
-    }
-    else
-    {
-      //pdlResetPid(&ds->altPid);
-      ds->altPid.target = altitude;
-    }
+    ds->velocityZPid.target = ds->altPid.out;
+  }
+  else
+  {
+    pdlResetPid2(&ds->altPid,altitude);
   }
 
   if(pdlUpdatePid(ds,&ds->velocityZPid,velZ,dt,0))
@@ -399,47 +395,8 @@ void pdlUpdateHorVelocityPids(pdlDroneState *ds, float dt)
   float velX = ds->nav[PDL_NORTH].vel * cos_theta + ds->nav[PDL_EAST].vel * sin_theta;
   float velY = -ds->nav[PDL_NORTH].vel * sin_theta + ds->nav[PDL_EAST].vel * cos_theta;
 
-  if(ds->trickModeEnabled)
-  {
-    pdlResetPid(&ds->posNorthPid);
-    ds->posNorthPid.target = posNorth;
-
-    pdlResetPid(&ds->posEastPid);
-    ds->posEastPid.target = posEast;
-
-    pdlResetPid(&ds->velocityYPid);
-    ds->velocityYPid.target = 0;
-
-    pdlResetPid(&ds->velocityXPid);
-    ds->velocityXPid.target = 0;
-    return;
-  }
-
   // restore posPid flags when drone stops and there is no remote control signal
   // this code prevents drone go back when we release pitch/roll stick in hold position mode
-  /*if( ds->stabilizationEnabled &&
-      !pdlGetPidPosXFlag(ds)   &&
-      pdlGetPidVeloXFlag(ds)   &&
-      ds->velocityXPid.target == 0.f)
-  {
-    if(fabs(ds->velocity[PDL_X]) < 0.01f)
-    {
-      ds->posXPid.target = ds->posX;
-      pdlSetPidPosXFlag(ds,1);
-    }
-  }
-
-  if( ds->stabilizationEnabled &&
-      !pdlGetPidPosYFlag(ds)   &&
-      pdlGetPidVeloYFlag(ds)   &&
-      ds->velocityYPid.target == 0.f)
-  {
-    if(fabs(ds->velocity[PDL_Y]) < 0.01f)
-    {
-      ds->posYPid.target = ds->posY;
-      pdlSetPidPosYFlag(ds,1);
-    }
-  }*/
 
   if( ds->stabilizationEnabled          &&
       (!pdlGetPidPosNorthFlag(ds) || !pdlGetPidPosEastFlag(ds)) &&
@@ -448,68 +405,57 @@ void pdlUpdateHorVelocityPids(pdlDroneState *ds, float dt)
       ds->velocityXPid.target == 0.f  &&
       ds->velocityYPid.target == 0.f)
   {
-    ds->posNorthPid.target = posNorth;
-    ds->posEastPid.target = posEast;
-    pdlSetPidPosNorthFlag(ds,1);
-    pdlSetPidPosEastFlag(ds,1);
-  }
-
-  if(pdlUpdatePid(ds,&ds->posNorthPid,posNorth,dt,0))
-  {
-    if(pdlGetPidPosNorthFlag(ds))
+    if(fabs(velX) < 0.1f && fabs(velY) < 0.1f) // wait for drone stops
     {
-      // Rotate output velocity to body frame
-      ds->velocityXPid.target = ds->posNorthPid.out * cos_theta + ds->posEastPid.out * sin_theta;
-      //ds->velocityXPid.target = ds->posXPid.out;
-    }
-    else
-    {
-      pdlResetPid(&ds->posNorthPid);
-      //ds->posXPid.target = ds->posX;
+      ds->posNorthPid.target = posNorth;
+      ds->posEastPid.target = posEast;
+      pdlSetPidPosNorthFlag(ds,1);
+      pdlSetPidPosEastFlag(ds,1);
     }
   }
 
-  if(pdlUpdatePid(ds,&ds->velocityXPid,velX,dt,0))
+  if( pdlGetPidPosNorthFlag(ds) &&
+      pdlUpdatePid(ds,&ds->posNorthPid,posNorth,dt,0) )
   {
-    //if(pdlGetPidVeloXFlag(ds))
-    if(pdlGetPidVeloXFlag(ds) && pdlGetPidVeloYFlag(ds))  // don't apply veloPid if we have control from user by pitch/roll
-    {
-      ds->pitchPid.target = -ds->velocityXPid.out;
-    }
-    else
-    {
-      pdlResetPid(&ds->velocityXPid);
-      ds->velocityXPid.target = 0;
-    }
+    // Rotate output velocity to body frame
+    ds->velocityXPid.target = ds->posNorthPid.out * cos_theta + ds->posEastPid.out * sin_theta;
+  }
+  else
+  {
+    pdlResetPid2(&ds->posNorthPid,posNorth);
   }
 
-  if(pdlUpdatePid(ds,&ds->posEastPid,posEast,dt,0))
+  if( pdlGetPidVeloXFlag(ds) &&
+      pdlGetPidVeloYFlag(ds) &&
+      pdlUpdatePid(ds,&ds->velocityXPid,velX,dt,0) )
   {
-    if(pdlGetPidPosEastFlag(ds))
-    {
-      // Rotate output velocity to body frame
-      ds->velocityYPid.target = -ds->posNorthPid.out * sin_theta + ds->posEastPid.out * cos_theta;
-      //ds->velocityYPid.target = ds->posYPid.out;
-    }
-    else
-    {
-      pdlResetPid(&ds->posEastPid);
-      //ds->posYPid.target = ds->posY;
-    }
+    ds->pitchPid.target = -ds->velocityXPid.out;
+  }
+  else
+  {
+    pdlResetPid2(&ds->velocityXPid,0);
   }
 
-  if(pdlUpdatePid(ds,&ds->velocityYPid,velY,dt,0))
+  if( pdlGetPidPosEastFlag(ds) &&
+      pdlUpdatePid(ds,&ds->posEastPid,posEast,dt,0) )
   {
-    //if(pdlGetPidVeloYFlag(ds))
-    if(pdlGetPidVeloXFlag(ds) && pdlGetPidVeloYFlag(ds))  // don't apply veloPid if we have control from user by pitch/roll
-    {
-      ds->rollPid.target = ds->velocityYPid.out;
-    }
-    else
-    {
-      pdlResetPid(&ds->velocityYPid);
-      ds->velocityYPid.target = 0;
-    }
+    // Rotate output velocity to body frame
+    ds->velocityYPid.target = -ds->posNorthPid.out * sin_theta + ds->posEastPid.out * cos_theta;
+  }
+  else
+  {
+    pdlResetPid2(&ds->posEastPid,posEast);
+  }
+
+  if( pdlGetPidVeloXFlag(ds) &&
+      pdlGetPidVeloYFlag(ds) &&
+      pdlUpdatePid(ds,&ds->velocityYPid,velY,dt,0) )
+  {
+    ds->rollPid.target = ds->velocityYPid.out;
+  }
+  else
+  {
+    pdlResetPid2(&ds->velocityYPid,0);
   }
 }
 

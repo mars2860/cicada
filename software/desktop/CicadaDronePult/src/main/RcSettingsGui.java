@@ -439,7 +439,8 @@ public class RcSettingsGui extends JSavedFrame
 		cgb[AppSettings.InputMap.TURN_CW].addToPanel(pnlCtrlSettings,"TURN_CW");
 		cgb[AppSettings.InputMap.TURN_CCW].addToPanel(pnlCtrlSettings,"TURN_CCW");
 		cgb[AppSettings.InputMap.ARM_DISARM].addToPanel(pnlCtrlSettings,"ARM_DISARM");
-		cgb[AppSettings.InputMap.TRICK_MODE].addToPanel(pnlCtrlSettings,"TRICK_MODE");
+		cgb[AppSettings.InputMap.TRICK_MODE_GYRO].addToPanel(pnlCtrlSettings,"TRICK_MODE_GYRO");
+		cgb[AppSettings.InputMap.TRICK_MODE_ACRO].addToPanel(pnlCtrlSettings,"TRICK_MODE_ACRO");
 		cgb[AppSettings.InputMap.LOAD1].addToPanel(pnlCtrlSettings,"LOAD1");
 		cgb[AppSettings.InputMap.LOAD2].addToPanel(pnlCtrlSettings,"LOAD2");
 		cgb[AppSettings.InputMap.ANTITURTLE].addToPanel(pnlCtrlSettings,"ANTITURTLE");

@@ -15,7 +15,7 @@ import pdl.commands.AbstractCmdSetPidTarget;
 import pdl.commands.AbstractDroneCmd;
 import pdl.commands.CmdEnableDynamicIp;
 import pdl.commands.CmdEnableStabilization;
-import pdl.commands.CmdEnableTrickMode;
+import pdl.commands.CmdSetTrickMode;
 import pdl.commands.CmdLoadDefaultCfg;
 import pdl.commands.CmdResetAltitude;
 import pdl.commands.CmdSaveDefaultCfg;
@@ -493,9 +493,9 @@ public class DroneCommander implements Runnable
 		DroneState.RemoteCtrl.MoveBy moveBy = DroneState.rc.moveBy;
 		float moveDelta = DroneState.rc.moveDelta;
 		
-		if(ds.trickModeEnabled)
+		if(ds.trickMode != DroneState.TrickMode.DISABLED)
 		{
-			moveBy = DroneState.RemoteCtrl.MoveBy.MOVE_BY_PITCH_ROLL_RATE;
+			moveBy = DroneState.RemoteCtrl.MoveBy.MOVE_BY_X_Y_RATE;
 			moveDelta = DroneState.rc.trickDelta;
 		}
 
@@ -534,7 +534,8 @@ public class DroneCommander implements Runnable
 
 				if(pitchRateTarget == 0 && ds.pitchPid.enabled && ds.pitchPidFlag > 0)
 				{
-					if(DroneState.rc.pitchAutoLevel) 
+					if(	DroneState.rc.pitchAutoLevel &&
+						ds.trickMode == DroneState.TrickMode.DISABLED ) 
 					{
 						if(Math.abs(ds.pitchPid.target) > CTRL_ERR)
 						{
@@ -562,7 +563,8 @@ public class DroneCommander implements Runnable
 
 				if(rollRateTarget == 0 && ds.rollPid.enabled && ds.rollPidFlag > 0)
 				{
-					if(DroneState.rc.rollAutoLevel) 
+					if( DroneState.rc.rollAutoLevel &&
+						ds.trickMode == DroneState.TrickMode.DISABLED ) 
 					{
 						if(Math.abs(ds.rollPid.target) > CTRL_ERR)
 						{
@@ -698,11 +700,14 @@ public class DroneCommander implements Runnable
 		DroneState.RemoteCtrl.RotateBy rotateBy = DroneState.rc.rotateBy;
 		float rotateDelta = DroneState.rc.rotateDelta;
 		
-		if(	ds.trickModeEnabled &&
-			rotateBy != DroneState.RemoteCtrl.RotateBy.ROTATE_BY_YAW_RATE )
+		if(ds.trickMode != DroneState.TrickMode.DISABLED)
 		{
-			rotateBy = DroneState.RemoteCtrl.RotateBy.ROTATE_BY_YAW_RATE;
-			rotateDelta = DroneState.rc.trickDelta;
+			if(rotateBy == DroneState.RemoteCtrl.RotateBy.ROTATE_BY_HEADING)
+			{
+				rotateDelta = DroneState.rc.trickDelta;
+			}
+			rotateBy = DroneState.RemoteCtrl.RotateBy.ROTATE_BY_Z_RATE;
+			
 		}
 
 		switch(rotateBy)
@@ -782,7 +787,7 @@ public class DroneCommander implements Runnable
 		
 		DroneState.RemoteCtrl.LiftBy liftBy = DroneState.rc.liftBy;
 		
-		if(ds.trickModeEnabled)
+		if(ds.trickMode != DroneState.TrickMode.DISABLED)
 		{
 			liftBy = DroneState.RemoteCtrl.LiftBy.LIFT_BY_GAS;
 		}
@@ -846,7 +851,7 @@ public class DroneCommander implements Runnable
 				
 				gas += gasAddon;
 
-				if(ds.velocityZPid.enabled && ds.trickModeEnabled == false)
+				if(ds.velocityZPid.enabled && ds.trickMode == DroneState.TrickMode.DISABLED)
 				{
 					DroneAlarmCenter.instance().setAlarm(Alarm.ALARM_DISABLE_VELOCITY_Z_PID);
 					return;
@@ -952,19 +957,19 @@ public class DroneCommander implements Runnable
 		}
 	}
 	
-	public void setTrickMode(boolean enabled)
+	public void setTrickMode(DroneState.TrickMode mode)
 	{
 		DroneState ds = DroneTelemetry.instance().getDroneState();
 		
 		if(antiTurtleEnabled)
 			return;
 		
-		if(ds.trickModeEnabled != enabled)
+		if(ds.trickMode != mode)
 		{
-			CmdEnableTrickMode cmd = new CmdEnableTrickMode(enabled);
+			CmdSetTrickMode cmd = new CmdSetTrickMode(mode);
 			DroneCommander.instance().addCmd(cmd);
 			
-			System.out.println("setTrickMode = " + enabled);
+			System.out.println("setTrickMode = " + mode.toString());
 		}
 	}
 	

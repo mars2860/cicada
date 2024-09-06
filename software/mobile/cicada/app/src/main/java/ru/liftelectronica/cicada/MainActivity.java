@@ -908,7 +908,7 @@ public class MainActivity extends AppCompatActivity {
         keyTrickGyro = sharedPref.getInt(context.getString(R.string.key_trick_gyro), defKeyTrickGyro);
 
         int defKeyTrickAcro = context.getResources().getInteger(R.integer.key_trick_acro);
-        keyTrickAcro = sharedPref.getInt(context.getString(R.string.key_trick_gyro), defKeyTrickAcro);
+        keyTrickAcro = sharedPref.getInt(context.getString(R.string.key_trick_acro), defKeyTrickAcro);
 
         int defKeyTurtle = context.getResources().getInteger(R.integer.key_turtle);
         keyTurtle = sharedPref.getInt(context.getString(R.string.key_turtle), defKeyTurtle);

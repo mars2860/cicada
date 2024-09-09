@@ -78,6 +78,11 @@ float pdlHeadingToDegrees(float radians);
  */
 pdlVector3 pdlBodyToWorld(float yaw, float pitch, float roll, float x, float y, float z);
 
+/** Converts coordinates from world frame to body frame
+ * @note yaw,pitch,roll have to be in radians
+ */
+pdlVector3 pdlWorldToBody(float yaw, float pitch, float roll, float x, float y, float z);
+
 /** Converts body angular rate to euler angular rate. In other words, gyroscope to euler
  * @note yaw,pitch,roll have to be in radians
  * @note gx,gy,gz have to be converted to PDL coordinate system

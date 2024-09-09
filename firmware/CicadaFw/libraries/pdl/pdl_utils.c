@@ -147,6 +147,66 @@ pdlVector3 pdlBodyToWorld(float yaw, float pitch, float roll, float i, float j, 
   return res;
 }
 
+pdlVector3 pdlWorldToBody(float yaw, float pitch, float roll, float i, float j, float k)
+{
+  /*
+   j*cos(p)*sin(y) - k*sin(p) + i*cos(p)*cos(y)
+   j*cos(y)*cos(r) + j*sin(p)*sin(y)*sin(r) + k*cos(p)*sin(r) + i*(-sin(y)*cos(r) + sin(p)*cos(y)*sin(r))
+   j*sin(p)*sin(y)*cos(r) - j*cos(y)*sin(r) + k*cos(p)*cos(r) + i*(sin(y)*sin(r) + sin(p)*cos(y)*cos(r))
+
+   a = sin(p)
+   b = cos(p)
+   c = sin(r)
+   d = cos(r)
+   e = sin(y)
+   f = cos(y)
+
+   j*b*e - k*a + i*b*f
+   j*f*d + j*a*e*c + k*b*c -i*e*d + i*a*f*c
+   j*a*e*d - j*f*c + k*b*d + i*e*c + i*a*f*d
+
+   u = j*e
+   v = j*f
+   w = i*e
+   m = i*a*f
+   n = k*b
+
+   u*b - k*a + i*b*f
+   v*d + u*a*c + n*c - w*d + m*c
+   u*a*d - v*c + n*d + w*c + m*d
+
+   s = u*a
+
+   u*b - k*a + i*b*f
+   v*d + s*c + n*c - w*d + m*c
+   s*d - v*c + n*d + w*c + m*d
+
+   */
+
+   pdlVector3 res;
+
+   float a = sinf(pitch);
+   float b = cosf(pitch);
+   float c = sinf(roll);
+   float d = cosf(roll);
+   float e = sinf(yaw);
+   float f = cosf(yaw);
+
+   float u = j*e;
+   float v = j*f;
+   float w = i*e;
+   float m = i*a*f;
+   float n = k*b;
+
+   float s = u*a;
+
+   res.x = u*b - k*a + i*b*f;
+   res.y = v*d + s*c + n*c - w*d + m*c;
+   res.z = s*d - v*c + n*d + w*c + m*d;
+
+   return res;
+}
+
 pdlVector3 pdlBodyRateToEulerRate(float yaw, float pitch, float roll, float gx, float gy, float gz)
 {
     // Explanation https://www.youtube.com/watch?v=nEJ9bA3M3V0

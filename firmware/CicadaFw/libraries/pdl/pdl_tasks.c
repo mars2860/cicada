@@ -427,6 +427,36 @@ void pdlNewAccelData(pdlDroneState *ds, int16_t rawX, int16_t rawY, int16_t rawZ
   dt = ((float)pdlGetDeltaTime(pdlMicros(),oldMicros)) / 1000000.f; // microseconds to seconds
   oldMicros = pdlMicros();
 
+  /*
+  // There is the problem. When angular rates gets zero the accel pitch/roll gets wrong caused by the linear accels
+  // At this moment the estimated pitch/roll downgrades to the wrong accel pitch/roll
+  // I tried to remove the linear accels from the accel measuruments but the code below has the problem
+  float ax = ds->accel.pure[PDL_X];
+  float ay = ds->accel.pure[PDL_Y];
+  float az = ds->accel.pure[PDL_Z];
+
+  // convert current linear accels to remove its from pitch/roll calculation
+  wAcc = pdlWorldToBody(  ds->pose[PDL_YAW].pos,
+                          ds->pose[PDL_PITCH].pos,
+                          ds->pose[PDL_ROLL].pos,
+                          ds->accel.world[PDL_X],
+                          ds->accel.world[PDL_Y],
+                          -ds->accel.world[PDL_Z] );
+
+  // There is the problem. When the drone hits the wall the linear accs/pitch/roll gets wrong.
+  // These errors is stored and when I try to remove its I get the wrong pitch/roll
+  // Also there is the loop back between the world linear accels and the estimated pitch/roll angles
+
+  if(fabsf(wAcc.x) > 1.f)
+    ax = ax - wAcc.x;
+  if(fabsf(wAcc.y) > 1.f)
+    ay = ay - wAcc.y;
+  if(fabsf(wAcc.z) > 1.f )
+    az = az - wAcc.z;
+
+  accEuler = pdlEulerFromAcc(ax,ay,az);
+   */
+
   accEuler = pdlEulerFromAcc(  ds->accel.pure[PDL_X],
                                ds->accel.pure[PDL_Y],
                                ds->accel.pure[PDL_Z]);

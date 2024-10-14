@@ -136,6 +136,10 @@
 #define PDL_CMD_SET_X_RATE            158
 /// Sets target for yRate. Format = {159, float}
 #define PDL_CMD_SET_Y_RATE            159
+/// Setup WiFi. Format = {160, uint8_t staMode, uint8_t chl, uint8_t tpw, uint8_t phy, uint8_t rate}
+#define PDL_CMD_SETUP_WIFI            160
+/// Enable WiFi broadcast mode. Format = {161, uint8_t enabled}
+#define PDL_CMD_ENABLE_WIFI_BROADCAST 161
 
 /// @}
 

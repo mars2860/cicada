@@ -48,6 +48,19 @@
 #define PDL_TRICK_MODE_ACRO       10
 #define PDL_TRICK_MODE_GYRO       20
 
+#define PDL_OSD_BAT_STATE         1
+#define PDL_OSD_RSSI              (1<<1)
+#define PDL_OSD_FLY_TIME          (1<<2)
+#define PDL_OSD_YAW               (1<<3)
+#define PDL_OSD_PITCH             (1<<4)
+#define PDL_OSD_ROLL              (1<<5)
+#define PDL_OSD_ALT               (1<<6)
+#define PDL_OSD_HOME              (1<<7)
+#define PDL_OSD_LAT               (1<<8)
+#define PDL_OSD_LON               (1<<9)
+#define PDL_OSD_SATTELS           (1<<10)
+#define PDL_OSD_VSPD              (1<<11)
+#define PDL_OSD_HSPD              (1<<12)
 
 /// Battery state takes 24 bytes
 typedef struct s_pdlBatteryState
@@ -404,8 +417,8 @@ typedef struct s_pdlDroneState
   float accUpOffset;
   /// Telemetry period
   uint32_t telemetryPeriod;
-  /// Reserved4
-  uint32_t reserved4;
+  /// OSD (on screen display) flags. PDL doesn't implement drawing OSD, but you can use this field in your implementation to know what data to draw on the screen
+  uint32_t osd;
   /// Reserved5
   uint32_t reserved5;
   /// Reserved6

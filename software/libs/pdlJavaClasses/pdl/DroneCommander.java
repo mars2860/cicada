@@ -1,13 +1,9 @@
 package pdl;
 
-import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.concurrent.Semaphore;
+
+import com.fazecast.jSerialComm.SerialPort;
+import com.fazecast.jSerialComm.SerialPortInvalidPortException;
 
 import pdl.DroneState.RemoteCtrl.MoveBy;
 import pdl.DroneState.RemoteCtrl.RotateBy;
@@ -15,6 +11,7 @@ import pdl.commands.AbstractCmdSetPidTarget;
 import pdl.commands.AbstractDroneCmd;
 import pdl.commands.CmdEnableDynamicIp;
 import pdl.commands.CmdEnableStabilization;
+import pdl.commands.CmdEnableWifiBroadcast;
 import pdl.commands.CmdSetTrickMode;
 import pdl.commands.CmdLoadDefaultCfg;
 import pdl.commands.CmdResetAltitude;
@@ -65,12 +62,23 @@ import pdl.commands.CmdSetYawRate;
 import pdl.commands.CmdSetZRatePid;
 import pdl.commands.CmdSetZRate;
 import pdl.commands.CmdSetup;
+import pdl.commands.CmdSetupWifi;
 import pdl.commands.CmdStartStopVideo;
 import pdl.commands.CmdSwitchMotors;
 import pdl.commands.CmdTakePhoto;
 import pdl.commands.CmdVeloZTakeoff;
+import pdl.res.Profile;
+import pdl.wlan.Modem;
+import pdl.wlan.ModemType;
+import pdl.wlan.WifiBroadcastModem;
+import pdl.wlan.WifiBroadcastModem.WifiPhy;
+import pdl.wlan.WifiBroadcastModem.WifiRate;
+import pdl.wlan.WifiUdpModem;
+import pdl.wlan.WlanCommandPacket;
+import pdl.wlan.WlanLogPacket;
+import pdl.wlan.WlanTelemetryPacket;
 
-public class DroneCommander implements Runnable
+public class DroneCommander
 {
 	public static final int SETUP_ATTEMPTS_COUNT = 10;
 
@@ -84,9 +92,11 @@ public class DroneCommander implements Runnable
 	public static final boolean LOG_CTRL_CMD = true;
 	
 	/** Delay in milliseconds between commands.
-	 *  This delay is needed to a drone have time to process last received command
+	 *  This delay is needed for the drone have time to process last received command
 	 */
 	public static final int DELAY_BTW_CMDS = 20;
+	// FIXME It is strange but in wifi broadcast mode If we send to many commands the drone is reseted. This is noticed only when we invoke sendSettingsToDrone
+	public static final int DELAY_BTW_CMDS_BROADCAST_MODE = 50;
 	
 	private static DroneCommander mSingleton;
 
@@ -98,69 +108,339 @@ public class DroneCommander implements Runnable
 		return mSingleton;
 	}
 	
-	private int mDroneCmdPort;
-	private InetAddress mDroneInetAddress;
-	private DatagramSocket mSocket;
-	private Thread mSender;
-	private boolean mSenderRun;
 	private ArrayList<AbstractDroneCmd> mCmds;
-	private Semaphore mListMutex;
-	private Object objSenderSync;
+
 	private boolean antiTurtleEnabled;
 	private int antiTurtleToggle;
+	private Modem mModem;
+	private Thread mthModemRx;
+	private Thread mthModemTx;
+	private Thread mthConnect;
+	private boolean mModemRxRun;
+	private boolean mModemTxRun;
+	private Object mCmdLock;
+	private Object mNewCmdLock;
+	private String mSsid;
+	private int mWifiChl;
+	private int mWifiPhy;
+	private int mWifiRate;
+	private float mWifiTpwDbm;
+	private boolean mDroneConnected = false;
+	// the host system timestamp at the drone were connected
+	private long connectTimestamp;
 	
 	private DroneCommander() 
 	{
 		mCmds = new ArrayList<AbstractDroneCmd>();
-		mListMutex = new Semaphore(1);
-		objSenderSync = new Object();
+		mCmdLock = new Object();
+		mNewCmdLock = new Object();
+		connectTimestamp = System.currentTimeMillis();
 	};
 	
-	/** Start new thread to receive telemetry packets. If thread is started it will be restarted */
-	public void start(String ip, int cmdPort) throws UnknownHostException, SocketException
+	private class OnModemRx implements Runnable
 	{
-		if(mSenderRun || mSocket != null)
-			this.stop();
-		
-		mDroneCmdPort = cmdPort;
-		mDroneInetAddress = InetAddress.getByName(ip);
-		mSocket = new DatagramSocket();
-		mSenderRun = true;
-		mSender = new Thread(this);
-		mSender.setName("DroneCommandSender");
-		mSender.start();
-	}
-	
-	public void stop()
-	{
-		mSenderRun = false;
-		
-		try
+		@Override
+		public void run()
 		{
-			synchronized(objSenderSync)
+			int rxTimeout = 100;
+			int pingErrCounter = 0;
+			int recvErrCounter = 0;
+			
+			mModemRxRun = true;
+			
+			while(mModemRxRun && mModem != null)
 			{
-				// Unblock commander thread
-				objSenderSync.notify();
-				//System.out.println("Wait until commander thread stops");
-				// Wait until commander thread stops its work
-				if(mSender != null && mSender.isAlive())
+				// select receive timeout
+				if(DroneTelemetry.instance().isDroneConnected())
 				{
-					objSenderSync.wait();
+					DroneState ds = DroneTelemetry.instance().getDroneState();
+					int telemetryPeriod = 2*ds.telemetry.period / 1000; // convert microseconds to milliseconds
+					if(telemetryPeriod >= 100 && telemetryPeriod != rxTimeout)
+					{
+						rxTimeout = telemetryPeriod;
+					}
 				}
-				//System.out.println("End to wait for commander thread stop");
+				// we assume that the drone is disconnected if it doesn't send any data in 3 seconds
+				int maxRecvErrCounter = Math.max(1, 3000 / rxTimeout);
+				
+				byte[] data = mModem.receive(rxTimeout);
+				
+				if(data == null)
+				{
+					recvErrCounter++;
+					// there is no data from the drone
+					// in this case test connection with modem
+					if(mModem.ping(100) == false)
+					{
+						pingErrCounter++;
+					}
+					else
+					{
+						pingErrCounter = 0;
+					}
+				}
+				else
+				{
+					pingErrCounter = 0;
+					
+					WlanLogPacket logPacket = WlanLogPacket.parse(data);
+					
+					if(logPacket != null)
+					{
+						if(logPacket.getSsid().compareTo(mSsid) == 0)
+						{
+							DroneLog.instance().append(logPacket);
+							recvErrCounter = 0;
+						}
+						else
+						{
+							System.out.println("Invalid log ssid");
+						}
+					}
+					else
+					{
+						WlanTelemetryPacket telemetryPacket = WlanTelemetryPacket.parse(data);
+						
+						if(telemetryPacket.getSsid().compareTo(mSsid) == 0)
+						{
+							DroneTelemetry.instance().append(telemetryPacket);
+							recvErrCounter = 0;
+						}
+					}
+				}
+				
+				if(recvErrCounter > maxRecvErrCounter)
+				{
+					recvErrCounter = maxRecvErrCounter;
+					setDroneConnected(false);
+				}
+				else if(recvErrCounter == 0)
+				{
+					setDroneConnected(true);
+					DroneAlarmCenter.instance().clearAlarm(Alarm.ALARM_RECEIVE_ERROR);
+				}
+				else
+				{
+					DroneAlarmCenter.instance().setAlarm(Alarm.ALARM_RECEIVE_ERROR);
+				}
+				
+				if(pingErrCounter > 10)
+				{
+					pingErrCounter = 10;
+					setDroneConnected(false);
+					DroneAlarmCenter.instance().setAlarm(Alarm.ALARM_MODEM_CONNECTION_LOST);
+					// try to reconnect
+					if(mModem != null)
+					{
+						mModem.connect();
+					}
+				}
+				else if(pingErrCounter == 0)
+				{
+					DroneAlarmCenter.instance().clearAlarm(Alarm.ALARM_MODEM_CONNECTION_LOST);
+				}
 			}
 		}
-		catch(Exception e)
+	}
+	
+	private class OnModemTx implements Runnable
+	{
+		@Override
+		public void run()
 		{
-			e.printStackTrace();
+			mModemTxRun = true;
+			AbstractDroneCmd cmd = null;
+			
+			while(mModemTxRun && mModem != null)
+			{
+				synchronized(mCmdLock)
+				{
+					if(mCmds.size() > 0)
+					{
+						cmd = mCmds.get(0);
+						mCmds.remove(0);
+					}
+					else
+					{
+						cmd = null;
+					}
+				}
+					
+				if(cmd != null)
+				{
+					WlanCommandPacket packet = new WlanCommandPacket(cmd, mSsid);
+										
+					if(mModem.send(packet.getDataToSend()))
+					{
+						DroneAlarmCenter.instance().clearAlarm(Alarm.ALARM_SEND_ERROR);
+					}
+					else
+					{
+						DroneAlarmCenter.instance().setAlarm(Alarm.ALARM_SEND_ERROR);
+					}
+					
+					try
+					{
+						// give time to the drone to process a command
+						if(mModem instanceof WifiBroadcastModem)
+						{
+							Thread.sleep(DELAY_BTW_CMDS_BROADCAST_MODE);
+						}
+						else
+						{
+							Thread.sleep(DELAY_BTW_CMDS);
+						}
+					}
+					catch(Exception e)
+					{
+						e.printStackTrace();
+					}
+
+					cmd = null;
+				}
+				else
+				{
+					try
+					{
+						synchronized(mNewCmdLock)
+						{
+							//long timestamp = System.currentTimeMillis();
+							mNewCmdLock.wait(1000);
+							//timestamp = System.currentTimeMillis() - timestamp;
+							//System.out.println("Wait cmd=" + timestamp);
+						}
+					}
+					catch(Exception e)
+					{
+						e.printStackTrace();
+					}
+				}
+			}
 		}
-		
-		if(mSocket != null)
+	}
+	
+	private void setDroneConnected(boolean state)
+	{
+		if(state != mDroneConnected)
 		{
-			mSocket.close();
-			mSocket = null;
+			connectTimestamp = System.currentTimeMillis();
+			mDroneConnected = state;
+			if(state)
+				DroneAlarmCenter.instance().clearAlarm(Alarm.ALARM_DRONE_NOT_FOUND);
+			else
+				DroneAlarmCenter.instance().setAlarm(Alarm.ALARM_DRONE_NOT_FOUND);
+		}
+	}
+	
+	public long getDroneConnectionTime()
+	{
+		if(this.isDroneConnected() == false)
+			return 0;
+		
+		return System.currentTimeMillis() - connectTimestamp;
+	}
+	
+	public boolean isDroneConnected()
+	{
+		return mDroneConnected;
+	}
+	
+	public void connect()
+	{
+		if(DroneAlarmCenter.instance().getAlarm(Alarm.ALARM_CONNECTING))
+			return;
+		
+		disconnect();
+		
+		DroneLog.instance().clearLog();
+		DroneTelemetry.instance().clearBlackBox();
+		DroneTelemetry.instance().resetFlyTime();
+		DroneAlarmCenter.instance().clearAll();
+		
+		DroneAlarmCenter.instance().setAlarm(Alarm.ALARM_CONNECTING);
+		
+		// Store current ssid
+		// After the user can change ssid in settings
+		// but it will be not actual ssid
+		// it get actual after drone is reloaded
+		mSsid = DroneState.net.ssid;
+		mWifiChl = DroneState.net.wifiChannel;
+		mWifiPhy = DroneState.net.wifiPhy;
+		mWifiRate = DroneState.net.wifiRate;
+		mWifiTpwDbm = DroneState.net.wifiTxPowerDbm;
+		
+		mthConnect = new Thread(new Runnable()
+		{
+			@Override
+			public void run()
+			{					
+				DroneState ds = Profile.instance().getDroneSettings();
+				// We always have to start with UDP modem!
+				// Start UDP modem
+				mModem = connectWifiUdpModem(DroneState.net.ip,DroneState.net.udpPort);
+				// Connect
+				if(mModem == null)
+				{
+					DroneAlarmCenter.instance().setAlarm(Alarm.ALARM_UDP_MODEM_CONNECTION_ERROR);
+					DroneAlarmCenter.instance().clearAlarm(Alarm.ALARM_CONNECTING);
+					return;
+				}
+				// Start modem rxtx threads
+				mthModemRx = new Thread(new OnModemRx(), "DroneModemRx");
+				mthModemRx.start();
+				mthModemTx = new Thread(new OnModemTx(), "DroneModemTx");
+				mthModemTx.start();
+				// Send new settings
+				DroneCommander.instance().sendSettingsToDrone(ds);
+				// Check connection
+				if(DroneCommander.instance().isDroneConnected() == false)
+				{
+					DroneAlarmCenter.instance().setAlarm(Alarm.ALARM_DRONE_NOT_FOUND);
+				}
+				// Connection ends
+				DroneAlarmCenter.instance().clearAlarm(Alarm.ALARM_CONNECTING);
+			}
+		});
+		
+		mthConnect.start();
+	}
+	
+	public void disconnect()
+	{
+		this.clearCmdQueue();
+		mModemRxRun = false;
+		mModemTxRun = false;
+		try
+		{
+			if(mthConnect != null)
+			{
+				mthConnect.join(3000);
+			}
+			
+			if(mthModemRx != null)
+			{
+				mthModemRx.join(3000);
+			}
+			
+			if(mthModemTx != null)
+			{
+				mthModemTx.join(3000);
+			}
+			mthConnect = null;
+			mthModemRx = null;
+			mthModemTx = null;
+		}
+		catch(Exception ex)
+		{
+			ex.printStackTrace();
 		}
 
+		if(mModem != null)
+		{
+			mModem.disconnect();
+			mModem = null;
+		}
+		
 		DroneAlarmCenter.instance().clearAll();
 		DroneAlarmCenter.instance().setAlarm(Alarm.ALARM_DRONE_NOT_FOUND);
 	}
@@ -169,142 +449,37 @@ public class DroneCommander implements Runnable
 	public boolean addCmd(AbstractDroneCmd cmd)
 	{
 		boolean result = true;
-		try
-		{
-			mListMutex.acquire();
-			
-			for(AbstractDroneCmd c : mCmds)
-			{
-				if(c.getCode() == cmd.getCode())
-				{
-					System.out.println("command duplicate is in the commands list");
-					result = false;
-					break;
-				}
-			}
-			
-			if(result)
-			{
-				mCmds.add(cmd);
-			}
+
+		synchronized(mCmdLock)
+		{	
+			mCmds.add(cmd);
 		}
-		catch(Exception e)
+		
+		synchronized(mNewCmdLock)
 		{
-			result = false;
-			e.printStackTrace();
+			mNewCmdLock.notifyAll();
 		}
-		finally
-		{
-			mListMutex.release();
-			synchronized(objSenderSync)
-			{
-				// Resume sender thread
-				//System.out.println("Notify commander thread about new command");
-				objSenderSync.notify();
-			}
-		}
+		
 		return result;
 	}
 
 	public int getCmdCount()
 	{
 		int result = 0;
-		try
+		
+		synchronized(mCmdLock)
 		{
-			mListMutex.acquire();
-
 			result = mCmds.size();
 		}
-		catch(Exception e)
-		{
-			e.printStackTrace();
-		}
-		finally
-		{
-			mListMutex.release();
-		}
+		
 		return result;
 	}
-
-	@Override
-	public void run()
+	
+	public void clearCmdQueue()
 	{
-		AbstractDroneCmd cmd = null;
-		int cmdIdx = 0;
-		
-		while(mSenderRun)
+		synchronized(mCmdLock)
 		{
-			try
-			{
-				mListMutex.acquire();
-				
-				if(mCmds.size() > 0)
-				{
-					//cmdIdx = mCmds.size() - 1; // old code implements LIFO queue in this place
-					cmdIdx = 0; // FIFO queue
-					cmd = mCmds.get(cmdIdx);
-					mCmds.remove(cmdIdx);
-				}
-				else
-				{
-					cmd = null;
-					cmdIdx = 0;
-				}
-			}
-			catch(Exception e)
-			{
-				e.printStackTrace();
-			}
-			finally
-			{
-				mListMutex.release();
-			}
-			
-			if(cmd != null)
-			{
-				byte buf[] = cmd.getPacketData();
-				DatagramPacket packet = new DatagramPacket(buf, buf.length, mDroneInetAddress, mDroneCmdPort);
-				//System.out.println("Send command");
-				try
-				{
-					mSocket.send(packet);
-					// give time to the drone to process a command
-					Thread.sleep(DELAY_BTW_CMDS);
-				}
-				catch(IOException e)
-				{
-					DroneAlarmCenter.instance().setAlarm(Alarm.ALARM_SEND_ERROR);
-					e.printStackTrace();
-				}
-				catch (InterruptedException e)
-				{
-					e.printStackTrace();
-				}
-				
-				cmd = null;
-				cmdIdx = 0;
-			}
-			else	// wait until new command will be
-			{
-				try
-				{
-					synchronized(objSenderSync)
-					{
-						//System.out.println("Wait until there are commands");
-						objSenderSync.wait();
-					}
-				}
-				catch(Exception e)
-				{
-					e.printStackTrace();
-				}
-			}
-		}
-		
-		synchronized(objSenderSync)
-		{
-			//System.out.println("Notify commander thread is stopped");
-			objSenderSync.notify();
+			mCmds.clear();
 		}
 	}
 	
@@ -339,7 +514,7 @@ public class DroneCommander implements Runnable
 		
 		if(attempt >= (SETUP_ATTEMPTS_COUNT - 1) )
 		{
-			DroneAlarmCenter.instance().setAlarm(Alarm.ALARM_SEND_ERROR);
+			DroneAlarmCenter.instance().setAlarm(Alarm.ALARM_SEND_SETUP_ERROR);
 			System.out.println("Number of attempts exceeded for " + cmd.toString());
 		}
 	}
@@ -347,6 +522,8 @@ public class DroneCommander implements Runnable
 	public void sendSettingsToDrone(DroneState ds)
 	{
 		DroneAlarmCenter.instance().clearAlarm(Alarm.ALARM_SEND_ERROR);
+		
+		// TODO May be it would be better to replace all setup commands by one command - send DroneState!
 		
 		CmdSetup cmd;
 		
@@ -445,6 +622,10 @@ public class DroneCommander implements Runnable
 		cmd = new CmdSetKalman(ds.kfSettings);
 		sendSetupCmd(cmd);
 		
+		// velupOffset
+		cmd = new CmdSetAccUpOffset(ds.velocityZPid.accUpOffset);
+		sendSetupCmd(cmd);
+		
 		// reset altitude
 		AbstractDroneCmd cmdResAlt = new CmdResetAltitude();
 		addCmd(cmdResAlt);
@@ -469,9 +650,172 @@ public class DroneCommander implements Runnable
 		CmdEnableDynamicIp enDynIp = new CmdEnableDynamicIp(DroneState.net.dynamicIp);
 		addCmd(enDynIp);
 		
-		// velupOffset
-		CmdSetAccUpOffset cmdAccUpOffset = new CmdSetAccUpOffset(ds.velocityZPid.accUpOffset);
-		addCmd(cmdAccUpOffset);
+		// wifi phy
+		CmdSetupWifi wifiCmd = new CmdSetupWifi(
+				DroneState.net.wifiStaMode,
+				DroneState.net.wifiChannel,
+				DroneState.net.wifiTxPowerDbm,
+				DroneState.net.wifiPhy,
+				DroneState.net.wifiRate );
+		
+		addCmd(wifiCmd);
+
+		// Switch the drone to wifi broadcast mode or back to wifi normal mode
+		if(DroneState.net.wifiBroadcastEnabled)
+		{
+			switchToWifiBroadcastModem();
+		}
+		else	// switch to wifi normal mode
+		{
+			switchToWifiUdpModem();
+		}
+	}
+	
+	private void sendSetModemCmd(boolean wifiBroadcastEnabled)
+	{
+		CmdEnableWifiBroadcast cmd = new CmdEnableWifiBroadcast(wifiBroadcastEnabled);
+
+		DroneCommander.instance().addCmd(cmd);
+		DroneCommander.instance().addCmd(cmd);
+		DroneCommander.instance().addCmd(cmd);
+
+		while(getCmdCount() > 0)	// wait until all commands are sent
+		{
+			try
+			{
+				Thread.sleep(100);
+			}
+			catch(Exception e)
+			{
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	private void setCurrentModem(Modem mdm)
+	{
+		if(mModem != null)
+		{
+			Modem oldModem = mModem;
+			mModem = mdm;
+			// if we disconnect old modem before applying new modem
+			// RxThread blocks old modem trying to reconnect them
+			oldModem.disconnect();
+		}
+		else
+		{
+			mModem = mdm;
+		}
+	}
+	
+	private WifiUdpModem connectWifiUdpModem(String ip, int port)
+	{
+		WifiUdpModem mdm = new WifiUdpModem(ip,port);
+		
+		if( mdm.connect() == true &&
+			mdm.ping(100) == true )
+		{
+			DroneAlarmCenter.instance().clearAlarm(Alarm.ALARM_UDP_MODEM_CONNECTION_ERROR);
+		}
+		else
+		{
+			mdm = null;
+			DroneAlarmCenter.instance().setAlarm(Alarm.ALARM_UDP_MODEM_CONNECTION_ERROR);
+		}
+		
+		return mdm;
+	}
+	
+	private WifiBroadcastModem connectWifiBroadcastModem(String comPortName)
+	{
+		WifiBroadcastModem mdm = null;
+		
+		try
+		{
+			// Test modem connection
+			SerialPort port = SerialPort.getCommPort(comPortName);
+			mdm = new WifiBroadcastModem(port);
+			if( mdm.connect() == true &&
+				mdm.ping(100) == true )
+			{
+				DroneAlarmCenter.instance().clearAlarm(Alarm.ALARM_WIFI_BROADCAST_MODEM_NOT_FOUND);
+				setupWifiBroadcastModem(mdm);
+			}
+			else
+			{
+				mdm.disconnect();
+				mdm = null;
+				DroneAlarmCenter.instance().setAlarm(Alarm.ALARM_WIFI_BROADCAST_MODEM_NOT_FOUND);
+			}
+		}
+		catch(SerialPortInvalidPortException e)
+		{
+			DroneAlarmCenter.instance().setAlarm(Alarm.ALARM_CANT_OPEN_COM_PORT);
+		}
+		
+		return mdm;
+	}
+	
+	private void setCurrentModem(ModemType t)
+	{
+		DroneAlarmCenter.instance().clearModemAlarms();
+		
+		boolean wifiBroadcastEnabled = false;
+		Modem mdm = null;
+		Alarm err = null;
+		
+		switch(t)
+		{
+		case WIFI_UDP_MODEM:
+			mdm = connectWifiUdpModem(DroneState.net.ip,DroneState.net.udpPort);
+			wifiBroadcastEnabled = false;
+			err = Alarm.ALARM_UDP_MODEM_CONNECTION_ERROR;
+			break;
+		case WIFI_BROADCAST_MODEM:
+			mdm = connectWifiBroadcastModem(DroneState.net.wifiBroadcastModemComPort);
+			wifiBroadcastEnabled = true;
+			err = Alarm.ALARM_WIFI_BROADCAST_MODEM_NOT_FOUND;
+			break;
+		}
+
+		if(mdm != null)
+		{
+			sendSetModemCmd(wifiBroadcastEnabled);
+			setCurrentModem(mdm);
+		}
+		else
+		{
+			DroneAlarmCenter.instance().setAlarm(err);	
+		}
+	}
+	
+	private void switchToWifiBroadcastModem()
+	{
+		if(mModem instanceof WifiBroadcastModem)
+		{
+			setupWifiBroadcastModem((WifiBroadcastModem)mModem);
+			return;
+		}
+		
+		setCurrentModem(ModemType.WIFI_BROADCAST_MODEM);
+	}
+	
+	private void switchToWifiUdpModem()
+	{
+		if(mModem instanceof WifiUdpModem)
+		{
+			return;
+		}
+			
+		setCurrentModem(ModemType.WIFI_UDP_MODEM);
+	}
+	
+	private void setupWifiBroadcastModem(WifiBroadcastModem mdm)
+	{
+		mdm.setChannel(mWifiChl);
+		mdm.setMaxTpwDbm(mWifiTpwDbm);
+		mdm.setWifiPhy(WifiPhy.fromeInt(mWifiPhy));
+		mdm.setWifiRate(WifiRate.fromeInt(mWifiRate));	
 	}
 
 	/** Sets new target of pitchRatePid,pitchPid,velocityXPid, etc
@@ -489,6 +833,8 @@ public class DroneCommander implements Runnable
 		
 		if(antiTurtleEnabled)
 			return;
+		
+		checkCmdQueueSize();
 		
 		DroneState.RemoteCtrl.MoveBy moveBy = DroneState.rc.moveBy;
 		float moveDelta = DroneState.rc.moveDelta;
@@ -697,6 +1043,8 @@ public class DroneCommander implements Runnable
 		if(antiTurtleEnabled)
 			return;
 		
+		checkCmdQueueSize();
+		
 		DroneState.RemoteCtrl.RotateBy rotateBy = DroneState.rc.rotateBy;
 		float rotateDelta = DroneState.rc.rotateDelta;
 		
@@ -769,6 +1117,21 @@ public class DroneCommander implements Runnable
 				break;
 		}
 	}
+	
+	private void checkCmdQueueSize()
+	{
+		// if we have too many commands we get big control lag
+		// this is can be if we connect slow modem
+		// try to fix it by clear commands queue
+		if(this.getCmdCount() > DroneState.misc.maxCtrlCmdsInQueue)
+		{
+			synchronized(mCmdLock)
+			{	
+				mCmds.clear();
+				System.out.println("checkCmdQueueSize: clear cmd queue");
+			}	
+		}
+	}
 
 	/** Sets new target of velocityZPid,altPid or DroneState.baseGas
 	 *  depending from DroneState.rc.liftBy
@@ -784,6 +1147,8 @@ public class DroneCommander implements Runnable
 		
 		if(antiTurtleEnabled)
 			return;
+		
+		checkCmdQueueSize();
 		
 		DroneState.RemoteCtrl.LiftBy liftBy = DroneState.rc.liftBy;
 		

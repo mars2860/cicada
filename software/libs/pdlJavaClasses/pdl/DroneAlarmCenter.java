@@ -8,7 +8,6 @@ public class DroneAlarmCenter extends Observable
 {
 	private static DroneAlarmCenter mSingleton;
 	
-	public static final double WIFI_LOW_LEVEL = -82.0;
 	public static final double BATTERY_LOW_LEVEL = 15.0;
 	public static final double BATTERY_CRITICAL_LOW_LEVEL = 5;
 	
@@ -107,7 +106,7 @@ public class DroneAlarmCenter extends Observable
 		return result;
 	}
 
-	void clearAll()
+	public void clearAll()
 	{
 		synchronized(mMutex)
 		{
@@ -116,5 +115,15 @@ public class DroneAlarmCenter extends Observable
 			this.notifyObservers();
 			this.clearChanged();
 		}
+	}
+	
+	public void clearModemAlarms()
+	{
+		clearAlarm(Alarm.ALARM_CANT_OPEN_COM_PORT);
+		clearAlarm(Alarm.ALARM_RECEIVE_ERROR);
+		clearAlarm(Alarm.ALARM_SEND_ERROR);
+		clearAlarm(Alarm.ALARM_SEND_SETUP_ERROR);
+		clearAlarm(Alarm.ALARM_UDP_MODEM_CONNECTION_ERROR);
+		clearAlarm(Alarm.ALARM_WIFI_BROADCAST_MODEM_NOT_FOUND);
 	}
 }

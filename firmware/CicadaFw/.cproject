@@ -41,6 +41,9 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/SoftwareSerial/src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/ds3231-master}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/BMP280_DEV}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/LongRangeModemFw/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/WifiBroadcastModemFw/src}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.cpp.sketch.input.95334001" name="CPP source files" superClass="io.sloeber.compiler.cpp.sketch.input"/>
 							</tool>
@@ -68,6 +71,9 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/SoftwareSerial/src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/ds3231-master}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/BMP280_DEV}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/LongRangeModemFw/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/WifiBroadcastModemFw/src}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.c.sketch.input.764340330" name="C Source Files" superClass="io.sloeber.compiler.c.sketch.input"/>
 							</tool>
@@ -95,6 +101,9 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/SoftwareSerial/src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/ds3231-master}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/BMP280_DEV}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/LongRangeModemFw/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/WifiBroadcastModemFw/src}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.S.sketch.input.736617084" name="Assembly source files" superClass="io.sloeber.compiler.S.sketch.input"/>
 							</tool>
@@ -153,6 +162,8 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/ds3231-master}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/BMP280_DEV}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/WifiBroadcastModemFw/src}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.cpp.sketch.input.911912672" name="CPP source files" superClass="io.sloeber.compiler.cpp.sketch.input"/>
 							</tool>
@@ -180,6 +191,8 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/ds3231-master}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/BMP280_DEV}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/WifiBroadcastModemFw/src}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.c.sketch.input.1412834262" name="C Source Files" superClass="io.sloeber.compiler.c.sketch.input"/>
 							</tool>
@@ -207,6 +220,8 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/ds3231-master}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/BMP280_DEV}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/WifiBroadcastModemFw/src}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.S.sketch.input.2093495950" name="Assembly source files" superClass="io.sloeber.compiler.S.sketch.input"/>
 							</tool>
@@ -218,7 +233,8 @@
 					</folderInfo>
 					<fileInfo id="io.sloeber.core.toolChain.release.303228233.1715018289.dshot.h" name="dshot.h" rcbsApplicability="disable" resourcePath="dshot.h" toolsToInvoke=""/>
 					<sourceEntries>
-						<entry excluding="sonar_hcsr04.cpp|optical_flow_pmw3901.cpp|lidar_vl53l1x_stm32duino.cpp|lidar_tfmini_plus_uart.cpp|lidar_tfmini_plus_i2c.cpp|imu_mpu9250.cpp|imu_mpu9250_spikefilter.cpp|imu_mpu9250_medianfilter.cpp|battery_adc.cpp|baro_bmp280.cpp|baro_bmp280_spikefilter.cpp|lidar_empty.cpp|lidar_vl53l1x_pololu.cpp|pwm_esc_ard.cpp|empty_esc.cpp|LPF.h|pwm_esc.cpp|imu_mpu9250_i2cdevlib.cpp|no_magneto.cpp|imu_mpu6550.cpp|mag_hmc5983.cpp|battery_max1704x.cpp|mag_qmc5883.cpp|pwm_escaper.cpp|imu_mpu6550dmp.cpp|imu_mpu6550dmp_qmc5883.cpp|libraries/?*/**/test*/**|libraries/?*/**/third-party/**|MAX1704X|drivers|libraries/?*/utility/*/*|libraries/?*/**/?xamples/**|libraries/?*/**/?xtras/**|Copter.ino|libraries/**/._*" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="WifiBroadcastModem|LongRangeModem|sonar_hcsr04.cpp|optical_flow_pmw3901.cpp|lidar_vl53l1x_stm32duino.cpp|lidar_tfmini_plus_uart.cpp|lidar_tfmini_plus_i2c.cpp|imu_mpu9250.cpp|imu_mpu9250_spikefilter.cpp|imu_mpu9250_medianfilter.cpp|battery_adc.cpp|baro_bmp280.cpp|baro_bmp280_spikefilter.cpp|lidar_empty.cpp|lidar_vl53l1x_pololu.cpp|pwm_esc_ard.cpp|empty_esc.cpp|LPF.h|pwm_esc.cpp|imu_mpu9250_i2cdevlib.cpp|no_magneto.cpp|imu_mpu6550.cpp|mag_hmc5983.cpp|battery_max1704x.cpp|mag_qmc5883.cpp|pwm_escaper.cpp|imu_mpu6550dmp.cpp|imu_mpu6550dmp_qmc5883.cpp|libraries/?*/**/test*/**|libraries/?*/**/third-party/**|MAX1704X|drivers|libraries/?*/utility/*/*|libraries/?*/**/?xamples/**|libraries/?*/**/?xtras/**|Copter.ino|libraries/**/._*" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="WifiBroadcastModem"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="drivers"/>
 					</sourceEntries>
 				</configuration>
@@ -263,6 +279,9 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/RunningMedian}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/BMP280_DEV}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/LongRangeModemFw/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/WifiBroadcastModemFw/src}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.cpp.sketch.input.226708292" name="CPP source files" superClass="io.sloeber.compiler.cpp.sketch.input"/>
 							</tool>
@@ -288,6 +307,9 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/RunningMedian}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/BMP280_DEV}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/LongRangeModemFw/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/WifiBroadcastModemFw/src}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.c.sketch.input.727960399" name="C Source Files" superClass="io.sloeber.compiler.c.sketch.input"/>
 							</tool>
@@ -313,6 +335,9 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/RunningMedian}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/BMP280_DEV}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/LongRangeModemFw/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/WifiBroadcastModemFw/src}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.S.sketch.input.1682677998" name="Assembly source files" superClass="io.sloeber.compiler.S.sketch.input"/>
 							</tool>
@@ -323,218 +348,6 @@
 						</toolChain>
 					</folderInfo>
 					<fileInfo id="io.sloeber.core.toolChain.release.303228233.596401897.dshot.h" name="dshot.h" rcbsApplicability="disable" resourcePath="dshot.h" toolsToInvoke=""/>
-					<sourceEntries>
-						<entry excluding="sonar_hcsr04.cpp|optical_flow_pmw3901.cpp|lidar_vl53l1x_stm32duino.cpp|lidar_tfmini_plus_uart.cpp|lidar_tfmini_plus_i2c.cpp|imu_mpu9250.cpp|imu_mpu9250_spikefilter.cpp|imu_mpu9250_medianfilter.cpp|battery_adc.cpp|baro_bmp280.cpp|baro_bmp280_spikefilter.cpp|lidar_empty.cpp|lidar_vl53l1x_pololu.cpp|pwm_esc_ard.cpp|empty_esc.cpp|LPF.h|pwm_esc.cpp|imu_mpu9250_i2cdevlib.cpp|no_magneto.cpp|imu_mpu6550.cpp|mag_hmc5983.cpp|battery_max1704x.cpp|mag_qmc5883.cpp|pwm.c|pwm_escaper.cpp|imu_mpu6550dmp.cpp|imu_mpu6550dmp_qmc5883.cpp|libraries/?*/**/test*/**|libraries/?*/**/third-party/**|MAX1704X|drivers|libraries/?*/utility/*/*|libraries/?*/**/?xamples/**|libraries/?*/**/?xtras/**|Copter.ino|libraries/**/._*" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="drivers"/>
-					</sourceEntries>
-				</configuration>
-			</storageModule>
-			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
-		</cconfiguration>
-		<cconfiguration id="io.sloeber.core.toolChain.release.303228233.1267452179">
-			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="io.sloeber.core.toolChain.release.303228233.1267452179" moduleId="org.eclipse.cdt.core.settings" name="ESP-07S">
-				<externalSettings/>
-				<extensions>
-					<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
-					<extension id="org.eclipse.cdt.core.GLDErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
-					<extension id="org.eclipse.cdt.core.MakeErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
-					<extension id="org.eclipse.cdt.core.GCCErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
-				</extensions>
-			</storageModule>
-			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactExtension="" artifactName="${ProjName}" buildProperties="" description="" errorParsers="org.eclipse.cdt.core.GLDErrorParser;org.eclipse.cdt.core.MakeErrorParser;org.eclipse.cdt.core.GCCErrorParser" id="io.sloeber.core.toolChain.release.303228233.1267452179" name="ESP-07S" parent="org.eclipse.cdt.build.core.emptycfg">
-					<folderInfo id="io.sloeber.core.toolChain.release.303228233.1267452179." name="/" resourcePath="">
-						<toolChain id="io.sloeber.core.toolChain.release.788902194" name="Arduino Toolchain (Sloeber edition)" superClass="io.sloeber.core.toolChain.release">
-							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="io.sloeber.targetplatform.604294866" name="Arduino Target" osList="all" superClass="io.sloeber.targetplatform"/>
-							<builder buildPath="${workspace_loc:/Copter}/Release" id="io.sloeber.sketch.builder.893060042" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Arduino sketch builder" superClass="io.sloeber.sketch.builder"/>
-							<tool id="io.sloeber.tool.sketch.compiler.cpp.293141843" name="Arduino C++ Compiler" superClass="io.sloeber.tool.sketch.compiler.cpp">
-								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="io.sloeber.compiler.cpp.sketch.option.incpath.1290916854" name="Include Paths (-I)" superClass="io.sloeber.compiler.cpp.sketch.option.incpath" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/core/core}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/core/variant}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/ESP8266HTTPUpdateServer/src}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/ESP8266WebServer/src}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/ESP8266WiFi/src}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/SPI}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/Wire}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/BMP280}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/MPU9250}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/PMW3901}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/PCA9536}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/VL53L1X_stm32duino}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/pdl}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/MPU6050}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/TFMINI-PLUS}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/HCSR04}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/GPS}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/RunningMedian}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/BMP280_DEV}&quot;"/>
-								</option>
-								<inputType id="io.sloeber.compiler.cpp.sketch.input.977073268" name="CPP source files" superClass="io.sloeber.compiler.cpp.sketch.input"/>
-							</tool>
-							<tool id="io.sloeber.tool.compiler.c.1358922407" name="Arduino C Compiler" superClass="io.sloeber.tool.compiler.c">
-								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="io.sloeber.compiler.c.sketch.option.incpath.1952252146" name="Include Paths (-I)" superClass="io.sloeber.compiler.c.sketch.option.incpath" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/core/core}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/core/variant}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/ESP8266HTTPUpdateServer/src}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/ESP8266WebServer/src}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/ESP8266WiFi/src}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/SPI}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/Wire}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/BMP280}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/MPU9250}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/PMW3901}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/PCA9536}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/VL53L1X_stm32duino}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/pdl}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/MPU6050}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/TFMINI-PLUS}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/HCSR04}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/GPS}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/RunningMedian}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/BMP280_DEV}&quot;"/>
-								</option>
-								<inputType id="io.sloeber.compiler.c.sketch.input.169010874" name="C Source Files" superClass="io.sloeber.compiler.c.sketch.input"/>
-							</tool>
-							<tool id="io.sloeber.tool.sketch.compiler.s.1648026340" name="Arduino Assembler" superClass="io.sloeber.tool.sketch.compiler.s">
-								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="io.sloeber.compiler.asm.sketch.option.incpath.1660452733" name="Include Paths (-I)" superClass="io.sloeber.compiler.asm.sketch.option.incpath" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/core/core}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/core/variant}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/ESP8266HTTPUpdateServer/src}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/ESP8266WebServer/src}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/ESP8266WiFi/src}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/SPI}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/Wire}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/BMP280}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/MPU9250}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/PMW3901}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/PCA9536}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/VL53L1X_stm32duino}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/pdl}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/MPU6050}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/TFMINI-PLUS}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/HCSR04}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/GPS}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/RunningMedian}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/BMP280_DEV}&quot;"/>
-								</option>
-								<inputType id="io.sloeber.compiler.S.sketch.input.1843586954" name="Assembly source files" superClass="io.sloeber.compiler.S.sketch.input"/>
-							</tool>
-							<tool id="io.sloeber.tool.ar.1357374207" name="Arduino archiver" superClass="io.sloeber.tool.ar"/>
-							<tool id="io.sloeber.tool.combine.302399538" name="Arduino combiner" superClass="io.sloeber.tool.combine"/>
-							<tool id="io.sloeber.tool.objcopy.eep.1303565029" name="Arduino tool objcopy command" superClass="io.sloeber.tool.objcopy.eep"/>
-							<tool id="io.sloeber.tool.size.79303788" name="Arduino tool Print Size" superClass="io.sloeber.tool.size"/>
-						</toolChain>
-					</folderInfo>
-					<fileInfo id="io.sloeber.core.toolChain.release.303228233.1267452179.dshot.h" name="dshot.h" rcbsApplicability="disable" resourcePath="dshot.h" toolsToInvoke=""/>
-					<sourceEntries>
-						<entry excluding="sonar_hcsr04.cpp|optical_flow_pmw3901.cpp|lidar_vl53l1x_stm32duino.cpp|lidar_tfmini_plus_uart.cpp|lidar_tfmini_plus_i2c.cpp|imu_mpu9250.cpp|imu_mpu9250_spikefilter.cpp|imu_mpu9250_medianfilter.cpp|battery_adc.cpp|baro_bmp280.cpp|baro_bmp280_spikefilter.cpp|lidar_empty.cpp|lidar_vl53l1x_pololu.cpp|pwm_esc_ard.cpp|empty_esc.cpp|LPF.h|pwm_esc.cpp|imu_mpu9250_i2cdevlib.cpp|no_magneto.cpp|imu_mpu6550.cpp|mag_hmc5983.cpp|battery_max1704x.cpp|mag_qmc5883.cpp|pwm.c|pwm_escaper.cpp|imu_mpu6550dmp.cpp|imu_mpu6550dmp_qmc5883.cpp|libraries/?*/**/test*/**|libraries/?*/**/third-party/**|MAX1704X|drivers|libraries/?*/utility/*/*|libraries/?*/**/?xamples/**|libraries/?*/**/?xtras/**|Copter.ino|libraries/**/._*" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="drivers"/>
-					</sourceEntries>
-				</configuration>
-			</storageModule>
-			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
-		</cconfiguration>
-		<cconfiguration id="io.sloeber.core.toolChain.release.303228233.1529138793">
-			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="io.sloeber.core.toolChain.release.303228233.1529138793" moduleId="org.eclipse.cdt.core.settings" name="ESP-07-8Mbit">
-				<externalSettings/>
-				<extensions>
-					<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
-					<extension id="org.eclipse.cdt.core.GLDErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
-					<extension id="org.eclipse.cdt.core.MakeErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
-					<extension id="org.eclipse.cdt.core.GCCErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
-				</extensions>
-			</storageModule>
-			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactExtension="" artifactName="${ProjName}" buildProperties="" description="" errorParsers="org.eclipse.cdt.core.GLDErrorParser;org.eclipse.cdt.core.MakeErrorParser;org.eclipse.cdt.core.GCCErrorParser" id="io.sloeber.core.toolChain.release.303228233.1529138793" name="ESP-07-8Mbit" parent="org.eclipse.cdt.build.core.emptycfg">
-					<folderInfo id="io.sloeber.core.toolChain.release.303228233.1529138793." name="/" resourcePath="">
-						<toolChain id="io.sloeber.core.toolChain.release.125098220" name="Arduino Toolchain (Sloeber edition)" superClass="io.sloeber.core.toolChain.release">
-							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="io.sloeber.targetplatform.1040399932" name="Arduino Target" osList="all" superClass="io.sloeber.targetplatform"/>
-							<builder buildPath="${workspace_loc:/Copter}/Release" id="io.sloeber.sketch.builder.393315565" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Arduino sketch builder" superClass="io.sloeber.sketch.builder"/>
-							<tool id="io.sloeber.tool.sketch.compiler.cpp.2127994528" name="Arduino C++ Compiler" superClass="io.sloeber.tool.sketch.compiler.cpp">
-								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="io.sloeber.compiler.cpp.sketch.option.incpath.1831998039" name="Include Paths (-I)" superClass="io.sloeber.compiler.cpp.sketch.option.incpath" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/core/core}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/core/variant}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/ESP8266HTTPUpdateServer/src}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/ESP8266WebServer/src}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/ESP8266WiFi/src}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/SPI}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/Wire}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/BMP280}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/MPU9250}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/PMW3901}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/PCA9536}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/VL53L1X_stm32duino}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/pdl}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/MPU6050}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/TFMINI-PLUS}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/HCSR04}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/GPS}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/RunningMedian}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/BMP280_DEV}&quot;"/>
-								</option>
-								<inputType id="io.sloeber.compiler.cpp.sketch.input.1908382636" name="CPP source files" superClass="io.sloeber.compiler.cpp.sketch.input"/>
-							</tool>
-							<tool id="io.sloeber.tool.compiler.c.1820053498" name="Arduino C Compiler" superClass="io.sloeber.tool.compiler.c">
-								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="io.sloeber.compiler.c.sketch.option.incpath.2071771145" name="Include Paths (-I)" superClass="io.sloeber.compiler.c.sketch.option.incpath" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/core/core}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/core/variant}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/ESP8266HTTPUpdateServer/src}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/ESP8266WebServer/src}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/ESP8266WiFi/src}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/SPI}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/Wire}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/BMP280}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/MPU9250}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/PMW3901}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/PCA9536}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/VL53L1X_stm32duino}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/pdl}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/MPU6050}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/TFMINI-PLUS}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/HCSR04}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/GPS}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/RunningMedian}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/BMP280_DEV}&quot;"/>
-								</option>
-								<inputType id="io.sloeber.compiler.c.sketch.input.1613033679" name="C Source Files" superClass="io.sloeber.compiler.c.sketch.input"/>
-							</tool>
-							<tool id="io.sloeber.tool.sketch.compiler.s.1695871153" name="Arduino Assembler" superClass="io.sloeber.tool.sketch.compiler.s">
-								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="io.sloeber.compiler.asm.sketch.option.incpath.376029017" name="Include Paths (-I)" superClass="io.sloeber.compiler.asm.sketch.option.incpath" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/core/core}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/core/variant}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/ESP8266HTTPUpdateServer/src}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/ESP8266WebServer/src}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/ESP8266WiFi/src}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/SPI}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/Wire}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/BMP280}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/MPU9250}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/PMW3901}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/PCA9536}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/VL53L1X_stm32duino}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/pdl}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/MPU6050}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/TFMINI-PLUS}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/HCSR04}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/GPS}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/libraries/RunningMedian}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/QMC5883}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CicadaFw/drivers/BMP280_DEV}&quot;"/>
-								</option>
-								<inputType id="io.sloeber.compiler.S.sketch.input.1448432260" name="Assembly source files" superClass="io.sloeber.compiler.S.sketch.input"/>
-							</tool>
-							<tool id="io.sloeber.tool.ar.545731215" name="Arduino archiver" superClass="io.sloeber.tool.ar"/>
-							<tool id="io.sloeber.tool.combine.1433935385" name="Arduino combiner" superClass="io.sloeber.tool.combine"/>
-							<tool id="io.sloeber.tool.objcopy.eep.772173388" name="Arduino tool objcopy command" superClass="io.sloeber.tool.objcopy.eep"/>
-							<tool id="io.sloeber.tool.size.513829961" name="Arduino tool Print Size" superClass="io.sloeber.tool.size"/>
-						</toolChain>
-					</folderInfo>
-					<fileInfo id="io.sloeber.core.toolChain.release.303228233.1529138793.dshot.h" name="dshot.h" rcbsApplicability="disable" resourcePath="dshot.h" toolsToInvoke=""/>
 					<sourceEntries>
 						<entry excluding="sonar_hcsr04.cpp|optical_flow_pmw3901.cpp|lidar_vl53l1x_stm32duino.cpp|lidar_tfmini_plus_uart.cpp|lidar_tfmini_plus_i2c.cpp|imu_mpu9250.cpp|imu_mpu9250_spikefilter.cpp|imu_mpu9250_medianfilter.cpp|battery_adc.cpp|baro_bmp280.cpp|baro_bmp280_spikefilter.cpp|lidar_empty.cpp|lidar_vl53l1x_pololu.cpp|pwm_esc_ard.cpp|empty_esc.cpp|LPF.h|pwm_esc.cpp|imu_mpu9250_i2cdevlib.cpp|no_magneto.cpp|imu_mpu6550.cpp|mag_hmc5983.cpp|battery_max1704x.cpp|mag_qmc5883.cpp|pwm.c|pwm_escaper.cpp|imu_mpu6550dmp.cpp|imu_mpu6550dmp_qmc5883.cpp|libraries/?*/**/test*/**|libraries/?*/**/third-party/**|MAX1704X|drivers|libraries/?*/utility/*/*|libraries/?*/**/?xamples/**|libraries/?*/**/?xtras/**|Copter.ino|libraries/**/._*" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="drivers"/>

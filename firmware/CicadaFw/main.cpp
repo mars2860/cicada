@@ -5,6 +5,9 @@
 #include <Wire.h>
 #include <FS.h>
 
+// Exclude gps.cpp from build if you need debug over Serial
+//#define SERIAL_DEBUG_ENABLED
+
 //-----------------------------------------------------------------------------
 // INSTALL
 // 1. https://github.com/enjoyneering/ESP8266-I2C-Driver
@@ -36,6 +39,9 @@ uint32_t pdlMicros()
 
 void setup()
 {
+#ifdef SERIAL_DEBUG_ENABLED
+  delay(5000);
+#endif
   pdlResetLog();
 
   LOG_INFO("System started, fw v%s", FW_VERSION);
@@ -46,6 +52,10 @@ void setup()
   Serial.begin(115200);
 
   scanI2C();
+
+#ifdef SERIAL_DEBUG_ENABLED
+  pdlResetLog();  // scanI2C overflows log without expansion board
+#endif
 
   pdlSetup(&droneState);
 
@@ -142,13 +152,46 @@ void pdlLoadDefaultCfg(pdlDroneState *ds)
   SPIFFS.end();
 }
 
+//--------------------------------------------
+#ifdef SERIAL_DEBUG_ENABLED
+void pdlSetupGps(pdlDroneState* ds)
+{
+  (void)ds;
+}
+
+uint8_t pdlReadGps(pdlDroneState *ds)
+{
+  (void)ds;
+  return 0;
+}
+#endif
+//-------------------------------------------
+
+uint8_t oldHostConnected = 0;
+
 void loop()
 {
+  //-----------------------------------------
+  #ifdef SERIAL_DEBUG_ENABLED
+  if(pdlGetLogSize() > 0)
+  {
+    Serial.write(pdlGetLog(),pdlGetLogSize());
+    pdlResetLog();
+  }
+  #endif
+  //-----------------------------------------
+
   pdlUpdate(&droneState);
-  if(WiFi.status() != WL_CONNECTED)
-    droneState.rc.rssi = -150;
-  pdlPreventFlyAway(  &droneState,
-                      -85,  // min RSSI
-                      3.f,  // safe alt
-                      0.4f); // safe veloZ
+
+  if(!pdlIsHostConnected(&droneState))
+  {
+    pdlSafeStop(&droneState, 3.f);
+
+    if(oldHostConnected)
+    {
+      LOG_INFO("Host is disconnected. Try to safe stop");
+    }
+  }
+
+  oldHostConnected = pdlIsHostConnected(&droneState);
 }

@@ -240,12 +240,10 @@ void pdlNewTemperatureData( pdlDroneState *ds, float temp);
 
 /// @}
 
-/**
- *  Resets all PIDs targets to zero and make velocityZPid.target = safeVeloZ until
- *  altitude is higher safeAlt or lower -safeAlt. Call this function in your mainLoop()
- *  if you need this feature
+/** Stops any drone moving in horizontal and lift to safeAlt.
+ *  It switch off motors if pitchPid/rollPid is disabled
  */
-void pdlPreventFlyAway(pdlDroneState *ds, int32_t rssiMinLevel, float safeAlt, float safeVeloZ);
+void pdlSafeStop(pdlDroneState *ds, float safeAlt);
 
 void pdlSetPitchTarget(pdlDroneState *ds, float target);
 void pdlSetRollTarget(pdlDroneState *ds, float target);

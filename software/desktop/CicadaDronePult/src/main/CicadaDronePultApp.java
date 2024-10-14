@@ -3,8 +3,6 @@ package main;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
-import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.util.Locale;
 
 import javax.swing.JFrame;
@@ -12,10 +10,8 @@ import javax.swing.JOptionPane;
 
 import pdl.DroneAlarmCenter;
 import pdl.DroneCommander;
-import pdl.DroneLog;
 import pdl.DroneTelemetry;
 import pdl.res.Profile;
-import pdl.DroneState;
 
 public class CicadaDronePultApp
 {
@@ -80,30 +76,14 @@ public class CicadaDronePultApp
 		mMainFrame = new StartGui();
 		mMainFrame.setVisible(true);
 		mMainFrame.addWindowListener(new OnMainWndListener());
-	
-		try
-		{
-			DroneCommander.instance().start(DroneState.net.ip, DroneState.net.cmdPort);
-			DroneTelemetry.instance().start(DroneState.net.ip, DroneState.net.telemetryPort);
-			DroneLog.instance().start(DroneState.net.ip, DroneState.net.logPort);
-		}
-		catch(UnknownHostException e)
-		{
-			showErrorMsg(mMainFrame,ResBox.text("INVALID_HOST"));
-			e.printStackTrace();
-		}
-		catch(SocketException e)
-		{
-			showErrorMsg(mMainFrame,ResBox.text("SOCKET_NOT_OPEN"));
-			e.printStackTrace();
-		}
 	}
 	
 	public void stop()
 	{
-		DroneCommander.instance().stop();
-		DroneTelemetry.instance().stop();
-		DroneLog.instance().stop();
+		DroneAlarmCenter.instance().deleteObservers();
+		DroneTelemetry.instance().deleteObservers();
+		
+		DroneCommander.instance().disconnect();
 		
 		if(mMainFrame != null)
 		{

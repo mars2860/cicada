@@ -32,6 +32,11 @@
 	</natures>
 	<linkedResources>
 		<link>
+			<name>WifiBroadcastModem</name>
+			<type>2</type>
+			<locationURI>PARENT-1-PROJECT_LOC/WifiBroadcastModemFw/src</locationURI>
+		</link>
+		<link>
 			<name>core/core</name>
 			<type>2</type>
 			<locationURI>ECLIPSE_HOME/arduinoPlugin/packages/esp8266/hardware/esp8266/3.1.2/cores/esp8266</locationURI>

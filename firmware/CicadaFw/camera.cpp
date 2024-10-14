@@ -79,6 +79,72 @@ public:
     return 4;
   }
 
+  uint8_t prepareDrawStringHor(uint8_t *packet, uint8_t len, const char* text, uint8_t textLen, uint8_t x, uint8_t y)
+  {
+    // THIS DOESN'T WORK ON RUNCAM SPLIT 4 V2.0.4
+    // When I send this command the runcam is dead
+    if(len < textLen + 6 || !textLen)
+      return 0;
+
+    packet[0] = PACKET_HEADER;
+    packet[1] = 0x22;
+    packet[2] = textLen;
+    packet[3] = x;
+    packet[4] = y;
+
+    memcpy(&packet[5],text,textLen);
+
+    uint8_t crc = 0;
+    for(uint8_t i = 0; i < textLen + 5; i++)
+    {
+      crc = crc8_dvb_s2(crc, packet[i]);
+    }
+    packet[textLen+5] = crc;
+
+    return textLen+6;
+
+    /* all code below also kills the runcam
+    uint8_t p = 0;
+    uint8_t crc = 0;
+
+    packet[p++] = PACKET_HEADER;
+    packet[p++] = 0x22;
+    packet[p++] = 4;
+    packet[p++] = 10;
+    packet[p++] = 10;
+    packet[p++] = 'T';
+    packet[p++] = 'E';
+    packet[p++] = 'S';
+    packet[p++] = 'T';
+
+    for(uint8_t i = 0; i < p; i++)
+    {
+      crc = crc8_dvb_s2(crc, packet[i]);
+    }
+
+    packet[p++] = crc;
+    */
+
+    /*
+    packet[p++] = PACKET_HEADER;
+    packet[p++] = 0x20;
+    packet[p++] = 0;
+    packet[p++] = 0;
+    packet[p++] = 10;
+    packet[p++] = 10;
+    packet[p++] = 'X';
+
+    for(uint8_t i = 0; i < p; i++)
+    {
+      crc = crc8_dvb_s2(crc, packet[i]);
+    }
+
+    packet[p++] = crc;
+
+    return p;
+    */
+  }
+
   virtual ~RuncamBase() {}
   virtual bool init() = 0;
   virtual uint8_t request(uint8_t *packet, uint8_t len) = 0;
@@ -110,6 +176,13 @@ public:
   {
     uint8_t packet[5];
     uint8_t len = prepareCameraControlPacket(packet,sizeof(packet),ACTION_SIMULATE_PWR_BTN);
+    request(packet,len);
+  }
+
+  void drawStringHor(const char* text, uint8_t textLen, uint8_t x, uint8_t y)
+  {
+    uint8_t packet[128];
+    uint8_t len = prepareDrawStringHor(packet,sizeof(packet),text,textLen,x,y);
     request(packet,len);
   }
 };
@@ -265,8 +338,9 @@ void pdlTakePhoto(pdlDroneState *ds)
 void pdlUpdateCamera(pdlDroneState *ds)
 {
   (void)ds;
-  if(!hostIsSet())
+  if(!hostIsSet() || !servOk)
     return;
+
   // Simulate PWM-50Hz
   uint32_t period = pdlGetDeltaTime(pdlMicros(),oldMicros);
   if(period < 20000)

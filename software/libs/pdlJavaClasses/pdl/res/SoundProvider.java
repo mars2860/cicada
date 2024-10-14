@@ -29,6 +29,8 @@ public abstract class SoundProvider
 	public static String BAT5 = "BAT5";
 	public static String BAT1 = "BAT1";
 	public static String LOW_RADIO_SIGNAL = "LOW_RADIO_SIGNAL";
+	public static String DRONE_CONNECTED = "DRONE_CONNECTED";
+	public static String DRONE_DISCONNECTED = "DRONE_DISCONNECTED";
 	
 	public abstract boolean init();	
 	public abstract void play(String key);

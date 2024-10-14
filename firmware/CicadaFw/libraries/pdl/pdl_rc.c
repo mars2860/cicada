@@ -568,5 +568,11 @@ void pdlParseCommand(pdlDroneState *ds, uint8_t *packet)
     case PDL_CMD_SET_X_RATE:
       pdlCmdSetXRateTarget(ds, packet);
       break;
+    case PDL_CMD_SETUP_WIFI:
+      pdlCmdSetupWifi(ds, packet);
+      break;
+    case PDL_CMD_ENABLE_WIFI_BROADCAST:
+      pdlCmdEnableWifiBroadcast(ds, packet);
+      break;
   }
 }

@@ -203,49 +203,96 @@ void pdlAddMotorGas(pdlDroneState *ds, uint8_t m, int32_t gas)
 //-----------------------------------------------------------------------------
 // OTHER
 
-void pdlPreventFlyAway(pdlDroneState *ds, int32_t rssiMinLevel, float safeAlt, float safeVeloZ)
+void pdlSafeStop(pdlDroneState *ds, float safeAlt)
 {
-  static int32_t old_rssi = 0;
-
   if(ds->motorsEnabled && ds->stabilizationEnabled)
   {
-    if(ds->rc.rssi < rssiMinLevel && old_rssi >= rssiMinLevel)
+    // ALTITUDE
+    if(pdlGetPidAltFlag(ds))
     {
-      // when drone gets out control zone
-      // lets stop it
-      ds->posNorthPid.target = ds->posNorthPid.input;
-      ds->velocityXPid.target = 0;
-      ds->pitchPid.target = 0;
-      ds->posEastPid.target = ds->posEastPid.input;
-      ds->velocityYPid.target = 0;
-      ds->rollPid.target = 0;
-      ds->velocityZPid.target = 0;
-      ds->altPid.target = ds->altPid.input;
-      ds->xRatePid.target = 0;
-      ds->yRatePid.target = 0;
-      ds->zRatePid.target = 0;
-      ds->headingPid.target = ds->headingPid.input;
-      if(ds->nav[PDL_UP].pos > safeAlt)
+      ds->altPid.target = safeAlt;
+    }
+    else if(ds->velocityZPid.enabled)
+    {
+      if(ds->velocityZPid.target != 0)
       {
-        if(safeVeloZ > 0.f)
-          safeVeloZ = -safeVeloZ;
-
-        ds->velocityZPid.target = safeVeloZ;
+        pdlSetVelocityZTarget(ds,0);
       }
-      else if(ds->nav[PDL_UP].pos < -safeAlt)
+    }
+    // POS NORTH
+    if(pdlGetPidPosNorthFlag(ds))
+    {
+      if(fabs(ds->posNorthPid.target - ds->posNorthPid.input) > 10.f)
       {
-        if(safeVeloZ < 0.f)
-          safeVeloZ = -safeVeloZ;
-
-        ds->velocityZPid.target = safeVeloZ;
+        ds->posNorthPid.target = ds->posNorthPid.input;
       }
-      // turn off motors if we in acro mode because no other way to stop drone
-      if(!ds->rollPid.enabled || !ds->pitchPid.enabled)
-        ds->motorsEnabled = 0;
+    }
+    else if(pdlGetPidVeloXFlag(ds))
+    {
+      if(ds->velocityXPid.target != 0)
+      {
+        pdlSetVelocityXTarget(ds,0);
+      }
+    }
+    else if(pdlGetPidPitchFlag(ds))
+    {
+      if(ds->pitchPid.target != 0)
+      {
+        pdlSetPitchTarget(ds,0);
+      }
+    }
+    else
+    {
+      pdlSetPitchRateTarget(ds,0);
+      pdlSetXRateTarget(ds,0);
+    }
+    // POS EAST
+    if(pdlGetPidPosEastFlag(ds))
+    {
+      if(fabs(ds->posEastPid.target - ds->posEastPid.input) > 10.f)
+      {
+        ds->posEastPid.target = ds->posEastPid.input;
+      }
+    }
+    else if(pdlGetPidVeloYFlag(ds))
+    {
+      if(ds->velocityYPid.target != 0)
+      {
+        pdlSetVelocityYTarget(ds,0);
+      }
+    }
+    else if(pdlGetPidRollFlag(ds))
+    {
+      if(ds->rollPid.target != 0)
+      {
+        pdlSetRollTarget(ds,0);
+      }
+    }
+    else
+    {
+      pdlSetRollRateTarget(ds,0);
+      pdlSetYRateTarget(ds,0);
+    }
+
+    if(pdlGetPidHeadingFlag(ds))
+    {
+      if(fabs(ds->headingPid.target - ds->headingPid.input) > 10.0)
+      {
+        pdlSetHeadingTarget(ds,ds->headingPid.input);
+      }
+    }
+    else
+    {
+      pdlSetYawRateTarget(ds,0);
+      pdlSetZRateTarget(ds,0);
+    }
+
+    // turn off motors if we in acro mode because no other way to stop drone
+    if(!ds->rollPid.enabled || !ds->pitchPid.enabled)
+    {
+      ds->motorsEnabled = 0;
     }
   }
-
-  old_rssi = ds->rc.rssi;
 }
 
 void pdlSetPitchTarget(pdlDroneState* ds, float target)

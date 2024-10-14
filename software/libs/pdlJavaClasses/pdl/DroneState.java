@@ -4,7 +4,6 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.net.DatagramPacket;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
@@ -40,10 +39,18 @@ public class DroneState implements Cloneable
 	public static final String DEFAULT_IP = "192.168.1.33";
 	public static final String DEFAULT_GATEWAY = "192.168.1.1";
 	public static final String DEFAULT_SUBNET = "255.255.255.0";
-	public static final int DEFAULT_CMD_PORT = 4210;
-	public static final int DEFAULT_TELEMETRY_PORT = 4211;
-	public static final int DEFAULT_LOG_PORT = 4212;
+	public static final int DEFAULT_UDP_PORT = 4210;
+	//public static final int DEFAULT_CMD_PORT = 4210;
+	//public static final int DEFAULT_TELEMETRY_PORT = 4211;
+	//public static final int DEFAULT_LOG_PORT = 4212;
 	public static final int DEFAULT_TELEMETRY_PERIOD = 50000;
+	public static final int DEFAULT_RSSI_ALARM_LEVEL = -82;
+	public static final boolean DEFAULT_WIFI_STA_MODE = false;
+	public static final int DEFAULT_WIFI_CHANNEL = 7;
+	public static final float DEFAULT_WIFI_TX_POWER_DBM = 20;
+	public static final int DEFAULT_WIFI_PHY = 2;
+	public static final int DEFAULT_WIFI_RATE = 0x0B;
+	public static final boolean DEFAULT_WIFI_BROADCAST_ENABLED = false;
 	 
 	public static class Vector3
 	{
@@ -81,6 +88,11 @@ public class DroneState implements Cloneable
 		@Setting
 		@NoChart
 		@Expose
+		public int udpPort = DEFAULT_UDP_PORT;
+		/* DEPRECATED
+		@Setting
+		@NoChart
+		@Expose
 		public int cmdPort = DEFAULT_CMD_PORT;
 		@Setting
 		@NoChart
@@ -90,6 +102,39 @@ public class DroneState implements Cloneable
 		@NoChart
 		@Expose
 		public int logPort = DEFAULT_LOG_PORT;
+		*/
+		@Setting
+		@NoChart
+		@Expose
+		public int rssiAlarmLevel = DEFAULT_RSSI_ALARM_LEVEL;
+		@Setting
+		@NoChart
+		@Expose
+		public boolean wifiStaMode = DEFAULT_WIFI_STA_MODE;
+		@Setting
+		@NoChart
+		@Expose
+		public int wifiChannel = DEFAULT_WIFI_CHANNEL;
+		@Setting
+		@NoChart
+		@Expose
+		public float wifiTxPowerDbm = DEFAULT_WIFI_TX_POWER_DBM;
+		@Setting
+		@NoChart
+		@Expose
+		public int wifiPhy = DEFAULT_WIFI_PHY;
+		@Setting
+		@NoChart
+		@Expose
+		public int wifiRate = DEFAULT_WIFI_RATE;
+		@Setting
+		@NoChart
+		@Expose
+		public boolean wifiBroadcastEnabled = DEFAULT_WIFI_BROADCAST_ENABLED;
+		@Setting
+		@NoChart
+		@Expose
+		public String wifiBroadcastModemComPort = "";
 		
 		@Override
 		public Object clone() throws CloneNotSupportedException
@@ -128,6 +173,11 @@ public class DroneState implements Cloneable
 		@NoChart
 		@Expose
 		public int blackBoxSize = 64000;
+		
+		@Setting
+		@NoChart
+		@Expose
+		public int maxCtrlCmdsInQueue = 3;
 		
 		@Override
 		public Object clone() throws CloneNotSupportedException
@@ -522,7 +572,7 @@ public class DroneState implements Cloneable
 		@Expose
 		public float maxVoltage;
 		
-		private void parse(BinaryParser parser, DatagramPacket packet)
+		private void parse(BinaryParser parser, byte[] packet)
 		{
 			voltage = parser.getFloat(packet);
 			percent = parser.getFloat(packet);
@@ -569,7 +619,7 @@ public class DroneState implements Cloneable
 		@Expose
 		public int offsetZ;
 		
-		protected abstract void parse(BinaryParser parser, DatagramPacket packet);
+		protected abstract void parse(BinaryParser parser, byte[] packet);
 		
 		public boolean settingsEquals(TripleAxisSensor s)
 		{
@@ -603,7 +653,7 @@ public class DroneState implements Cloneable
 		public int dlpf;
 		
 		@Override
-		protected void parse(BinaryParser parser, DatagramPacket packet)
+		protected void parse(BinaryParser parser, byte[] packet)
 		{
 			dlpf = (int)parser.getUint32t(packet);
 			
@@ -677,7 +727,7 @@ public class DroneState implements Cloneable
 		@Expose
 		public int dlpf;
 		
-		protected void parse(BinaryParser parser, DatagramPacket packet)
+		protected void parse(BinaryParser parser, byte[] packet)
 		{
 			dlpf = (int)parser.getUint32t(packet);
 			
@@ -763,7 +813,7 @@ public class DroneState implements Cloneable
 		public double headingDeg;
 		
 		@Override
-		protected void parse(BinaryParser parser, DatagramPacket packet)
+		protected void parse(BinaryParser parser, byte[] packet)
 		{
 			headingRad = parser.getFloat(packet);
 			headingDeg = Math.toDegrees(headingRad);
@@ -850,7 +900,7 @@ public class DroneState implements Cloneable
 		
 		public double out;
 		
-		protected void parse(BinaryParser parser, DatagramPacket packet)
+		protected void parse(BinaryParser parser, byte[] packet)
 		{
 			kp = parser.getFloat(packet);
 			ki = parser.getFloat(packet);
@@ -932,7 +982,7 @@ public class DroneState implements Cloneable
 		public double inputDeg;
 		
 		@Override
-		protected void parse(BinaryParser parser, DatagramPacket packet)
+		protected void parse(BinaryParser parser, byte[] packet)
 		{
 			super.parse(parser, packet);
 			
@@ -994,7 +1044,7 @@ public class DroneState implements Cloneable
 		public double pos;
 		public double accBias;
 		
-		protected void parse(BinaryParser parser, DatagramPacket packet)
+		protected void parse(BinaryParser parser, byte[] packet)
 		{
 			pos = parser.getFloat(packet);
 			vel = parser.getFloat(packet);
@@ -1115,7 +1165,7 @@ public class DroneState implements Cloneable
 		@Expose
 		public float gpsVerPosVariance;
 		
-		protected void parse(BinaryParser parser, DatagramPacket packet)
+		protected void parse(BinaryParser parser, byte[] packet)
 		{
 			navModelNoise = parser.getFloat(packet);
 			accVariance = parser.getFloat(packet);
@@ -1402,7 +1452,7 @@ public class DroneState implements Cloneable
 	public double refPitchDeg;
 	public double refRollDeg;
 	
-	public void parse(BinaryParser parser, DatagramPacket packet)
+	public void parse(BinaryParser parser, byte[] packet)
 	{
 		version = parser.getUint8t(packet);
 		
@@ -1573,7 +1623,7 @@ public class DroneState implements Cloneable
 		public double range;
 		public double velZ;
 		
-		protected void parse(BinaryParser parser, DatagramPacket packet)
+		protected void parse(BinaryParser parser, byte[] packet)
 		{
 			range = parser.getFloat(packet);
 			velZ = parser.getFloat(packet);
@@ -1607,7 +1657,7 @@ public class DroneState implements Cloneable
 		public double sumX;
 		public double sumY;
 		
-		protected void parse(BinaryParser parser, DatagramPacket packet)
+		protected void parse(BinaryParser parser, byte[] packet)
 		{
 			rawX = parser.getInt16t(packet);
 			rawY = parser.getInt16t(packet);
@@ -1661,7 +1711,7 @@ public class DroneState implements Cloneable
 		public double posEast;
 		public double posUp;
 		
-		protected void parse(BinaryParser parser, DatagramPacket packet)
+		protected void parse(BinaryParser parser, byte[] packet)
 		{
 			enabled = parser.getBool(packet);
 			fixType = parser.getUint8t(packet);
@@ -1710,7 +1760,7 @@ public class DroneState implements Cloneable
 		public double altitude;
 		public double seaLevelPressure;
 		
-		protected void parse(BinaryParser parser, DatagramPacket packet)
+		protected void parse(BinaryParser parser, byte[] packet)
 		{
 			pressure = parser.getFloat(packet);
 			altitude = parser.getFloat(packet);
@@ -1746,7 +1796,7 @@ public class DroneState implements Cloneable
 		
 		public double state;
 		
-		protected void parse(BinaryParser parser, DatagramPacket packet)
+		protected void parse(BinaryParser parser, byte[] packet)
 		{
 			enabled = parser.getBool(packet);
 			state = parser.getUint8t(packet);

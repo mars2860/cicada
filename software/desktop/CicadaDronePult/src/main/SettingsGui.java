@@ -26,8 +26,7 @@ import pdl.DroneState;
 
 public class SettingsGui extends JSavedFrame
 {
-	// TODO Изменение текущего языка
-	// TODO Перезапуск сервера при изменении сетевых настроек
+	// TODO Change current locale
 	
 	private static final long serialVersionUID = 1818813549822697828L;
 
@@ -126,6 +125,9 @@ public class SettingsGui extends JSavedFrame
 		{
 			SettingsNode n = (SettingsNode)node;
 			n.value = aValue;
+			
+			DroneState ds = grabNewSettings();
+			Profile.instance().setDroneSettings(ds);
 		}
 	}
 	
@@ -167,9 +169,6 @@ public class SettingsGui extends JSavedFrame
 		@Override
 		public void actionPerformed(ActionEvent e)
 		{
-			if(DroneTelemetry.instance().isDroneConnected() == false)
-				return;
-			
 			DroneState ds = grabNewSettings();
 			
 			if(ds == null)
@@ -186,7 +185,7 @@ public class SettingsGui extends JSavedFrame
 			{
 				JOptionPane.showMessageDialog(
 						SettingsGui.this,
-						ResBox.text("COPTER_NOT_FOUND"),
+						ResBox.text("ALARM_DRONE_NOT_FOUND"),
 						ResBox.text("ERROR"),
 						JOptionPane.ERROR_MESSAGE);
 				return;

@@ -4,6 +4,8 @@
 /// @defgroup pdlConfig Config
 /// @{
 
+#define LOG_LEVEL INFO_LEVEL
+
 /// Number of motors. Motors are indexed from left-top in counterclockwise direction like pins of chip.
 #define PDL_MOTOR_COUNT                 4
 /// Number of loads (led, buzzer, drop-machine, etc)
@@ -58,7 +60,7 @@
 #define PDL_FOLLOW_TERRAIN_RANGE    1.f
 
 /// Size of buffer to store log before send to host
-#define PDL_LOG_BUF_SIZE            768
+#define PDL_LOG_BUF_SIZE            1024
 
 /// Lidar offset from gravity center along X-axis in meters
 #define PDL_LIDAR_OFFSET            0.055f

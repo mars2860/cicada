@@ -6,8 +6,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
-import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.util.Observable;
 import java.util.Observer;
 
@@ -22,11 +20,8 @@ import net.miginfocom.swing.MigLayout;
 import pdl.Alarm;
 import pdl.DroneAlarmCenter;
 import pdl.DroneCommander;
-import pdl.DroneLog;
 import pdl.DroneState;
 import pdl.DroneTelemetry;
-import pdl.commands.CmdResetAltitude;
-import pdl.res.Profile;
 import pdl.res.TextBox;
 
 public class StartGui extends JSavedFrame
@@ -165,6 +160,13 @@ public class StartGui extends JSavedFrame
 		{
 			Alarm alarm = DroneAlarmCenter.instance().getAlarm();
 			printAlarm(alarm);
+			
+			if(DroneAlarmCenter.instance().getAlarm(Alarm.ALARM_CONNECTING))
+				return;
+			
+			DroneState ds = DroneTelemetry.instance().getDroneState();
+
+			DroneTelemetry.instance().speakDroneState(ds, pdlSoundProvider);
 		}
 	}
 	
@@ -179,12 +181,12 @@ public class StartGui extends JSavedFrame
 				return;
 				
 			timestamp = System.currentTimeMillis();
-				
+			
 			DroneState ds = DroneTelemetry.instance().getDroneState();
 			
-			// wait first 20 secs for drone system has been stabilized and initialized
+			// wait first 5 secs for drone system has been stabilized and initialized
 			// this prevent from false messages at startup
-			if(ds.timestamp < 20000000)
+			if(DroneTelemetry.instance().getDroneConnectionTime() < 5000)
 			{
 				return;
 			}
@@ -198,61 +200,12 @@ public class StartGui extends JSavedFrame
 		@Override
 		public void actionPerformed(ActionEvent e)
 		{
-			if(DroneAlarmCenter.instance().getAlarm(Alarm.ALARM_CONNECTING))
-				return;
-			
-			DroneAlarmCenter.instance().setAlarm(Alarm.ALARM_CONNECTING);
-			
-			if(DroneTelemetry.instance().isDroneConnected() == false)
+			if(mLogGui != null)
 			{
-				DroneLog.instance().clearLog();
-				if(mLogGui != null)
-				{
-					mLogGui.clearLog();
-				}
+				mLogGui.clearLog();
 			}
 			
-			Thread thread = new Thread(new Runnable()
-			{
-				@Override
-				public void run()
-				{
-					try
-					{
-						DroneTelemetry.instance().resetFlyTime();
-						DroneState ds = Profile.instance().getDroneSettings();
-						// Restart Telemetry/Commander/Log services because we can change Ip address of drone in settings
-						DroneLog.instance().start(DroneState.net.ip, DroneState.net.logPort);
-						DroneTelemetry.instance().start(DroneState.net.ip, DroneState.net.telemetryPort);
-						DroneCommander.instance().start(DroneState.net.ip, DroneState.net.cmdPort);
-						// DroneCommander.start clear all alarms
-						DroneAlarmCenter.instance().setAlarm(Alarm.ALARM_CONNECTING);
-						// Send new settings
-						DroneCommander.instance().sendSettingsToDrone(ds);
-						CmdResetAltitude cmd = new CmdResetAltitude();
-						// we can lose udp packet thus we send it three times
-						DroneCommander.instance().addCmd(cmd);
-						//DroneCommander.instance().addCmd(cmd);
-						//DroneCommander.instance().addCmd(cmd);
-						DroneTelemetry.instance().clearBlackBox();
-						
-						DroneAlarmCenter.instance().clearAlarm(Alarm.ALARM_CONNECTING);
-					}
-					catch(UnknownHostException e)
-					{
-						CicadaDronePultApp.showErrorMsg(StartGui.this,ResBox.text("INVALID_HOST"));
-						DroneAlarmCenter.instance().clearAlarm(Alarm.ALARM_CONNECTING);
-						e.printStackTrace();
-					}
-					catch(SocketException e)
-					{
-						CicadaDronePultApp.showErrorMsg(StartGui.this,ResBox.text("SOCKET_NOT_OPEN"));
-						DroneAlarmCenter.instance().clearAlarm(Alarm.ALARM_CONNECTING);
-						e.printStackTrace();
-					}
-				}
-			});
-			thread.start();
+			DroneCommander.instance().connect();
 		}
 	}
 

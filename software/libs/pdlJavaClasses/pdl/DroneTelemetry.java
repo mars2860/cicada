@@ -1,19 +1,13 @@
 package pdl;
 
-import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
-import java.net.UnknownHostException;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 import pdl.res.SoundProvider;
+import pdl.wlan.WlanTelemetryPacket;
 
-public class DroneTelemetry extends java.util.Observable implements Runnable
+public class DroneTelemetry extends java.util.Observable
 {
 	private static DroneTelemetry mSingleton;
 	
@@ -24,31 +18,20 @@ public class DroneTelemetry extends java.util.Observable implements Runnable
 		
 		return mSingleton;
 	}
-	
-	public static final int TIMEOUT = 3000;
-	public static final int DRONE_MAX_PACKET_SIZE = 1096;
-	
+		
 	private DroneState mDroneState = new DroneState();
 	private int mBlackBoxSize;
 	private Deque<DroneState> mBlackBox;
 	//private static final int MAX_BLACK_BOX_SIZE = 64000;	// about 18 Mb
-	private int mDroneTelemetryPort;
-	private InetAddress mDroneInetAddress;
-	private DatagramSocket mSocket;
-	private Thread mTelemetryThread;
-	private boolean mTelemetryRun;
-	private Object objTelemetrySync;
-	private Object objDataSync;
-	private boolean mDroneConnected;
 	private double mFlyTime;
 	private double oldTimestamp;
+	private Object mBlackBoxLock;
 
 	private DroneTelemetry()
 	{
-		objTelemetrySync = new Object();
-		objDataSync = new Object();
 		mBlackBox = new ConcurrentLinkedDeque<DroneState>();
 		mBlackBoxSize = 0;
+		mBlackBoxLock = new Object();
 	}
 	
 	public double getFlyTime()
@@ -61,67 +44,22 @@ public class DroneTelemetry extends java.util.Observable implements Runnable
 		mFlyTime = 0;
 	}
 	
-	/** Start new thread to receive telemetry packets. If thread is started it will be restarted */
-	public void start(String ip, int port) throws UnknownHostException, SocketException
-	{
-		if(mTelemetryRun || mSocket != null)
-			this.stop();
-		
-		mDroneTelemetryPort = port;
-		mDroneInetAddress = InetAddress.getByName(ip);
-		mSocket = new DatagramSocket(mDroneTelemetryPort);
-		mSocket.setSoTimeout(TIMEOUT);
-		mTelemetryRun = true;
-		mTelemetryThread = new Thread(this);
-		mTelemetryThread.setName("DroneTelemetryReceiver");
-		mTelemetryThread.start();
-	}
-	
-	/** Stops telemetry service. But It doesn't clear observers list and doesn't clear Black Box! */
-	public void stop()
-	{
-		mTelemetryRun = false;
-		mDroneConnected = false;
-		
-		try
-		{
-			synchronized(objTelemetrySync)
-			{
-				// Unblock telemetry thread
-				objTelemetrySync.notify();
-				//System.out.println("Wait until telemetry thread stops");
-				// Wait until thread stops its work
-				if(mTelemetryThread != null && mTelemetryThread.isAlive())
-				{
-					objTelemetrySync.wait();
-				}
-				//System.out.println("End to wait for telemetry thread stop");
-			}
-		}
-		catch(Exception e)
-		{
-			e.printStackTrace();
-		}
-		
-		if(mSocket != null)
-		{
-			mSocket.close();
-			mSocket = null;
-		}
-
-		DroneAlarmCenter.instance().clearAll();
-	}
-	
 	public boolean isDroneConnected()
 	{
-		return mDroneConnected;
+		return DroneCommander.instance().isDroneConnected();
+	}
+	
+	/** @return drone connection time in millis */
+	public long getDroneConnectionTime()
+	{
+		return DroneCommander.instance().getDroneConnectionTime();
 	}
 	
 	public DroneState getDroneState()
 	{
 		DroneState state = new DroneState();
 		
-		synchronized(objDataSync)
+		synchronized(mBlackBoxLock)
 		{
 			try
 			{
@@ -137,69 +75,30 @@ public class DroneTelemetry extends java.util.Observable implements Runnable
 	}
 	
 	public long droneStateSize;
-
-	@Override
-	public void run()
-	{	
-		byte[] receivedData = new byte[DRONE_MAX_PACKET_SIZE];
-		
-		while(mTelemetryRun)
+	
+	public void append(WlanTelemetryPacket packet)
+	{
+		synchronized(mBlackBoxLock)
 		{
-			DatagramPacket receivedPacket = new DatagramPacket(receivedData, receivedData.length);
+			droneStateSize = packet.getDroneStateSize();
+			mDroneState = packet.getDroneState();
+			mBlackBox.offer(mDroneState);
+			mBlackBoxSize++;
+			if(mBlackBoxSize >= DroneState.misc.blackBoxSize)
+			{
+				mBlackBox.poll();
+				mBlackBoxSize--;
+				if(mBlackBoxSize < 0)
+					mBlackBoxSize = 0;
+			}
 			
-			try
-			{
-				mSocket.receive(receivedPacket);
-				
-				if(receivedPacket.getAddress().equals(mDroneInetAddress))
-				{
-					DroneAlarmCenter.instance().clearAlarm(Alarm.ALARM_DRONE_NOT_FOUND);
-					DroneAlarmCenter.instance().clearAlarm(Alarm.ALARM_RECEIVE_ERROR);
-
-					synchronized(objDataSync)
-					{
-						mDroneConnected = true;
-						BinaryParser parser = new BinaryParser();
-						droneStateSize = parser.getUint32t(receivedPacket);
-						mDroneState = new DroneState();
-						mDroneState.parse(parser, receivedPacket);
-						mBlackBox.offer(mDroneState);
-						mBlackBoxSize++;
-						if(mBlackBoxSize >= DroneState.misc.blackBoxSize)
-						{
-							mBlackBox.poll();
-							mBlackBoxSize--;
-							if(mBlackBoxSize < 0)
-								mBlackBoxSize = 0;
-						}
-						checkDroneStateForAlarms(mDroneState);
-						updateFlyTime();
-					}
-
-					this.setChanged();
-					this.notifyObservers();
-					this.clearChanged();
-				}
-			}
-			catch(SocketTimeoutException e)
-			{
-				mDroneConnected = false;
-				DroneAlarmCenter.instance().setAlarm(Alarm.ALARM_DRONE_NOT_FOUND);
-			}
-			catch(IOException e)
-			{
-				DroneAlarmCenter.instance().setAlarm(Alarm.ALARM_RECEIVE_ERROR);
-				e.printStackTrace();
-			}
+			checkDroneStateForAlarms(mDroneState);
+			updateFlyTime();
 		}
-		
-		//System.out.println("Telemetry thread finish its work");
-		
-		synchronized(objTelemetrySync)
-		{
-			//System.out.println("Notify telemetry thread is stopped");
-			objTelemetrySync.notify();
-		}
+
+		this.setChanged();
+		this.notifyObservers();
+		this.clearChanged();
 	}
 	
 	protected void updateFlyTime()
@@ -246,11 +145,11 @@ public class DroneTelemetry extends java.util.Observable implements Runnable
 			DroneAlarmCenter.instance().clearAlarm(Alarm.ALARM_LOW_BATTERY_CRITICAL);
 		}
 		
-		if(ds.rssi <= DroneAlarmCenter.WIFI_LOW_LEVEL)
+		if(ds.rssi <= DroneState.net.rssiAlarmLevel)
 		{
 			DroneAlarmCenter.instance().setAlarm(Alarm.ALARM_LOW_RADIO_SIGNAL);
 		}
-		else if(ds.rssi >= DroneAlarmCenter.WIFI_LOW_LEVEL + 4.0)
+		else if(ds.rssi >= DroneState.net.rssiAlarmLevel + 4.0)
 		{
 			DroneAlarmCenter.instance().clearAlarm(Alarm.ALARM_LOW_RADIO_SIGNAL);
 		}
@@ -315,23 +214,25 @@ public class DroneTelemetry extends java.util.Observable implements Runnable
 		DroneState[] result = new DroneState[0];
 		int telemetryPeriod = this.getDroneState().telemetry.period;
 		
-		if(range > 0 && telemetryPeriod > 0)
+		synchronized(mBlackBoxLock)
 		{
-			int count = Math.min(range/telemetryPeriod, mBlackBoxSize);
-
-			result = new DroneState[count];
-			Iterator<DroneState> iter = mBlackBox.descendingIterator();
-			
-			
-			while(iter.hasNext() && count > 0)
+			if(range > 0 && telemetryPeriod > 0)
 			{
-				result[count - 1] = iter.next();
-				count--;
+				int count = Math.min(range/telemetryPeriod, mBlackBoxSize);
+
+				result = new DroneState[count];
+				Iterator<DroneState> iter = mBlackBox.descendingIterator();
+			
+				while(iter.hasNext() && count > 0)
+				{
+					result[count - 1] = iter.next();
+					count--;
+				}
 			}
-		}
-		else
-		{
-			result = mBlackBox.toArray(new DroneState[0]); 
+			else
+			{
+				result = mBlackBox.toArray(new DroneState[0]); 
+			}
 		}
 		
 		return result; 
@@ -339,7 +240,7 @@ public class DroneTelemetry extends java.util.Observable implements Runnable
 	
 	public void clearBlackBox()
 	{
-		synchronized(objDataSync)
+		synchronized(mBlackBoxLock)
 		{
 			mBlackBox.clear();
 			mBlackBoxSize = 0;
@@ -461,18 +362,21 @@ public class DroneTelemetry extends java.util.Observable implements Runnable
 				
 		oldStabilizationEnabled = ds.stabilizationEnabled;
 				
-		if(	ds.trickMode != DroneState.TrickMode.DISABLED &&
-			ds.trickMode != oldTrickMode)
+		if(ds.trickMode != null)
 		{
-			sp.play("TRICK_MODE_ENABLED");
-		}
-		else if(ds.trickMode == DroneState.TrickMode.DISABLED &&
+			if(	ds.trickMode != DroneState.TrickMode.DISABLED &&
 				ds.trickMode != oldTrickMode)
-		{
-			sp.play("TRICK_MODE_DISABLED");
+			{
+				sp.play("TRICK_MODE_ENABLED");
+			}
+			else if(ds.trickMode == DroneState.TrickMode.DISABLED &&
+					ds.trickMode != oldTrickMode)
+			{
+				sp.play("TRICK_MODE_DISABLED");
+			}
+			
+			oldTrickMode = ds.trickMode;
 		}
-				
-		oldTrickMode = ds.trickMode;
 		
 		if(ds.videoState && !oldVideoState)
 		{
@@ -521,12 +425,25 @@ public class DroneTelemetry extends java.util.Observable implements Runnable
 		}	
 	}
 	
+	private boolean oldDroneConnected = false;
+	
 	public void speakRadioState(DroneState ds, SoundProvider sp)
 	{
-		if(ds.rssi <= DroneAlarmCenter.WIFI_LOW_LEVEL)
+		if(DroneAlarmCenter.instance().getAlarm(Alarm.ALARM_LOW_RADIO_SIGNAL))
 		{
 			sp.play("LOW_RADIO_SIGNAL");
 		}
+		
+		if(DroneTelemetry.instance().isDroneConnected() && !oldDroneConnected)
+		{
+			sp.play(SoundProvider.DRONE_CONNECTED);
+		}
+		else if(!DroneTelemetry.instance().isDroneConnected() && oldDroneConnected)
+		{
+			sp.play(SoundProvider.DRONE_DISCONNECTED);
+		}
+		
+		oldDroneConnected = DroneTelemetry.instance().isDroneConnected();
 	}
 	
 	public void speakDroneState(DroneState ds, SoundProvider sp)

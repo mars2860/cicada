@@ -16,8 +16,9 @@ public class TextBundle extends ListResourceBundle
 
             // ALARMS
             {"ALARM_DRONE_NOT_FOUND", "The drone is not found"},
-            {"ALARM_SEND_ERROR", "Can't send data to a drone. Try connect again"},
-            {"ALARM_RECEIVE_ERROR", "Can't receive data from a drone"},
+            {"ALARM_SEND_ERROR", "Can't send data to the drone"},
+            {"ALARM_SEND_SETUP_ERROR","Can't setup the drone. Try send setting or connect again"},
+            {"ALARM_RECEIVE_ERROR", "Can't receive data from the drone"},
             {"ALARM_LOW_BATTERY", "Battery is low, go to home"},
             {"ALARM_LOW_BATTERY_CRITICAL", "Battery is very low, land right now"},
             {"ALARM_LOW_RADIO_SIGNAL", "Radio signal is low, you can lose control"},
@@ -31,6 +32,10 @@ public class TextBundle extends ListResourceBundle
             {"ALARM_MAGNETO_NOT_READY","No magneto data. Maybe magnetometer is broken"},
             {"ALARM_CONNECTING","Connecting...Please wait"},
             {"ALARM_UNSUPPORTED_FIRMWARE","Unsupported firmware version"},
+            {"ALARM_UDP_MODEM_CONNECTION_ERROR","Can't open UDP socket, check Net params in settings"},
+        	{"ALARM_WIFI_BROADCAST_MODEM_NOT_FOUND","Wifi broadcast modem is not found"},
+        	{"ALARM_CANT_OPEN_COM_PORT","Can't open com port to connect wifi broadcast modem"},
+        	{"ALARM_MODEM_CONNECTION_LOST","Lost connection to the modem"},
             
             // UI
             //{"APP_TITLE", "Cicada drone pult (C) Anton Sysoev (anton.sysoev.ru68@gmail.com)"},

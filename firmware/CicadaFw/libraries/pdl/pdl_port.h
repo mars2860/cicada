@@ -205,6 +205,18 @@ void pdlCmdSetSubnet(pdlDroneState*ds, const uint8_t* packet);
  */
 void pdlCmdEnableDynamicIp(pdlDroneState* ds, const uint8_t* packet);
 
+/** Setups WiFi channel, mode, tx power, tx rate
+ *  @param ds Drone state
+ *  @param packet Received from host packet
+ */
+void pdlCmdSetupWifi(pdlDroneState* ds, const uint8_t* packet);
+
+/** Enables WiFi broadcast mode */
+void pdlCmdEnableWifiBroadcast(pdlDroneState* ds, const uint8_t* packet);
+
+/** @return 1 if the host is connected */
+uint8_t pdlIsHostConnected(pdlDroneState* ds);
+
 /// @}
 
 #endif

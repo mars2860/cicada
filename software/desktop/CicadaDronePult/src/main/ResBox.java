@@ -6,6 +6,7 @@ import java.util.Map;
 
 import javax.swing.ImageIcon;
 
+import pdl.res.SoundProvider;
 import pdl.res.TextBox;
 
 public class ResBox
@@ -130,6 +131,8 @@ public class ResBox
 		sounds.put("VIDEO_STARTED", loadSound("sounds/video_started.wav"));
 		sounds.put("VIDEO_STOPED", loadSound("sounds/video_stoped.wav"));
 		sounds.put("PHOTO_TAKEN", loadSound("sounds/photo_taken.wav"));
+		sounds.put(SoundProvider.DRONE_CONNECTED, loadSound("sounds/connected.wav"));
+		sounds.put(SoundProvider.DRONE_DISCONNECTED, loadSound("sounds/disconnected.wav"));
 	}
 	
 	public static Sound sound(String key)

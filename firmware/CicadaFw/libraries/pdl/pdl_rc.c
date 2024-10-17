@@ -574,5 +574,8 @@ void pdlParseCommand(pdlDroneState *ds, uint8_t *packet)
     case PDL_CMD_ENABLE_WIFI_BROADCAST:
       pdlCmdEnableWifiBroadcast(ds, packet);
       break;
+    case PDL_CMD_SET_DRONE_ID:
+      pdlCmdSetDroneId(ds, packet);
+      break;
   }
 }

@@ -21,6 +21,7 @@ import pdl.commands.CmdSetAltitude;
 import pdl.commands.CmdSetBaseGas;
 import pdl.commands.CmdSetBattery;
 import pdl.commands.CmdSetCameraAngle;
+import pdl.commands.CmdSetDroneId;
 import pdl.commands.CmdSetEsc;
 import pdl.commands.CmdSetFrame;
 import pdl.commands.CmdSetGateway;
@@ -119,7 +120,7 @@ public class DroneCommander
 	private boolean mModemTxRun;
 	private Object mCmdLock;
 	private Object mNewCmdLock;
-	private String mSsid;
+	private int mDroneId;
 	private int mWifiChl;
 	private int mWifiPhy;
 	private int mWifiRate;
@@ -127,6 +128,10 @@ public class DroneCommander
 	private boolean mDroneConnected = false;
 	// the host system timestamp at the drone were connected
 	private long connectTimestamp;
+	
+	private int wlanRxPacketCounter;
+	private int wlanLastRxPacketNum;
+	private int wlanTxPacketCounter;
 	
 	private DroneCommander() 
 	{
@@ -137,13 +142,15 @@ public class DroneCommander
 	};
 	
 	private class OnModemRx implements Runnable
-	{
+	{				
 		@Override
 		public void run()
 		{
 			int rxTimeout = 100;
 			int pingErrCounter = 0;
 			int recvErrCounter = 0;
+			wlanRxPacketCounter = 0;
+			wlanLastRxPacketNum = 0;
 			
 			mModemRxRun = true;
 			
@@ -186,24 +193,30 @@ public class DroneCommander
 					
 					if(logPacket != null)
 					{
-						if(logPacket.getSsid().compareTo(mSsid) == 0)
+						if(logPacket.getDroneId() == mDroneId)
 						{
 							DroneLog.instance().append(logPacket);
 							recvErrCounter = 0;
+							wlanLastRxPacketNum = logPacket.getNum();
 						}
 						else
 						{
-							System.out.println("Invalid log ssid");
+							recvErrCounter++;
 						}
 					}
 					else
 					{
 						WlanTelemetryPacket telemetryPacket = WlanTelemetryPacket.parse(data);
 						
-						if(telemetryPacket.getSsid().compareTo(mSsid) == 0)
+						if(telemetryPacket.getDroneId() == mDroneId)
 						{
 							DroneTelemetry.instance().append(telemetryPacket);
 							recvErrCounter = 0;
+							wlanLastRxPacketNum = telemetryPacket.getNum();
+						}
+						else
+						{
+							recvErrCounter++;
 						}
 					}
 				}
@@ -215,6 +228,7 @@ public class DroneCommander
 				}
 				else if(recvErrCounter == 0)
 				{
+					wlanRxPacketCounter++;
 					setDroneConnected(true);
 					DroneAlarmCenter.instance().clearAlarm(Alarm.ALARM_RECEIVE_ERROR);
 				}
@@ -243,12 +257,13 @@ public class DroneCommander
 	}
 	
 	private class OnModemTx implements Runnable
-	{
+	{	
 		@Override
 		public void run()
 		{
 			mModemTxRun = true;
 			AbstractDroneCmd cmd = null;
+			wlanTxPacketCounter = 0;
 			
 			while(mModemTxRun && mModem != null)
 			{
@@ -267,7 +282,7 @@ public class DroneCommander
 					
 				if(cmd != null)
 				{
-					WlanCommandPacket packet = new WlanCommandPacket(cmd, mSsid);
+					WlanCommandPacket packet = new WlanCommandPacket(cmd, mDroneId, wlanTxPacketCounter++);
 										
 					if(mModem.send(packet.getDataToSend()))
 					{
@@ -344,6 +359,21 @@ public class DroneCommander
 		return mDroneConnected;
 	}
 	
+	public int getRxPacketCounter()
+	{
+		return wlanRxPacketCounter;
+	}
+	
+	public int getTxPacketCounter()
+	{
+		return wlanTxPacketCounter;
+	}
+	
+	public int getRxLostPacketCounter()
+	{
+		return wlanLastRxPacketNum + 1 - wlanRxPacketCounter;
+	}
+	
 	public void connect()
 	{
 		if(DroneAlarmCenter.instance().getAlarm(Alarm.ALARM_CONNECTING))
@@ -358,11 +388,11 @@ public class DroneCommander
 		
 		DroneAlarmCenter.instance().setAlarm(Alarm.ALARM_CONNECTING);
 		
-		// Store current ssid
-		// After the user can change ssid in settings
-		// but it will be not actual ssid
+		// Store current droneId
+		// After the user can change droneId in settings
+		// but it will be not actual droneId
 		// it get actual after drone is reloaded
-		mSsid = DroneState.net.ssid;
+		mDroneId = DroneState.net.droneId;
 		mWifiChl = DroneState.net.wifiChannel;
 		mWifiPhy = DroneState.net.wifiPhy;
 		mWifiRate = DroneState.net.wifiRate;
@@ -655,6 +685,10 @@ public class DroneCommander
 				DroneState.net.wifiRate );
 		
 		addCmd(wifiCmd);
+		
+		// drone id
+		CmdSetDroneId droneIdCmd = new CmdSetDroneId(DroneState.net.droneId);
+		addCmd(droneIdCmd);
 
 		// Switch the drone to wifi broadcast mode or back to wifi normal mode
 		if(DroneState.net.wifiBroadcastEnabled)

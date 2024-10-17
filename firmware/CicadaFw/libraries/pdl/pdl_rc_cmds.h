@@ -140,6 +140,8 @@
 #define PDL_CMD_SETUP_WIFI            160
 /// Enable WiFi broadcast mode. Format = {161, uint8_t enabled}
 #define PDL_CMD_ENABLE_WIFI_BROADCAST 161
+/// Set drone id. Format = {162, uint32_t droneId}
+#define PDL_CMD_SET_DRONE_ID          162
 
 /// @}
 

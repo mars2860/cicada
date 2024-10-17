@@ -8,9 +8,9 @@ public class WlanLogPacket extends WlanPacket
 	
 	protected String mText;
 
-	private WlanLogPacket(String text, String ssid)
+	private WlanLogPacket(String text, int droneId, int packetNum)
 	{
-		super(TYPE_ID,ssid);
+		super(TYPE_ID,droneId,packetNum);
 		mText = text;
 	}
 	
@@ -18,7 +18,8 @@ public class WlanLogPacket extends WlanPacket
 	{
 		BinaryParser parser = new BinaryParser();
 		
-		String recSsid = parser.getString(data);
+		int pktDroneId = parser.getInt32t(data);
+		int pktNum = parser.getInt32t(data);
 		int packetType = parser.getUint8t(data);
 		
 		if(packetType != WlanLogPacket.TYPE_ID)
@@ -28,7 +29,7 @@ public class WlanLogPacket extends WlanPacket
 		
 		String text = parser.getString(data);
 		
-		return new WlanLogPacket(text,recSsid);
+		return new WlanLogPacket(text,pktDroneId,pktNum);
 	}
 	
 	public String getText()

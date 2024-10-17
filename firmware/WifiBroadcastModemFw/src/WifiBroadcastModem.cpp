@@ -160,7 +160,6 @@ uint8_t wbmSendPktFreedom(uint8_t *data, uint16_t len)
   uint16_t pos = 0;
   memcpy(&wbmWifiTxBuf[pos], WLAN_IEEE_HEADER, WLAN_IEEE_HEADER_SIZE);
   pos += WLAN_IEEE_HEADER_SIZE;
-  // TODO FEC ENCODING
   memcpy(&wbmWifiTxBuf[pos], data, len);
   pos += len;
   wbmWifiTxBusy = 1;
@@ -227,7 +226,7 @@ void packet_received_cb(struct RxPacket *pkt)
   {
     wbmWifiRssi = -wbmWifiRssi;
   }
-  // TODO FEC DECODING
+
   if(mdmRxFunc != NULL)
   {
     mdmRxFunc(data,len);

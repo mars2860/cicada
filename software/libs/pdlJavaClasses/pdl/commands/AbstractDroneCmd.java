@@ -1,5 +1,7 @@
 package pdl.commands;
 
+import pdl.wlan.WlanCommandPacket;
+
 public abstract class AbstractDroneCmd
 {
 	protected int mCmdCode;
@@ -15,6 +17,25 @@ public abstract class AbstractDroneCmd
 	}
 	
 	abstract public byte[] getPacketData();
+	
+	public byte[] getWlanPacketData(int droneId, int packetNum)
+	{
+		byte cmdData[] = getPacketData();
+		int len = 9 + cmdData.length;
+		byte[] wlanPacketData = new byte[len];
+		int pos = 0;
+		
+		pos = this.writeInt32(pos, wlanPacketData, droneId);
+		pos = this.writeInt32(pos, wlanPacketData, packetNum);
+		pos = this.writeUint8(pos, wlanPacketData, WlanCommandPacket.TYPE_ID);
+		
+		for(byte b: cmdData)
+		{
+			wlanPacketData[pos++] = b;
+		}
+		
+		return wlanPacketData;
+	}
 	
 	protected int writeInt16(int pos, byte data[], int value)
 	{

@@ -10,9 +10,9 @@ public class WlanTelemetryPacket extends WlanPacket
 	protected DroneState mDroneState;
 	protected int mDroneStateSize;
 	
-	private WlanTelemetryPacket(DroneState droneState, int droneStateSize, String ssid)
+	private WlanTelemetryPacket(DroneState droneState, int droneStateSize, int droneId, int packetNum)
 	{
-		super(TYPE_ID, ssid);
+		super(TYPE_ID, droneId, packetNum);
 		mDroneStateSize = droneStateSize;
 		mDroneState = droneState;
 	}
@@ -21,7 +21,8 @@ public class WlanTelemetryPacket extends WlanPacket
 	{
 		BinaryParser parser = new BinaryParser();
 		
-		String recSsid = parser.getString(data);
+		int pktDroneId = parser.getInt32t(data);
+		int pktNum = parser.getInt32t(data);
 		int packetType = parser.getUint8t(data);
 		
 		if(packetType != WlanTelemetryPacket.TYPE_ID)
@@ -33,7 +34,7 @@ public class WlanTelemetryPacket extends WlanPacket
 		DroneState droneState = new DroneState();
 		droneState.parse(parser,data);
 		
-		return new WlanTelemetryPacket(droneState,droneStateSize,recSsid);
+		return new WlanTelemetryPacket(droneState,droneStateSize,pktDroneId,pktNum);
 	}
 	
 	public int getDroneStateSize()

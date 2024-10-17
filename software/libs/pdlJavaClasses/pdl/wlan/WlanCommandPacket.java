@@ -9,26 +9,12 @@ public class WlanCommandPacket extends WlanPacket
 	protected AbstractDroneCmd mCmd;
 	protected byte[] mData;
 	
-	public WlanCommandPacket(AbstractDroneCmd cmd, String ssid)
+	public WlanCommandPacket(AbstractDroneCmd cmd, int droneId, int packetNum)
 	{
-		super(TYPE_ID, ssid);
+		super(TYPE_ID, droneId, packetNum);
 		
 		mCmd = cmd;
-		
-		byte cmdData[] = mCmd.getPacketData();
-		int len = mSsid.length() + 2 + cmdData.length;
-		mData = new byte[len];
-		int pos = 0;
-		for(byte b: mSsid.getBytes())
-		{
-			mData[pos++] = b;
-		}
-		mData[pos++] = 0;	// string termination symbol
-		mData[pos++] = TYPE_ID;
-		for(byte b: cmdData)
-		{
-			mData[pos++] = b;
-		}
+		mData = cmd.getWlanPacketData(droneId, packetNum);
 	}
 	
 	public byte[] getDataToSend()

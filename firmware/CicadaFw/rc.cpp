@@ -14,9 +14,11 @@
 //-------------------------------------------
 // drone wlan packet structure
 // {
+//   ***HEADER***
 //   WLAN_IEEE_HEADER = 24 bytes,
-//   SSID = 0 to 24 bytes
-//   '\0' = 1 byte string termination symbol
+//   droneId = 4 bytes
+//   packetNum = 4 bytes
+//   ***DATA***
 //   packetType = 1 byte (0 - Command, 1 - Telemetry, 2 - LOG)
 //   various (Command data, DroneState size (4 bytes) + DroneState bytes, LOG text)
 // }
@@ -383,9 +385,8 @@ void pdlRemoteControl(pdlDroneState *ds)
     {
       uint16_t pos = 0;
       // prepare wifi packet
-      strcpy((char*)wlanTxBuf,strSsid);
-      pos = strlen(strSsid);
-      wlanTxBuf[pos++] = 0; // string termination symbol
+      pos = writeWlanPacket(pos, wlanTxBuf, &droneId, sizeof(droneId));
+      pos = writeWlanPacket(pos, wlanTxBuf, &wlanTxPacketNum, sizeof(wlanTxPacketNum));
       wlanTxBuf[pos++] = WLAN_LOG_PACKET; // log packet type
       pos = writeWlanPacket(pos, wlanTxBuf, pdlGetLog(), logSize);
       if(pos < WLAN_TX_BUF_SIZE)
@@ -396,6 +397,7 @@ void pdlRemoteControl(pdlDroneState *ds)
         if( !wbmIsTxBusy() &&
             wbmGetRssi() != 0 ) // that we determine that host is connected after switching to the broadcast mode
         {
+          wlanTxPacketNum++;
           if(wbmSendPktFreedom(wlanTxBuf,pos))
           {
             pdlResetLog();
@@ -404,7 +406,9 @@ void pdlRemoteControl(pdlDroneState *ds)
       }
       else
       {
+        wlanTxPacketNum++;
         pdlResetLog();
+
         udp.beginPacket(host, logPort);
         udp.write(wlanTxBuf,pos);
         udp.endPacket();
@@ -417,8 +421,19 @@ void pdlRemoteControl(pdlDroneState *ds)
     if(udp.parsePacket())
     {
       wlanRxBufLen = udp.read(wlanRxBuf, sizeof(wlanRxBuf));
-
-      if(wlanRxBufLen > 0)
+    }
+  }
+  // parse command
+  wlanRxBufBusy = 1;  // to prevent data corruption by onWifiBroadcastRx
+  if(wlanRxBufLen > 0)
+  {
+    // we use droneId for data collision avoidance if many drones work at the same channel
+    // droneId we put at the head of the packet
+    uint32_t pktDroneId = 0;
+    memcpy(&pktDroneId,&wlanRxBuf[0],sizeof(pktDroneId));
+    if(droneId == pktDroneId)
+    {
+      if(!wifiBroadcastEnabled)
       {
         if(WiFi.getMode() == WIFI_STA && !hostIsSet()) // In WIFI_STA mode we trust only who first sent a packet to the drone
         {
@@ -430,33 +445,24 @@ void pdlRemoteControl(pdlDroneState *ds)
           host = udp.remoteIP();
         }
       }
+
+      // skip droneId
+      uint16_t pos = 4;
+      // skip packetNum
+      pos += 4;
+      // get packet type
+      uint8_t packetType = wlanRxBuf[pos++];
+      if(packetType == WLAN_COMMAND_PACKET)
+      {
+        pdlParseCommand(ds,&wlanRxBuf[pos]);
+        // immediately send back telemetry packet to confirm command execution
+        pdlUpdateTelemetry(ds);
+      }
+      else
+      {
+        LOG_ERROR("Received unknown packet type=%i",packetType);
+      }
     }
-  }
-  // parse command
-  wlanRxBufBusy = 1;  // to prevent data corruption by onWifiBroadcastRx
-  if(wlanRxBufLen > 0)
-  {
-     // we use ssid for data collision avoidance if many drones work at the same channel
-     // ssid we put at the head of the packet
-     if(strcmp((const char*)wlanRxBuf,strSsid) == 0)
-     {
-       // skip ssid
-       uint16_t pos = strlen((const char*)wlanRxBuf);
-       // skip '\0' which is terminated ssid
-       pos++;
-       // get packet type
-       uint8_t packetType = wlanRxBuf[pos++];
-       if(packetType == WLAN_COMMAND_PACKET)
-       {
-         pdlParseCommand(ds,&wlanRxBuf[pos]);
-         // immediately send back telemetry packet to confirm command execution
-         pdlUpdateTelemetry(ds);
-       }
-       else
-       {
-         LOG_ERROR("Received unknown packet type=%i",packetType);
-       }
-     }
   }
   wlanRxBufLen = 0;
   wlanRxBufBusy = 0;
@@ -524,9 +530,8 @@ void pdlUpdateTelemetry(pdlDroneState *ds)
   ds->rc.rssi = getRssi();
 
   // prepare wifi broadcast packet
-  strcpy((char*)wlanTxBuf,strSsid);
-  pos = strlen(strSsid);
-  wlanTxBuf[pos++] = 0; // string termination symbol
+  pos = writeWlanPacket(pos, wlanTxBuf, &droneId, sizeof(droneId));
+  pos = writeWlanPacket(pos, wlanTxBuf, &wlanTxPacketNum, sizeof(wlanTxPacketNum));
   wlanTxBuf[pos++] = WLAN_TELEMETRY_PACKET; // telemetry packet type
   // DroneState size
   pos = writeWlanPacket(pos, wlanTxBuf, &sz, sizeof(sz));
@@ -537,11 +542,15 @@ void pdlUpdateTelemetry(pdlDroneState *ds)
   {
     if(!wbmIsTxBusy())
     {
+      wlanTxPacketNum++;
+
       wbmSendPktFreedom(wlanTxBuf,pos);
     }
   }
   else
   {
+    wlanTxPacketNum++;
+
     udp.beginPacket(host, telemetryPort);
     udp.write(wlanTxBuf, pos);
     udp.endPacket();
@@ -615,6 +624,15 @@ void pdlCmdSetSubnet(pdlDroneState*ds, const uint8_t* packet)
 {
   (void)ds;
   saveParamToFile(PARAM_SUBNET,(const char*)&packet[1]);
+}
+
+void pdlCmdSetDroneId(pdlDroneState* ds, const uint8_t* packet)
+{
+  (void)ds;
+  char buf[24];
+  uint32_t drone_id = 0;
+  memcpy(&drone_id,&packet[1],sizeof(drone_id));
+  saveParamToFile(PARAM_DRONE_ID,itoa(drone_id,buf,10));
 }
 
 void pdlCmdSetupWifi(pdlDroneState *ds, const uint8_t* packet)

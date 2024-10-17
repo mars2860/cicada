@@ -199,6 +199,8 @@ public class AppSettings
 	@Expose
 	private WndState rcSettingsWnd;
 	@Expose
+	private WndState radioWnd;
+	@Expose
 	private String lang;
 	@Expose
 	private String profile;
@@ -324,6 +326,16 @@ public class AppSettings
 	{
 		return logWnd;
 	}
+	
+	public void setRadioWnd(WndState ws)
+	{
+		radioWnd = ws;
+	}
+	
+	public WndState getRadioWnd()
+	{
+		return radioWnd;
+	}
 
 	public void save()
 	{
@@ -360,6 +372,7 @@ public class AppSettings
 		rcWnd = new WndState();
 		rcSettingsWnd = new WndState();
 		logWnd = new WndState();
+		radioWnd = new WndState();
 		profile = "default";
 		inputMap = new InputMap();
 	}

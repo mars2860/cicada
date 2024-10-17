@@ -60,6 +60,7 @@ public class ResBox
 		icons.put("ERROR", loadIcon("images/error.png"));
 		icons.put("BATTERY", loadIcon("images/battery.png"));
 		icons.put("WIFI", loadIcon("images/wifi.png"));
+		icons.put("RADIO", loadIcon("images/radio.png"));
 		icons.put("YAW", loadIcon("images/yaw.png"));
 		icons.put("PITCH", loadIcon("images/pitch.png"));
 		icons.put("ROLL", loadIcon("images/roll.png"));

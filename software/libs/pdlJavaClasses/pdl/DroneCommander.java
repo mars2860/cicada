@@ -369,9 +369,9 @@ public class DroneCommander
 		return wlanTxPacketCounter;
 	}
 	
-	public int getRxLostPacketCounter()
+	public int getLostRxPacketCounter()
 	{
-		return wlanLastRxPacketNum + 1 - wlanRxPacketCounter;
+		return (wlanLastRxPacketNum > 0)?(wlanLastRxPacketNum + 1 - wlanRxPacketCounter):0;
 	}
 	
 	public void connect()

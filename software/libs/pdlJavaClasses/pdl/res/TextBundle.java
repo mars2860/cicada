@@ -93,6 +93,7 @@ public class TextBundle extends ListResourceBundle
             {"REMOTE_CONTROL", "Remote control"},
             {"LOG","Log"},
             {"INFO","Info"},
+            {"RADIO_STATUS","Radio status"},
             
             {"IP_ADDRESS", "IP Address"},
             {"CMD_PORT", "Port 1"},

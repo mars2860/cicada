@@ -208,6 +208,20 @@ public class StartGui extends JSavedFrame
 			DroneCommander.instance().connect();
 		}
 	}
+	
+	private class OnBtnRadioStatus implements ActionListener
+	{
+		@Override
+		public void actionPerformed(ActionEvent e)
+		{
+			if(mRadioGui == null)
+			{
+				mRadioGui = new RadioGui();
+			}
+			
+			mRadioGui.setVisible(true);
+		}
+	}
 
 	private MotorsGui mMotorsGui;
 	private StatusGui mStatusGui;
@@ -217,6 +231,7 @@ public class StartGui extends JSavedFrame
 	private SettingsGui mSettingsGui;
 	private RemoteControlGui mRemoteControlGui;
 	private LogGui mLogGui;
+	private RadioGui mRadioGui;
 	
 	private JLabel mlbAlarmIcon;
 	private JLabel mlbAlarmText;
@@ -231,6 +246,7 @@ public class StartGui extends JSavedFrame
 	private JButton mbtnRemoteControl;
 	private JButton mbtnLog;
 	private JButton mbtnInfo;
+	private JButton mbtnRadioStatus;
 	
 	private PDLSoundProvider pdlSoundProvider;
 	
@@ -314,10 +330,16 @@ public class StartGui extends JSavedFrame
 		mbtnInfo.setMargin(zeroInsets);
 		mbtnInfo.setToolTipText(ResBox.text("INFO"));
 		mbtnInfo.addActionListener(new OnBtnInfo());
+		
+		mbtnRadioStatus = new JButton(ResBox.icon("RADIO"));
+		mbtnRadioStatus.setMargin(zeroInsets);
+		mbtnRadioStatus.setToolTipText(ResBox.text("RADIO_STATUS"));
+		mbtnRadioStatus.addActionListener(new OnBtnRadioStatus());
 
 		tb.add(mbtnConnect);
 		tb.add(mbtnStatus);
 		tb.add(mbtnLocation);
+		tb.add(mbtnRadioStatus);
 		tb.add(mbtnMotors);
 		tb.add(mbtnSensors);
 		tb.add(mbtnCharts);

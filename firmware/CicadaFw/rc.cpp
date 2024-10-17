@@ -52,6 +52,7 @@
 #define PARAM_WIFI_TX_POWER_LEVEL       "tpw"
 #define PARAM_WIFI_PHY_MODE             "phy"
 #define PARAM_WIFI_RATE                 "rate"
+#define PARAM_DRONE_ID                  "droneid"
 
 char strSsid[24];
 
@@ -68,10 +69,13 @@ uint8_t wlanTxBuf[WLAN_TX_BUF_SIZE];
 uint8_t wlanRxBuf[WLAN_RX_BUF_SIZE];
 uint16_t wlanRxBufLen = 0;
 uint8_t wlanRxBufBusy = 0;  // onWifiBroadcastRx will skip received packet if this flag is set
+uint32_t wlanRxPacketNum = 0;
+uint32_t wlanTxPacketNum = 0;
 
 uint32_t cmdPort;
 uint32_t telemetryPort;
 uint32_t logPort;
+uint32_t droneId; // we use droneId to avoid collisions when many drones work at the same channel
 
 static uint8_t wifiChl;
 static uint8_t wifiTpw;
@@ -84,16 +88,9 @@ uint8_t wifiBroadcastEnabled = 0;
 /// Writes data to wlan packet at given position. Returns new position to write
 uint16_t writeWlanPacket(uint16_t pos, byte *packet, void *value, size_t valueSize);
 
-void printParam(const char *param, const char *value, bool printAsInt)
+void printParam(const char *param, const char *value)
 {
-  if(printAsInt)
-  {
-    LOG_INFO("Loaded %s=%i",param,value[0]);
-  }
-  else
-  {
-    LOG_INFO("Loaded %s=%s",param,value);
-  }
+  LOG_INFO("Loaded %s=%s",param,value);
 }
 
 /// @note: this function have to be used between SPIFFS.begin() and SPIFFS.end()
@@ -122,7 +119,7 @@ void getParamFromFile(const char *param, char *buf, uint8_t buf_size, const char
   file.close();
 }
 
-void saveParamToFile(const char* param, const char* buf, bool isIntParam)
+void saveParamToFile(const char* param, const char* buf)
 {
   char filename[32];
   char oldValue[24];
@@ -157,31 +154,34 @@ void saveParamToFile(const char* param, const char* buf, bool isIntParam)
     // ESP-07 doesn't save anything but return OK and written > 0 !!!
     getParamFromFile(param,oldValue,sizeof(oldValue),"");
 
-    if(isIntParam)
+    if(strcmp(oldValue,buf) == 0)
     {
-      if(oldValue[0] == buf[0])
-      {
-        LOG_INFO("New %s=%i stored, %i bytes",param,buf[0],written);
-      }
-      else
-      {
-        LOG_ERROR("Can't store new %s=%i, %i bytes",param,buf[0],strlen(buf));
-      }
+      LOG_INFO("New %s=%s stored, %i bytes",param,buf,written);
     }
     else
     {
-      if(strcmp(oldValue,buf) == 0)
-      {
-        LOG_INFO("New %s=%s stored, %i bytes",param,buf,written);
-      }
-      else
-      {
-        LOG_ERROR("Can't store new %s=%s, %i bytes",param,buf,strlen(buf));
-      }
+     LOG_ERROR("Can't store new %s=%s, %i bytes",param,buf,strlen(buf));
     }
   }
 
   SPIFFS.end();
+}
+
+void setWifiParams(uint8_t chl, uint8_t tpw, uint8_t phy, uint8_t rate)
+{
+  if(chl > 14 || chl < 1)
+    chl = atoi(DEFAULT_WIFI_CHANNEL_STR);
+  if(tpw > 82)
+    tpw = atoi(DEFAULT_WIFI_TX_POWER_LEVEL_STR);
+  if(phy > 3 || phy < 1)
+    phy = atoi(DEFAULT_WIFI_PHY_MODE_STR);
+  if(rate > 0x0F || rate < 0x01)
+    rate = atoi(DEFAULT_WIFI_RATE_STR);
+
+  wifiChl = chl;
+  wifiTpw = tpw;
+  wifiPhy = phy;
+  wifiRate = rate;
 }
 
 void pdlSetupRc(pdlDroneState*)
@@ -196,6 +196,7 @@ void pdlSetupRc(pdlDroneState*)
   char strTpw[4];
   char strPhy[4];
   char strRate[4];
+  char strDroneId[8];
 
   WiFiPhyMode phy;
   uint8_t staMode = 0;
@@ -206,29 +207,31 @@ void pdlSetupRc(pdlDroneState*)
     LOG_ERROR("Can't mount SPIFFS");
   }
 
-  getParamFromFile(PARAM_SSID,strSsid,sizeof(strSsid),DEFAULT_SSID);
-  getParamFromFile(PARAM_PSK,strPsk,sizeof(strPsk),DEFAULT_PSK);
-  getParamFromFile(PARAM_IP,strIp,sizeof(strIp),DEFAULT_IP_ADDRESS);
-  getParamFromFile(PARAM_GATEWAY,strGateway,sizeof(strGateway),DEFAULT_GATEWAY_ADDRESS);
-  getParamFromFile(PARAM_SUBNET,strSubnet,sizeof(strSubnet),DEFAULT_SUBNET);
-  getParamFromFile(PARAM_USE_DHCP,strUseDhcp,sizeof(strUseDhcp),DEFAULT_USE_DHCP);
-  getParamFromFile(PARAM_WIFI_STA_MODE,strSta,sizeof(strSta),DEFAULT_WIFI_STA_MODE);
-  getParamFromFile(PARAM_WIFI_CHANNEL,strChl,sizeof(strChl),DEFAULT_WIFI_CHANNEL);
-  getParamFromFile(PARAM_WIFI_TX_POWER_LEVEL,strTpw,sizeof(strTpw),DEFAULT_WIFI_TX_POWER_LEVEL);
-  getParamFromFile(PARAM_WIFI_PHY_MODE,strPhy,sizeof(strPhy),DEFAULT_WIFI_PHY_MODE);
-  getParamFromFile(PARAM_WIFI_RATE,strRate,sizeof(strRate),DEFAULT_WIFI_RATE);
+  getParamFromFile(PARAM_SSID,strSsid,sizeof(strSsid),DEFAULT_SSID_STR);
+  getParamFromFile(PARAM_PSK,strPsk,sizeof(strPsk),DEFAULT_PSK_STR);
+  getParamFromFile(PARAM_IP,strIp,sizeof(strIp),DEFAULT_IP_ADDRESS_STR);
+  getParamFromFile(PARAM_GATEWAY,strGateway,sizeof(strGateway),DEFAULT_GATEWAY_ADDRESS_STR);
+  getParamFromFile(PARAM_SUBNET,strSubnet,sizeof(strSubnet),DEFAULT_SUBNET_STR);
+  getParamFromFile(PARAM_USE_DHCP,strUseDhcp,sizeof(strUseDhcp),DEFAULT_USE_DHCP_STR);
+  getParamFromFile(PARAM_WIFI_STA_MODE,strSta,sizeof(strSta),DEFAULT_WIFI_STA_MODE_STR);
+  getParamFromFile(PARAM_WIFI_CHANNEL,strChl,sizeof(strChl),DEFAULT_WIFI_CHANNEL_STR);
+  getParamFromFile(PARAM_WIFI_TX_POWER_LEVEL,strTpw,sizeof(strTpw),DEFAULT_WIFI_TX_POWER_LEVEL_STR);
+  getParamFromFile(PARAM_WIFI_PHY_MODE,strPhy,sizeof(strPhy),DEFAULT_WIFI_PHY_MODE_STR);
+  getParamFromFile(PARAM_WIFI_RATE,strRate,sizeof(strRate),DEFAULT_WIFI_RATE_STR);
+  getParamFromFile(PARAM_DRONE_ID,strDroneId,sizeof(strDroneId),DEFAULT_DRONE_ID_STR);
 
-  printParam(PARAM_SSID,strSsid,false);
-  printParam(PARAM_PSK,strPsk,false);
-  printParam(PARAM_IP,strIp,false);
-  printParam(PARAM_GATEWAY,strGateway,false);
-  printParam(PARAM_SUBNET,strSubnet,false);
-  printParam(PARAM_USE_DHCP,strUseDhcp,false);
-  printParam(PARAM_WIFI_STA_MODE,strSta,false);
-  printParam(PARAM_WIFI_CHANNEL,strChl,true);
-  printParam(PARAM_WIFI_TX_POWER_LEVEL,strTpw,true);
-  printParam(PARAM_WIFI_PHY_MODE,strPhy,true);
-  printParam(PARAM_WIFI_RATE,strRate,true);
+  printParam(PARAM_SSID,strSsid);
+  printParam(PARAM_PSK,strPsk);
+  printParam(PARAM_IP,strIp);
+  printParam(PARAM_GATEWAY,strGateway);
+  printParam(PARAM_SUBNET,strSubnet);
+  printParam(PARAM_USE_DHCP,strUseDhcp);
+  printParam(PARAM_WIFI_STA_MODE,strSta);
+  printParam(PARAM_WIFI_CHANNEL,strChl);
+  printParam(PARAM_WIFI_TX_POWER_LEVEL,strTpw);
+  printParam(PARAM_WIFI_PHY_MODE,strPhy);
+  printParam(PARAM_WIFI_RATE,strRate);
+  printParam(PARAM_DRONE_ID,strDroneId);
 
   SPIFFS.end();
 
@@ -236,11 +239,18 @@ void pdlSetupRc(pdlDroneState*)
   cmdPort = DEFAULT_UDP_PORT;
   logPort = DEFAULT_UDP_PORT;
 
+  droneId = atoi(strDroneId);
+
+  setWifiParams( atoi(strChl),
+                 atoi(strTpw),
+                 atoi(strPhy),
+                 atoi(strRate));
+
   ip.fromString(strIp);
   gateway.fromString(strGateway);
   subnet.fromString(strSubnet);
 
-  switch(strPhy[0])
+  switch(wifiPhy)
   {
   case WIFI_PHY_MODE_11B:
     phy = WIFI_PHY_MODE_11B;
@@ -255,11 +265,6 @@ void pdlSetupRc(pdlDroneState*)
     phy = WIFI_PHY_MODE_11G;
     break;
   }
-
-  wifiChl = strChl[0];
-  wifiTpw = strTpw[0];
-  wifiPhy = strPhy[0];
-  wifiRate = strRate[0];
 
   if(strcmp(strSta,"y") == 0)
   {
@@ -293,20 +298,20 @@ void pdlSetupRc(pdlDroneState*)
     // Try to connect default wifi
     if(connectionResult != WL_CONNECTED)
     {
-      ip.fromString(DEFAULT_IP_ADDRESS);
-      gateway.fromString(DEFAULT_GATEWAY_ADDRESS);
-      subnet.fromString(DEFAULT_SUBNET);
+      ip.fromString(DEFAULT_IP_ADDRESS_STR);
+      gateway.fromString(DEFAULT_GATEWAY_ADDRESS_STR);
+      subnet.fromString(DEFAULT_SUBNET_STR);
 
       for(uint8_t i = 0; i < 5; i++)
       {
         WiFi.config(ip, gateway, subnet);
-        WiFi.begin(DEFAULT_SSID, DEFAULT_PSK);
+        WiFi.begin(DEFAULT_SSID_STR, DEFAULT_PSK_STR);
         connectionResult = WiFi.waitForConnectResult(5000);
         if(connectionResult == WL_CONNECTED)
         {
           break;
         }
-        LOG_ERROR("Connection to %s is failed", DEFAULT_SSID);
+        LOG_ERROR("Connection to %s is failed", DEFAULT_SSID_STR);
       }
     }
 
@@ -585,86 +590,60 @@ void onWifiBroadcastRx(uint8_t *data, uint16_t len)
 void pdlCmdSetSsid(pdlDroneState *ds,const uint8_t* packet)
 {
   (void)ds;
-  saveParamToFile(PARAM_SSID,(const char*)&packet[1],false);
+  saveParamToFile(PARAM_SSID,(const char*)&packet[1]);
 }
 
 void pdlCmdSetPsk(pdlDroneState *ds,const uint8_t* packet)
 {
   (void)ds;
-  saveParamToFile(PARAM_PSK,(const char*)&packet[1],false);
+  saveParamToFile(PARAM_PSK,(const char*)&packet[1]);
 }
 
 void pdlCmdSetIp(pdlDroneState *ds, const uint8_t* packet)
 {
   (void)ds;
-  saveParamToFile(PARAM_IP,(const char*)&packet[1],false);
+  saveParamToFile(PARAM_IP,(const char*)&packet[1]);
 }
 
 void pdlCmdSetGateway(pdlDroneState *ds, const uint8_t* packet)
 {
   (void)ds;
-  saveParamToFile(PARAM_GATEWAY,(const char*)&packet[1],false);
+  saveParamToFile(PARAM_GATEWAY,(const char*)&packet[1]);
 }
 
 void pdlCmdSetSubnet(pdlDroneState*ds, const uint8_t* packet)
 {
   (void)ds;
-  saveParamToFile(PARAM_SUBNET,(const char*)&packet[1],false);
-}
-
-void pdlCmdEnableDynamicIp(pdlDroneState*ds, const uint8_t* packet)
-{
-  (void)ds;
-  char value[] = {'n',0};
-  if(packet[1])
-  {
-    value[0] = 'y';
-  }
-  saveParamToFile(PARAM_USE_DHCP,value,false);
+  saveParamToFile(PARAM_SUBNET,(const char*)&packet[1]);
 }
 
 void pdlCmdSetupWifi(pdlDroneState *ds, const uint8_t* packet)
 {
   (void)ds;
 
+  char buf[24];
   char sta[] = {'n',0};
-  char chl[] = {packet[2], 0};
-  char tpw[] = {packet[3], 0};
-  char phy[] = {packet[4], 0};
-  char rate[] = {packet[5], 0};
+  char dhcp[] = {'n',0};
 
   if(packet[1])
   {
     sta[0] = 'y';
   }
 
-  if(chl[0] < 1 || chl[0] > 14)
+  if(packet[2])
   {
-    chl[0] = 7;
+    dhcp[0] = 'y';
   }
 
-  if(tpw[0] > 82)
-  {
-    tpw[0] = 82;
-  }
+  uint8_t chl = packet[3];
+  uint8_t tpw = packet[4];
+  uint8_t phy = packet[5];
+  uint8_t rate = packet[6];
 
-  if(phy[0] < 1 || phy[0] > 3)
-  {
-    phy[0] = 2;
-  }
-
-  if(rate[0] > 0x0F)
-  {
-    rate[0] = 0x0B;
-  }
+  setWifiParams(chl,tpw,phy,rate);
 
   // don't allow to change wifi param on the fly because it is not safe
   /*
-  wifiChl = chl[0];
-  wifiTpw = tpw[0];
-  wifiPhy = phy[0];
-  wifiRate = rate[0];
-
   if(wifiBroadcastEnabled)
   {
     wbmSetChannel(wifiChl);
@@ -674,11 +653,12 @@ void pdlCmdSetupWifi(pdlDroneState *ds, const uint8_t* packet)
   }
   */
 
-  saveParamToFile(PARAM_WIFI_STA_MODE,sta,false);
-  saveParamToFile(PARAM_WIFI_CHANNEL,chl,true);
-  saveParamToFile(PARAM_WIFI_TX_POWER_LEVEL,tpw,true);
-  saveParamToFile(PARAM_WIFI_PHY_MODE,phy,true);
-  saveParamToFile(PARAM_WIFI_RATE,rate,true);
+  saveParamToFile(PARAM_WIFI_STA_MODE,sta);
+  saveParamToFile(PARAM_USE_DHCP,dhcp);
+  saveParamToFile(PARAM_WIFI_CHANNEL,itoa(chl,buf,10));
+  saveParamToFile(PARAM_WIFI_TX_POWER_LEVEL,itoa(tpw,buf,10));
+  saveParamToFile(PARAM_WIFI_PHY_MODE,itoa(phy,buf,10));
+  saveParamToFile(PARAM_WIFI_RATE,itoa(rate,buf,10));
 }
 
 void pdlCmdEnableWifiBroadcast(pdlDroneState* ds, const uint8_t* packet)

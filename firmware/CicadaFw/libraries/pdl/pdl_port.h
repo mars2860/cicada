@@ -199,12 +199,6 @@ void pdlCmdSetGateway(pdlDroneState *ds, const uint8_t* packet);
  */
 void pdlCmdSetSubnet(pdlDroneState*ds, const uint8_t* packet);
 
-/** Enable using of dynamic ip given by host
- *  @param ds Drone state
- *  @param packet Received from host packet
- */
-void pdlCmdEnableDynamicIp(pdlDroneState* ds, const uint8_t* packet);
-
 /** Setups WiFi channel, mode, tx power, tx rate
  *  @param ds Drone state
  *  @param packet Received from host packet

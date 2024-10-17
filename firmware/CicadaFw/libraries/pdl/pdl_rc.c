@@ -553,9 +553,9 @@ void pdlParseCommand(pdlDroneState *ds, uint8_t *packet)
     case PDL_CMD_TAKE_PHOTO:
       pdlCmdTakePhoto(ds,packet);
       break;
-    case PDL_CMD_ENABLE_DYNAMIC_IP:
-      pdlCmdEnableDynamicIp(ds,packet);
-      break;
+    //case PDL_CMD_ENABLE_DYNAMIC_IP: DEPRECATED
+    //  pdlCmdEnableDynamicIp(ds,packet);
+    //  break;
     case PDL_CMD_SET_ACCUP_OFFSET:
       pdlCmdSetAccUpOffset(ds,packet);
       break;

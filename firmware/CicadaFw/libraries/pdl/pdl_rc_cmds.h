@@ -126,8 +126,8 @@
 #define PDL_CMD_START_STOP_VIDEO      153
 /// Take a photo, Format = {154}
 #define PDL_CMD_TAKE_PHOTO            154
-/// Enable dynamic ip, Format = {155, uint8_t en}
-#define PDL_CMD_ENABLE_DYNAMIC_IP     155
+/// Enable dynamic ip, Format = {155, uint8_t en} DEPRECATED
+//#define PDL_CMD_ENABLE_DYNAMIC_IP     155
 /// Set accUpOffset, Format = {156, float accUpOffset}
 #define PDL_CMD_SET_ACCUP_OFFSET      156
 /// Sets target for zRate. Format = {157, float}
@@ -136,7 +136,7 @@
 #define PDL_CMD_SET_X_RATE            158
 /// Sets target for yRate. Format = {159, float}
 #define PDL_CMD_SET_Y_RATE            159
-/// Setup WiFi. Format = {160, uint8_t staMode, uint8_t chl, uint8_t tpw, uint8_t phy, uint8_t rate}
+/// Setup WiFi. Format = {160, uint8_t staMode, uint8_t dhcpEnabled, uint8_t chl, uint8_t tpw, uint8_t phy, uint8_t rate}
 #define PDL_CMD_SETUP_WIFI            160
 /// Enable WiFi broadcast mode. Format = {161, uint8_t enabled}
 #define PDL_CMD_ENABLE_WIFI_BROADCAST 161

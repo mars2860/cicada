@@ -3129,10 +3129,10 @@ environment/project/io.sloeber.core.toolChain.release.303228233.1715018289/A.SER
 environment/project/io.sloeber.core.toolChain.release.303228233.1715018289/A.SERIAL.DISABLERTS/value=true
 environment/project/io.sloeber.core.toolChain.release.303228233.1715018289/A.SERIAL.PORT.FILE/delimiter=;
 environment/project/io.sloeber.core.toolChain.release.303228233.1715018289/A.SERIAL.PORT.FILE/operation=replace
-environment/project/io.sloeber.core.toolChain.release.303228233.1715018289/A.SERIAL.PORT.FILE/value=COM25
+environment/project/io.sloeber.core.toolChain.release.303228233.1715018289/A.SERIAL.PORT.FILE/value=${A.SERIAL.PORT}
 environment/project/io.sloeber.core.toolChain.release.303228233.1715018289/A.SERIAL.PORT/delimiter=;
 environment/project/io.sloeber.core.toolChain.release.303228233.1715018289/A.SERIAL.PORT/operation=replace
-environment/project/io.sloeber.core.toolChain.release.303228233.1715018289/A.SERIAL.PORT/value=COM25
+environment/project/io.sloeber.core.toolChain.release.303228233.1715018289/A.SERIAL.PORT/value=${JANTJE.COM_PORT}
 environment/project/io.sloeber.core.toolChain.release.303228233.1715018289/A.SOFTWARE/delimiter=;
 environment/project/io.sloeber.core.toolChain.release.303228233.1715018289/A.SOFTWARE/operation=replace
 environment/project/io.sloeber.core.toolChain.release.303228233.1715018289/A.SOFTWARE/value=ARDUINO

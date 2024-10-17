@@ -9,7 +9,6 @@ import pdl.DroneState.RemoteCtrl.MoveBy;
 import pdl.DroneState.RemoteCtrl.RotateBy;
 import pdl.commands.AbstractCmdSetPidTarget;
 import pdl.commands.AbstractDroneCmd;
-import pdl.commands.CmdEnableDynamicIp;
 import pdl.commands.CmdEnableStabilization;
 import pdl.commands.CmdEnableWifiBroadcast;
 import pdl.commands.CmdSetTrickMode;
@@ -646,13 +645,10 @@ public class DroneCommander
 		// subnet
 		netCmd = new CmdSetSubnet(DroneState.net.subnet);
 		addCmd(netCmd);
-		// dynamic ip
-		CmdEnableDynamicIp enDynIp = new CmdEnableDynamicIp(DroneState.net.dynamicIp);
-		addCmd(enDynIp);
-		
-		// wifi phy
+		// wifi settings
 		CmdSetupWifi wifiCmd = new CmdSetupWifi(
 				DroneState.net.wifiStaMode,
+				DroneState.net.dynamicIp,
 				DroneState.net.wifiChannel,
 				DroneState.net.wifiTxPowerDbm,
 				DroneState.net.wifiPhy,

@@ -89,6 +89,10 @@ public class DroneState implements Cloneable
 		@NoChart
 		@Expose
 		public int udpPort = DEFAULT_UDP_PORT;
+		@Setting
+		@NoChart
+		@Expose
+		public int droneId = 0;
 		/* DEPRECATED
 		@Setting
 		@NoChart

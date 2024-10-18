@@ -84,6 +84,8 @@ public class PDLSoundProvider extends SoundProvider {
         mSounds.put(VIDEO_STARTED,MediaPlayer.create(context,R.raw.video_started));
         mSounds.put(VIDEO_STOPED,MediaPlayer.create(context,R.raw.video_stoped));
         mSounds.put(PHOTO_TAKEN,MediaPlayer.create(context,R.raw.photo_taken));
+        mSounds.put(DRONE_CONNECTED,MediaPlayer.create(context,R.raw.connected));
+        mSounds.put(DRONE_DISCONNECTED,MediaPlayer.create(context,R.raw.disconnected));
 
         return true;
     }

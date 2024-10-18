@@ -763,6 +763,7 @@ public class DroneCommander
 		try
 		{
 			// Test modem connection
+			// FIXME Open com port doesn't work on Android. I have to use SerialPort.getCommPorts()[0], but it doesn't work in jserialcomm 2.11.0
 			SerialPort port = SerialPort.getCommPort(comPortName);
 			mdm = new WifiBroadcastModem(port);
 			if( mdm.connect() == true &&

@@ -3,6 +3,7 @@ package ru.liftelectronica.cicada;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
@@ -27,6 +28,9 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.Timer;
 import java.util.TimerTask;
+
+import com.fazecast.jSerialComm.SerialPort;
+import com.fazecast.jSerialComm.android.AndroidPort;
 
 import io.github.controlwear.virtual.joystick.android.JoystickView;
 import pdl.Accelerator;
@@ -84,6 +88,8 @@ public class MainActivity extends AppCompatActivity {
                 public void run() {
                     Alarm alarm = DroneAlarmCenter.instance().getAlarm();
                     printAlarm(alarm);
+                    DroneState ds = DroneTelemetry.instance().getDroneState();
+                    DroneTelemetry.instance().speakDroneState(ds,pdlSoundProvider);
                 }
             });
         }
@@ -458,9 +464,6 @@ public class MainActivity extends AppCompatActivity {
         }
         // if I stop it here SettingsActivity can't run new services
         // because this code can be performed after SettingsActivity restart services
-        //DroneCommander.instance().stop();
-        //DroneTelemetry.instance().stop();
-        //DroneLog.instance().stop();
         DroneAlarmCenter.instance().deleteObservers();
         DroneTelemetry.instance().deleteObservers();
     }
@@ -468,6 +471,8 @@ public class MainActivity extends AppCompatActivity {
     private void myResCreate() {
 
         Context context = this.getApplicationContext();
+
+        SerialPort.setAndroidContext(context);
 
         if(pdlSoundProvider == null)
         {
@@ -525,23 +530,11 @@ public class MainActivity extends AppCompatActivity {
         TextBox.load(new Locale(Locale.ENGLISH.getLanguage()));
 
         DroneAlarmCenter.instance().addObserver(new OnAlarmUpdate());
+        DroneTelemetry.instance().addObserver(new OnTelemetryUpdate());
 
-        try
-        {
-            DroneCommander.instance().start(DroneState.net.ip, DroneState.net.cmdPort);
-            DroneTelemetry.instance().start(DroneState.net.ip, DroneState.net.telemetryPort);
-            DroneTelemetry.instance().addObserver(new OnTelemetryUpdate());
-            //DroneLog.instance().start(DroneState.net.ip, DroneState.net.logPort);
+        if(DroneTelemetry.instance().isDroneConnected() == false) { // for first run
+            DroneAlarmCenter.instance().setAlarm(Alarm.ALARM_DRONE_NOT_FOUND);
         }
-        catch(UnknownHostException e)
-        {
-            Toast.makeText(this,TextBox.get("INVALID_HOST"),Toast.LENGTH_LONG).show();
-        }
-        catch(SocketException e) {
-            Toast.makeText(this,TextBox.get("SOCKET_NOT_OPEN"),Toast.LENGTH_LONG).show();
-        }
-
-        DroneAlarmCenter.instance().setAlarm(Alarm.ALARM_DRONE_NOT_FOUND);
         printAlarm(DroneAlarmCenter.instance().getAlarm());
         printDroneState(DroneTelemetry.instance().getDroneState());
         updateJoysticks();
@@ -591,9 +584,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
 
-        DroneTelemetry.instance().stop();
-        DroneCommander.instance().stop();
-        //DroneLog.instance().stop();
+        DroneCommander.instance().disconnect();
     }
 
     public void updateJoysticks() {
@@ -631,25 +622,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onBtnConnect(View v) {
-
-        if(DroneAlarmCenter.instance().getAlarm(Alarm.ALARM_CONNECTING))
-            return;
-
-        DroneAlarmCenter.instance().setAlarm(Alarm.ALARM_CONNECTING);
-
-        Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                DroneTelemetry.instance().resetFlyTime();
-                DroneState ds = Profile.instance().getDroneSettings();
-                DroneCommander.instance().sendSettingsToDrone(ds);
-                CmdResetAltitude cmd = new CmdResetAltitude();
-                DroneCommander.instance().addCmd(cmd);
-                DroneAlarmCenter.instance().clearAlarm(Alarm.ALARM_CONNECTING);
-            }
-        });
-
-        thread.start();
+        DroneCommander.instance().connect();
     }
 
     public void onBtnDisarm(View v) {

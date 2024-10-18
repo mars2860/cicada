@@ -103,19 +103,11 @@ public class SettingsActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        try
-        {
-            // Restart drone services because it can be closed when we close MainActivity
-            DroneCommander.instance().start(DroneState.net.ip, DroneState.net.cmdPort);
-            DroneTelemetry.instance().start(DroneState.net.ip, DroneState.net.telemetryPort);
-        }
-        catch(UnknownHostException e)
-        {
-            Toast.makeText(this,TextBox.get("INVALID_HOST"),Toast.LENGTH_LONG).show();
-        }
-        catch(SocketException e) {
-            Toast.makeText(this,TextBox.get("SOCKET_NOT_OPEN"),Toast.LENGTH_LONG).show();
-        }
+
+        // FIXME Restart drone services because it can be closed when we close MainActivity
+        //DroneCommander.instance().start(DroneState.net.ip, DroneState.net.cmdPort);
+        //DroneTelemetry.instance().start(DroneState.net.ip, DroneState.net.telemetryPort);
+
     }
 
     public void updateSettingsView() {
@@ -138,17 +130,10 @@ public class SettingsActivity extends AppCompatActivity {
 
         if(ds != null) {
             Profile.instance().setDroneSettings(ds);
-
-            DroneTelemetry.instance().resetFlyTime();
             DroneCommander.instance().sendSettingsToDrone(ds);
-            CmdResetAltitude cmd = new CmdResetAltitude();
-            // we can lose udp packet so send it three times
-            DroneCommander.instance().addCmd(cmd);
-            DroneCommander.instance().addCmd(cmd);
-            DroneCommander.instance().addCmd(cmd);
 
-            if(DroneAlarmCenter.instance().getAlarm(Alarm.ALARM_SEND_ERROR)) {
-                Toast.makeText(this,TextBox.get("ALARM_SEND_ERROR"), Toast.LENGTH_SHORT).show();
+            if(DroneAlarmCenter.instance().getAlarm(Alarm.ALARM_SEND_SETUP_ERROR)) {
+                Toast.makeText(this,TextBox.get("ALARM_SEND_SETUP_ERROR"), Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(this, R.string.settings_sent, Toast.LENGTH_SHORT).show();
             }

@@ -71,6 +71,8 @@ void pdlSetup(pdlDroneState *ds)
   ds->kfSettings.gpsHorPosVariance = 10.f;
   ds->kfSettings.gpsVerPosVariance = 10.f;
 
+  pdlSetTelemetryUpdatePeriod(ds, 250000);
+
   pdlResetKalman(ds);
   pdlStopMotors(ds);
   pdlLoadDefaultCfg(ds);
@@ -625,14 +627,14 @@ void pdlSetFrameType(pdlDroneState *ds, uint8_t frame)
 void pdlSetTime(pdlDroneState *ds, uint64_t t)
 {
   (void)ds;
-  //pdlRefTime = t;
-  //pdlRefTimestamp = pdlMicros();
+  pdlRefTime = t;
+  pdlRefTimestamp = pdlMicros();
 }
 
 void pdlUpdateTime(pdlDroneState *ds)
 {
   ds->timestamp = pdlMicros();
-  //ds->localTime = pdlRefTime + pdlGetDeltaTime(pdlMicros(),pdlRefTimestamp) / 1000;
+  ds->localTime = pdlRefTime + (uint64_t)(pdlGetDeltaTime(pdlMicros(),pdlRefTimestamp) / 1000);
 }
 
 uint8_t pdlIsHostConnected(pdlDroneState* ds)
@@ -641,6 +643,8 @@ uint8_t pdlIsHostConnected(pdlDroneState* ds)
   // host have to send SET_TIME command every 1s
   // if it is not then the connection is not alive
   if(pdlGetDeltaTime(pdlMicros(),pdlRefTimestamp) <= 3000000 && pdlRefTimestamp > 0)
+  {
     return 1;
+  }
   return 0;
 }

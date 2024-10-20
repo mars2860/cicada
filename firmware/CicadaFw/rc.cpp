@@ -271,6 +271,13 @@ void pdlSetupRc(pdlDroneState*)
   if(strcmp(strSta,"y") == 0)
   {
     staMode = 1;
+  }
+
+  WiFi.persistent(false);
+
+  if(staMode)
+  {
+    WiFi.disconnect(true);
 
     LOG_INFO("Start WIFI_STA");
 
@@ -326,6 +333,8 @@ void pdlSetupRc(pdlDroneState*)
 
   if(!staMode)
   {
+    WiFi.disconnect(true);
+
     LOG_INFO("Start WIFI_AP");
 
     if(!WiFi.mode(WIFI_AP))

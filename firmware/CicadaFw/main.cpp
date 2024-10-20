@@ -77,10 +77,10 @@ void scanI2C()
     {
       LOG_INFO("I2Cdev=0x%x",address);
     }
-    else if(error==4)
-    {
-      LOG_ERROR("I2C error at address 0x%x",address);
-    }
+    //else if(error==4) // this floods the log when no I2C devices
+    //{
+    //  LOG_ERROR("I2C error at address 0x%x",address);
+    //}
   }
 }
 

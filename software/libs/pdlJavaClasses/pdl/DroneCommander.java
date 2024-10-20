@@ -36,6 +36,7 @@ import pdl.commands.CmdSetMagneto;
 import pdl.commands.CmdSetMotorsDir;
 import pdl.commands.CmdSetMotorsGas;
 import pdl.commands.CmdSetTelemetryPeriod;
+import pdl.commands.CmdSetTime;
 import pdl.commands.CmdSetPitch;
 import pdl.commands.CmdSetPitchPid;
 import pdl.commands.CmdSetPitchRate;
@@ -132,6 +133,8 @@ public class DroneCommander
 	private int wlanRxPacketCounter;
 	private int wlanLastRxPacketNum;
 	private int wlanTxPacketCounter;
+	private int wlanLatency;
+	private long wlanLastSetTime;
 	
 	private DroneCommander() 
 	{
@@ -213,6 +216,8 @@ public class DroneCommander
 							DroneTelemetry.instance().append(telemetryPacket);
 							recvErrCounter = 0;
 							wlanLastRxPacketNum = telemetryPacket.getNum();
+							System.out.println("time="+System.currentTimeMillis());
+							wlanLatency = (int)(System.currentTimeMillis() - telemetryPacket.getDroneState().time);
 						}
 						else
 						{
@@ -278,6 +283,13 @@ public class DroneCommander
 					{
 						cmd = null;
 					}
+				}
+				
+				// Send CmdSetTime every one second to inform the drone that the connection is alive. Also it is used to measure the net latency
+				if(System.currentTimeMillis() - wlanLastSetTime >= 1000)
+				{
+					wlanLastSetTime = System.currentTimeMillis();
+					DroneCommander.instance().addCmd(new CmdSetTime());
 				}
 					
 				if(cmd != null)
@@ -372,6 +384,11 @@ public class DroneCommander
 	public int getLostRxPacketCounter()
 	{
 		return (wlanLastRxPacketNum > 0)?(wlanLastRxPacketNum + 1 - wlanRxPacketCounter):0;
+	}
+	
+	public int getWlanLatency()
+	{
+		return wlanLatency;
 	}
 	
 	public void connect()

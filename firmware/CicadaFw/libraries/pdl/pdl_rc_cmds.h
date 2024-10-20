@@ -142,6 +142,8 @@
 #define PDL_CMD_ENABLE_WIFI_BROADCAST 161
 /// Set drone id. Format = {162, uint32_t droneId}
 #define PDL_CMD_SET_DRONE_ID          162
+/// Set time. Format = {163, uint64_t time}
+#define PDL_CMD_SET_TIME              163
 
 /// @}
 

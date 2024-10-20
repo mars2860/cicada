@@ -7,6 +7,8 @@
 
 char pdlLog[PDL_LOG_BUF_SIZE];
 int pdlLogPos = 0;
+uint64_t pdlRefTime = 0;
+uint32_t pdlRefTimestamp = 0;
 
 int pdl_printf(const char *format, ... )
 {
@@ -98,7 +100,7 @@ void pdlSetup(pdlDroneState *ds)
 
 void pdlUpdate(pdlDroneState *ds)
 {
-  ds->timestamp = pdlMicros();
+  pdlUpdateTime(ds);
 
   pdlPidTask(ds);
   pdlEscTask(ds);
@@ -618,4 +620,30 @@ void pdlSetEscMode(pdlDroneState *ds, uint8_t mode)
 void pdlSetFrameType(pdlDroneState *ds, uint8_t frame)
 {
   ds->frame = frame;
+}
+
+void pdlSetTime(pdlDroneState *ds, uint64_t time)
+{
+  (void)ds;
+  pdlRefTime = time;
+  pdlRefTimestamp = pdlMicros();
+
+  LOG_INFO("Set time %f", (double)pdlRefTime);
+}
+
+void pdlUpdateTime(pdlDroneState *ds)
+{
+  ds->timestamp = pdlMicros();
+  //ds->time = pdlRefTime + pdlGetDeltaTime(pdlMicros(),pdlRefTimestamp) / 1000;
+  LOG_INFO("time %f", (double)ds->time);
+}
+
+uint8_t pdlIsHostConnected(pdlDroneState* ds)
+{
+  (void)ds;
+  // host have to send SET_TIME command every 1s
+  // if it is not then the connection is not alive
+  if(pdlGetDeltaTime(pdlMicros(),pdlRefTimestamp) <= 3000000 && pdlRefTimestamp > 0)
+    return 1;
+  return 0;
 }

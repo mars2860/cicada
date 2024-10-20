@@ -21,6 +21,7 @@ public class RadioGui extends JSavedFrame
 	private JLabel mlbRxPackets;
 	private JLabel mlbLostRxPackets;
 	private JLabel mlbTxPackets;
+	private JLabel mlbLatency;
 	
 	private Timer mTimer;
 	
@@ -41,6 +42,7 @@ public class RadioGui extends JSavedFrame
 			mlbRxPackets.setText(Integer.toString(DroneCommander.instance().getRxPacketCounter()));
 			mlbLostRxPackets.setText(Integer.toString(DroneCommander.instance().getLostRxPacketCounter()));
 			mlbTxPackets.setText(Integer.toString(DroneCommander.instance().getTxPacketCounter()));
+			mlbLatency.setText(Integer.toString(DroneCommander.instance().getWlanLatency()));
 		}
 	}
 	
@@ -91,6 +93,7 @@ public class RadioGui extends JSavedFrame
 		mlbRxPackets = new JLabel();
 		mlbLostRxPackets = new JLabel();
 		mlbTxPackets = new JLabel();
+		mlbLatency = new JLabel();
 		
 		JPanel pnl = new JPanel(new MigLayout("","[][100]"));
 
@@ -102,6 +105,8 @@ public class RadioGui extends JSavedFrame
 		pnl.add(mlbLostRxPackets,"wrap");
 		pnl.add(new JLabel("TxPackets: "));
 		pnl.add(mlbTxPackets,"wrap");
+		pnl.add(new JLabel("Latency: "));
+		pnl.add(mlbLatency,"wrap");
 
 		this.add(pnl);
 	}

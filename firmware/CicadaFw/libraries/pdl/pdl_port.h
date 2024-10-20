@@ -211,9 +211,6 @@ void pdlCmdEnableWifiBroadcast(pdlDroneState* ds, const uint8_t* packet);
 /** Set drone id */
 void pdlCmdSetDroneId(pdlDroneState* ds, const uint8_t* packet);
 
-/** @return 1 if the host is connected */
-uint8_t pdlIsHostConnected(pdlDroneState* ds);
-
 /// @}
 
 #endif

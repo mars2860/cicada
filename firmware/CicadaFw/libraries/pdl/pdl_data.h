@@ -319,7 +319,7 @@ typedef struct s_pdlDroneState
   uint32_t errors;
   /// Base gas. This value is output of altitude PID. If altitude PID is disabled you have to control this value yourself
   int32_t baseGas;
-  /// Current time in microseconds from system has been started
+  /// Current time in microseconds from the system has been started
   uint32_t timestamp;
   /// Battery state
   pdlBatteryState battery;
@@ -419,10 +419,8 @@ typedef struct s_pdlDroneState
   uint32_t telemetryPeriod;
   /// OSD (on screen display) flags. PDL doesn't implement drawing OSD, but you can use this field in your implementation to know what data to draw on the screen
   uint32_t osd;
-  /// Reserved5
-  uint32_t reserved5;
-  /// Reserved6
-  uint32_t reserved6;
+  /// unix time in milliseconds
+  uint64_t time;
   /// Motors gas. These values are intended to motor regulator. Gas means your PWM value, DSHOT value, etc.
   int32_t motorGas[PDL_MOTOR_COUNT];
   /// Loads (led,buzzer,drop-machine,etc)

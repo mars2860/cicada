@@ -479,30 +479,6 @@ bool hostIsSet()
   return host.isSet();
 }
 
-uint8_t pdlIsHostConnected(pdlDroneState*)
-{
-  if(wifiBroadcastEnabled)  // TODO I don't know how to determine that the host is connected in wifi broadcast mode
-  {
-    return 1;
-  }
-
-  if( WiFi.getMode() == WIFI_STA &&
-      WiFi.status() == WL_CONNECTED &&
-      hostIsSet() )
-  {
-    return 1;
-  }
-
-  if( WiFi.getMode() == WIFI_AP &&
-      WiFi.softAPgetStationNum() > 0 &&
-      hostIsSet() )
-  {
-    return 1;
-  }
-
-  return 0;
-}
-
 int32_t getRssi()
 {
   if(wifiBroadcastEnabled)
@@ -526,7 +502,7 @@ void pdlUpdateTelemetry(pdlDroneState *ds)
   uint16_t pos = 0;
   size_t sz = sizeof(pdlDroneState);
 
-  ds->timestamp = pdlMicros();
+  pdlUpdateTime(ds);
   ds->rc.rssi = getRssi();
 
   // prepare wifi broadcast packet

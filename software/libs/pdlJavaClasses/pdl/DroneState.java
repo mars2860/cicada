@@ -1290,6 +1290,10 @@ public class DroneState implements Cloneable
 	
 	@NoChart
 	public double timestamp;
+	@NoChart
+	public long time;
+	@NoChart
+	public int osd;
 	
 	public double rssi;
 	
@@ -1575,12 +1579,10 @@ public class DroneState implements Cloneable
 		velocityZPid.accUpOffset = parser.getFloat(packet);
 		// Now Reserved3 is telemetry.period
 		telemetry.period = (int)parser.getUint32t(packet);
-		// skip Reserved4
-		parser.getUint32t(packet);
-		// skip Reserved5
-		parser.getUint32t(packet);
-  	    // skip Reserved6
-		parser.getUint32t(packet);
+		// Now Reserved4 is OSD
+		osd = (int)parser.getUint32t(packet);
+		// Now Reserved5 and Reserved6 is time
+		time = parser.getUint64t(packet);
 		
 		for(int i = 0; i < DroneState.Motors.count; i++)
 		{

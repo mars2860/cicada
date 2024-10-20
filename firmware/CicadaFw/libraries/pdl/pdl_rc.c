@@ -381,6 +381,13 @@ void pdlCmdSetAccUpOffset(pdlDroneState *ds, uint8_t *packet)
   memcpy(&ds->accUpOffset, &packet[1], sizeof(float));
 }
 
+void pdlCmdSetTime(pdlDroneState *ds, uint8_t *packet)
+{
+  uint64_t time;
+  memcpy(&time,&packet[1],sizeof(time));
+  pdlSetTime(ds,time);
+}
+
 void pdlParseCommand(pdlDroneState *ds, uint8_t *packet)
 {
   uint8_t cmd = packet[0];
@@ -576,6 +583,9 @@ void pdlParseCommand(pdlDroneState *ds, uint8_t *packet)
       break;
     case PDL_CMD_SET_DRONE_ID:
       pdlCmdSetDroneId(ds, packet);
+      break;
+    case PDL_CMD_SET_TIME:
+      pdlCmdSetTime(ds, packet);
       break;
   }
 }

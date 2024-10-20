@@ -55,6 +55,20 @@ public abstract class AbstractDroneCmd
 		return pos;
 	}
 	
+	protected int writeInt64(int pos, byte data[], long value)
+	{
+		data[pos++] = (byte)(value & 0xFF);
+		data[pos++] = (byte)((value >>> 8) & 0xFF);
+		data[pos++] = (byte)((value >>> 16) & 0xFF);
+		data[pos++] = (byte)((value >>> 24) & 0xFF);
+		data[pos++] = (byte)((value >>> 32) & 0xFF);
+		data[pos++] = (byte)((value >>> 40) & 0xFF);
+		data[pos++] = (byte)((value >>> 48) & 0xFF);
+		data[pos++] = (byte)((value >>> 56) & 0xFF);
+		
+		return pos;
+	}
+	
 	protected int writeUint8(int pos, byte data[], int value)
 	{
 		data[pos++] = (byte)(value & 0xFF);

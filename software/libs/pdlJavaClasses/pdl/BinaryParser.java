@@ -68,6 +68,31 @@ public class BinaryParser
 		return result;
 	}
 	
+	public long getUint64t(byte[] packet)
+	{
+		long result = 0;
+		long t = 0;
+		
+		t = packet[mParsePos++] & 0xFF;
+		result = t;
+		t = (packet[mParsePos++] & 0xFF);
+		result |= t << 8;
+		t = (packet[mParsePos++] & 0xFF);
+		result |= t << 16;
+		t = (packet[mParsePos++] & 0xFF);
+		result |= t << 24;
+		t = (packet[mParsePos++] & 0xFF);
+		result |= t << 32;
+		t = (packet[mParsePos++] & 0xFF);
+		result |= t << 40;
+		t = (packet[mParsePos++] & 0xFF);
+		result |= t << 48;
+		t = (packet[mParsePos++] & 0xFF);
+		result |= t << 56;
+		
+		return result;
+	}
+	
 	public int getUint16t(byte[] packet)
 	{
 		int result = 0;

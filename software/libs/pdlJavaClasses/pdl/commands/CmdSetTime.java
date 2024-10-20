@@ -12,8 +12,8 @@ public class CmdSetTime extends AbstractDroneCmd
 	{
 		int pos = 0;
 		byte[] data = new byte[9];
-		this.writeUint8(pos, data, this.getCode());
-		this.writeInt64(pos, data, System.currentTimeMillis());
+		pos = this.writeUint8(pos, data, this.getCode());
+		pos = this.writeInt64(pos, data, System.currentTimeMillis());
 		return data;
 	}
 }

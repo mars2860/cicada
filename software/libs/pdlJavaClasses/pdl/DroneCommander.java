@@ -216,8 +216,8 @@ public class DroneCommander
 							DroneTelemetry.instance().append(telemetryPacket);
 							recvErrCounter = 0;
 							wlanLastRxPacketNum = telemetryPacket.getNum();
-							System.out.println("time="+System.currentTimeMillis());
-							wlanLatency = (int)(System.currentTimeMillis() - telemetryPacket.getDroneState().time);
+							// sometimes droneTime is bigger than current time I think this is because System.currentTimeMillis() is not precise
+							wlanLatency = Math.max(0,(int)(System.currentTimeMillis() - telemetryPacket.getDroneState().time));
 						}
 						else
 						{

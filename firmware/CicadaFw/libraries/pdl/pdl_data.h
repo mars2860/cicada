@@ -419,8 +419,8 @@ typedef struct s_pdlDroneState
   uint32_t telemetryPeriod;
   /// OSD (on screen display) flags. PDL doesn't implement drawing OSD, but you can use this field in your implementation to know what data to draw on the screen
   uint32_t osd;
-  /// unix time in milliseconds
-  uint64_t time;
+  /// elapsed local time in milliseconds from UNIX Epoch
+  uint64_t localTime;
   /// Motors gas. These values are intended to motor regulator. Gas means your PWM value, DSHOT value, etc.
   int32_t motorGas[PDL_MOTOR_COUNT];
   /// Loads (led,buzzer,drop-machine,etc)

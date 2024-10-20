@@ -268,7 +268,7 @@ void pdlSetTrickMode(pdlDroneState *ds, uint8_t mode);
 void pdlSetEscMode(pdlDroneState *ds, uint8_t mode);
 void pdlSetFrameType(pdlDroneState *ds, uint8_t frame);
 
-void pdlSetTime(pdlDroneState *ds, uint64_t time);
+void pdlSetTime(pdlDroneState *ds, uint64_t t);
 void pdlUpdateTime(pdlDroneState *ds);
 /** @return 1 if the host sends SET_TIME command every 1s */
 uint8_t pdlIsHostConnected(pdlDroneState* ds);

@@ -383,9 +383,9 @@ void pdlCmdSetAccUpOffset(pdlDroneState *ds, uint8_t *packet)
 
 void pdlCmdSetTime(pdlDroneState *ds, uint8_t *packet)
 {
-  uint64_t time;
-  memcpy(&time,&packet[1],sizeof(time));
-  pdlSetTime(ds,time);
+  uint64_t t;
+  memcpy(&t,&packet[1],sizeof(t));
+  pdlSetTime(ds,t);
 }
 
 void pdlParseCommand(pdlDroneState *ds, uint8_t *packet)

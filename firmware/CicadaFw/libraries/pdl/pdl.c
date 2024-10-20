@@ -622,20 +622,17 @@ void pdlSetFrameType(pdlDroneState *ds, uint8_t frame)
   ds->frame = frame;
 }
 
-void pdlSetTime(pdlDroneState *ds, uint64_t time)
+void pdlSetTime(pdlDroneState *ds, uint64_t t)
 {
   (void)ds;
-  pdlRefTime = time;
-  pdlRefTimestamp = pdlMicros();
-
-  LOG_INFO("Set time %f", (double)pdlRefTime);
+  //pdlRefTime = t;
+  //pdlRefTimestamp = pdlMicros();
 }
 
 void pdlUpdateTime(pdlDroneState *ds)
 {
   ds->timestamp = pdlMicros();
-  //ds->time = pdlRefTime + pdlGetDeltaTime(pdlMicros(),pdlRefTimestamp) / 1000;
-  LOG_INFO("time %f", (double)ds->time);
+  //ds->localTime = pdlRefTime + pdlGetDeltaTime(pdlMicros(),pdlRefTimestamp) / 1000;
 }
 
 uint8_t pdlIsHostConnected(pdlDroneState* ds)

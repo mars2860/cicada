@@ -684,14 +684,14 @@ void pdlCmdEnableWifiBroadcast(pdlDroneState* ds, const uint8_t* packet)
   uint8_t oldWifiBroadcastEnabled = wifiBroadcastEnabled;
   wifiBroadcastEnabled = packet[1];
 
-  if(wifiBroadcastEnabled)
+  if(wifiBroadcastEnabled && !oldWifiBroadcastEnabled)
   {
-    if(!oldWifiBroadcastEnabled)
-    {
-      udp.stop();
-      httpServer.stop();
-      httpServer.close();
-    }
+    udp.stop();
+    httpServer.stop();
+    httpServer.close();
+
+    WiFi.disconnect(true);
+    WiFi.softAPdisconnect(true);
 
     delay(1000);
 
@@ -704,13 +704,12 @@ void pdlCmdEnableWifiBroadcast(pdlDroneState* ds, const uint8_t* packet)
 
     LOG_INFO("Wifi broadcast is enabled");
   }
-  else
+
+  if(!wifiBroadcastEnabled && oldWifiBroadcastEnabled)
   {
     wbmStop();
 
     delay(1000);
-
-    // FIXME The system resets when we try to switch back to normal wifi mode
 
     pdlSetupRc(ds);
     pdlSetupTelemetry(ds);

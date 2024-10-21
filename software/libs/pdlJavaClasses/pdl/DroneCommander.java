@@ -415,6 +415,12 @@ public class DroneCommander
 		mWifiRate = DroneState.net.wifiRate;
 		mWifiTpwDbm = DroneState.net.wifiTxPowerDbm;
 		
+		// Reset net statistics
+		wlanRxPacketCounter = 0;
+		wlanLastRxPacketNum = 0;
+		wlanTxPacketCounter = 0;
+		wlanLatency = 0;
+		
 		mthConnect = new Thread(new Runnable()
 		{
 			@Override

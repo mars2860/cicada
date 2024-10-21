@@ -277,7 +277,14 @@ void pdlSetupRc(pdlDroneState*)
 
   if(staMode)
   {
+    WiFi.softAPdisconnect(true);
     WiFi.disconnect(true);
+
+    connectionResult = WiFi.waitForConnectResult(5000);
+    if(connectionResult != WL_DISCONNECTED)
+    {
+      LOG_ERROR("Old WiFi is not disconnected,stat=%i",connectionResult);
+    }
 
     LOG_INFO("Start WIFI_STA");
 
@@ -334,6 +341,13 @@ void pdlSetupRc(pdlDroneState*)
   if(!staMode)
   {
     WiFi.disconnect(true);
+    WiFi.softAPdisconnect(true);
+
+    connectionResult = WiFi.waitForConnectResult(5000);
+    if(connectionResult != WL_DISCONNECTED)
+    {
+      LOG_ERROR("Old WiFi is not disconnected,stat=%i",connectionResult);
+    }
 
     LOG_INFO("Start WIFI_AP");
 
@@ -679,6 +693,8 @@ void pdlCmdEnableWifiBroadcast(pdlDroneState* ds, const uint8_t* packet)
       httpServer.close();
     }
 
+    delay(1000);
+
     wbmSetRxFunc(onWifiBroadcastRx);
     wbmStartNormal();
     wbmSetChannel(wifiChl);
@@ -691,6 +707,10 @@ void pdlCmdEnableWifiBroadcast(pdlDroneState* ds, const uint8_t* packet)
   else
   {
     wbmStop();
+
+    delay(1000);
+
+    // FIXME The system resets when we try to switch back to normal wifi mode
 
     pdlSetupRc(ds);
     pdlSetupTelemetry(ds);

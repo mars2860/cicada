@@ -625,7 +625,7 @@ environment/project/io.sloeber.core.toolChain.release.543996704.1344082602/JANTJ
 environment/project/io.sloeber.core.toolChain.release.543996704.1344082602/JANTJE.BOARD_NAME/value=Generic ESP8266 Module
 environment/project/io.sloeber.core.toolChain.release.543996704.1344082602/JANTJE.COM_PORT/delimiter=;
 environment/project/io.sloeber.core.toolChain.release.543996704.1344082602/JANTJE.COM_PORT/operation=replace
-environment/project/io.sloeber.core.toolChain.release.543996704.1344082602/JANTJE.COM_PORT/value=COM10
+environment/project/io.sloeber.core.toolChain.release.543996704.1344082602/JANTJE.COM_PORT/value=COM25
 environment/project/io.sloeber.core.toolChain.release.543996704.1344082602/JANTJE.ECLIPSE_LOCATION/delimiter=;
 environment/project/io.sloeber.core.toolChain.release.543996704.1344082602/JANTJE.ECLIPSE_LOCATION/operation=replace
 environment/project/io.sloeber.core.toolChain.release.543996704.1344082602/JANTJE.ECLIPSE_LOCATION/value=D\:\\SloeberIDE\\

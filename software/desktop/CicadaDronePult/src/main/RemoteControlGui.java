@@ -375,8 +375,11 @@ public class RemoteControlGui extends JSavedFrame
 				}
 			}
 			
-			if(DroneTelemetry.instance().isDroneConnected() == false)
-				return; // can't execute code below if drone is disconnected
+			if	(DroneTelemetry.instance().isDroneConnected() == false &&
+				DroneState.net.wifiBroadcastEnabled == false )
+			{
+				return; // can't execute code below if drone is disconnected but in the wifibroadcast mode the drone can hear us
+			}
 			
 			// get up
 			if(btnGetUp.getModel().isPressed())

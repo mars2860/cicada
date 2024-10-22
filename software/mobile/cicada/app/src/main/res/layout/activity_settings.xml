@@ -18,14 +18,24 @@
         android:layout_alignParentStart="true"
         android:id="@+id/profileBar"
         >
+        <TextView
+            android:id="@+id/tvAlarm"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentLeft="true"
+            android:text="The drone is not found"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="5dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="5dp" />
+
         <Spinner
             android:layout_width="280dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
             android:id="@+id/spProfile"
-            android:layout_alignParentTop="true"
             android:layout_alignParentLeft="true"
-            android:layout_alignParentStart="true" />
+            />
 
         <Button
             android:layout_width="60dp"

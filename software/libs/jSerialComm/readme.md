@@ -1,0 +1,1 @@
+The modified version of [jSerialComm](https://github.com/Fazecast/jSerialComm/tree/v2.11.0) to support the serial port on the Adnroid devices. The porting uses the project [Usb-serial-for-android](https://github.com/mik3y/usb-serial-for-android/tree/master?tab=readme-ov-file). The serial port is needed to work with the WifiBroadcastModem.

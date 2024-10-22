@@ -59,6 +59,8 @@ public class MainActivity extends AppCompatActivity {
     ToggleButton mbtnDisarm;
 
     PDLSoundProvider pdlSoundProvider;
+    OnAlarmUpdate alarmObserver;
+    OnTelemetryUpdate telemetryObserver;
 
     DPad dpad = new DPad();
 
@@ -250,11 +252,15 @@ public class MainActivity extends AppCompatActivity {
                 rotateCtrl = mRotateAccelerator.normalize(dt);
             }
 
-            if(DroneTelemetry.instance().isDroneConnected()) {
-                DroneCommander.instance().liftDrone(liftCtrl);
-                DroneCommander.instance().rotateDrone(rotateCtrl);
-                DroneCommander.instance().moveDrone(pitchCtrl, rollCtrl);
+            if( DroneTelemetry.instance().isDroneConnected() == false &&
+                DroneState.net.wifiBroadcastEnabled == false) {
+                // In the wifibroadcast mode the drone can hear us
+                return;
             }
+
+            DroneCommander.instance().liftDrone(liftCtrl);
+            DroneCommander.instance().rotateDrone(rotateCtrl);
+            DroneCommander.instance().moveDrone(pitchCtrl, rollCtrl);
         }
     }
 
@@ -341,8 +347,11 @@ public class MainActivity extends AppCompatActivity {
 
     private void processGamepadKey(int keyCode, boolean pressed) {
 
-        if(DroneTelemetry.instance().isDroneConnected() == false)
+        if( DroneTelemetry.instance().isDroneConnected() == false &&
+            DroneState.net.wifiBroadcastEnabled == false ) {
+            // In the wifibroadcast mode the drone can hear us
             return;
+        }
 
         DroneState ds = DroneTelemetry.instance().getDroneState();
 
@@ -462,17 +471,14 @@ public class MainActivity extends AppCompatActivity {
             pdlSoundProvider.deinit();
             pdlSoundProvider = null;
         }
-        // if I stop it here SettingsActivity can't run new services
-        // because this code can be performed after SettingsActivity restart services
-        DroneAlarmCenter.instance().deleteObservers();
-        DroneTelemetry.instance().deleteObservers();
+
+        DroneAlarmCenter.instance().deleteObserver(alarmObserver);
+        DroneTelemetry.instance().deleteObserver(telemetryObserver);
     }
 
     private void myResCreate() {
 
         Context context = this.getApplicationContext();
-
-        SerialPort.setAndroidContext(context);
 
         if(pdlSoundProvider == null)
         {
@@ -529,8 +535,10 @@ public class MainActivity extends AppCompatActivity {
         Locale.setDefault(Locale.ENGLISH);
         TextBox.load(new Locale(Locale.ENGLISH.getLanguage()));
 
-        DroneAlarmCenter.instance().addObserver(new OnAlarmUpdate());
-        DroneTelemetry.instance().addObserver(new OnTelemetryUpdate());
+        alarmObserver = new OnAlarmUpdate();
+        telemetryObserver = new OnTelemetryUpdate();
+        DroneAlarmCenter.instance().addObserver(alarmObserver);
+        DroneTelemetry.instance().addObserver(telemetryObserver);
 
         if(DroneTelemetry.instance().isDroneConnected() == false) { // for first run
             DroneAlarmCenter.instance().setAlarm(Alarm.ALARM_DRONE_NOT_FOUND);
@@ -549,6 +557,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_main);
+
+        SerialPort.setAndroidContext(this);
 
         // app version
         try {
@@ -582,9 +592,9 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
-
         DroneCommander.instance().disconnect();
+        SerialPort.setAndroidContext(null);
+        super.onDestroy();
     }
 
     public void updateJoysticks() {

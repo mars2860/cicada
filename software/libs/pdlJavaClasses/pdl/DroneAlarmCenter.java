@@ -30,29 +30,31 @@ public class DroneAlarmCenter extends Observable
 	
 	public void setAlarm(Alarm alarm)
 	{
+		boolean result;
 		synchronized(mMutex)
 		{
-			//if(mAlarms.add(alarm))
-			// notify always to play alarm sounds in loop
-			mAlarms.add(alarm);
-			{
-				this.setChanged();
-				this.notifyObservers();
-				this.clearChanged();
-			}
+			result = mAlarms.add(alarm);
+		}
+		if(result)
+		{
+			this.setChanged();
+			this.notifyObservers();
+			this.clearChanged();
 		}
 	}
 	
 	public void clearAlarm(Alarm alarm)
 	{
+		boolean result;
 		synchronized(mMutex)
 		{
-			if(mAlarms.remove(alarm))
-			{
-				this.setChanged();
-				this.notifyObservers();
-				this.clearChanged();
-			}
+			result = mAlarms.remove(alarm);
+		}
+		if(result)
+		{
+			this.setChanged();
+			this.notifyObservers();
+			this.clearChanged();
 		}
 	}
 	

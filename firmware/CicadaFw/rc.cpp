@@ -340,6 +340,9 @@ void pdlSetupRc(pdlDroneState*)
 
   if(!staMode)
   {
+    // FIXME Some devices can't communicate with the esp in SoftAP mode but before all devices can connect to AP without problems.
+    // https://github.com/esp8266/Arduino/issues/1094
+    // https://github.com/OpenMYR/IoT_Motors/issues/19
     WiFi.disconnect(true);
     WiFi.softAPdisconnect(true);
 

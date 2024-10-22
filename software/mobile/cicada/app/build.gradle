@@ -6,6 +6,10 @@ android {
     namespace 'ru.liftelectronica.cicada'
     compileSdk 34
 
+    buildFeatures {
+        buildConfig true
+    }
+
     defaultConfig {
         applicationId "ru.liftelectronica.cicada"
         minSdk 24
@@ -18,6 +22,7 @@ android {
 
     sourceSets {
         main.java.srcDirs += 'src/main/../../../../../libs/pdlJavaClasses'
+        main.java.srcDirs += 'src/main/../../../../../libs/jSerialComm'
     }
 
     buildTypes {
@@ -36,6 +41,7 @@ dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'io.github.controlwear:virtualjoystick:1.10.1'
     implementation 'org.apmem.tools:layouts:1.10@aar'
+    implementation 'com.github.mik3y:usb-serial-for-android:3.8.0'
     //implementation 'com.herohan:UVCAndroid:1.0.5' // may be I implement camera view in future
     implementation libs.appcompat
     implementation libs.material

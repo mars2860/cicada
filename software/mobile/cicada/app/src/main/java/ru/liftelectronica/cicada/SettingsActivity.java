@@ -2,6 +2,7 @@ package ru.liftelectronica.cicada;
 
 import android.content.Context;
 import android.content.DialogInterface;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -11,6 +12,7 @@ import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ExpandableListView;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
@@ -20,6 +22,8 @@ import java.io.FilenameFilter;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Observable;
+import java.util.Observer;
 
 import pdl.Alarm;
 import pdl.DroneAlarmCenter;
@@ -33,6 +37,9 @@ import pdl.res.TextBox;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AlertDialog;
+
+import com.fazecast.jSerialComm.SerialPort;
+
 public class SettingsActivity extends AppCompatActivity {
 
     private static final String CUR_PROFILE_FILENAME = "profile.txt";
@@ -40,6 +47,43 @@ public class SettingsActivity extends AppCompatActivity {
 
     private SettingsAdapter settingsAdapter;
     Spinner spProfile;
+    TextView mtvAlarm;
+    OnAlarmUpdate alarmObserver;
+
+    private class OnAlarmUpdate implements Observer {
+        @Override
+        public void update(Observable o, Object arg) {
+            SettingsActivity.this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Alarm alarm = DroneAlarmCenter.instance().getAlarm();
+                    printAlarm(alarm);
+                }
+            });
+        }
+    }
+
+    private void printAlarm(Alarm alarm) {
+        if(DroneAlarmCenter.instance().getAlarm(Alarm.ALARM_CONNECTING)) {
+            mtvAlarm.setText(TextBox.get("ALARM_CONNECTING"));
+            mtvAlarm.setTextColor(Color.YELLOW);
+            return;
+        }
+
+        if(DroneAlarmCenter.instance().getAlarm(Alarm.ALARM_UNSUPPORTED_FIRMWARE)) {
+            mtvAlarm.setText(TextBox.get("ALARM_UNSUPPORTED_FIRMWARE"));
+            mtvAlarm.setTextColor(Color.RED);
+        }
+
+        if (alarm == null) {
+            mtvAlarm.setText(TextBox.get("SYSTEM_OK"));
+            mtvAlarm.setTextColor(Color.GREEN);
+            return;
+        }
+
+        mtvAlarm.setText(TextBox.get(alarm.name()));
+        mtvAlarm.setTextColor(Color.RED);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,6 +115,7 @@ public class SettingsActivity extends AppCompatActivity {
         // Specify the layout to use when the list of choices appears
         profileAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
+        mtvAlarm = (TextView)findViewById(R.id.tvAlarm);
         spProfile = (Spinner)findViewById(R.id.spProfile);
         // Apply the adapter to the spinner
         spProfile.setAdapter(profileAdapter);
@@ -104,10 +149,15 @@ public class SettingsActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
 
-        // FIXME Restart drone services because it can be closed when we close MainActivity
-        //DroneCommander.instance().start(DroneState.net.ip, DroneState.net.cmdPort);
-        //DroneTelemetry.instance().start(DroneState.net.ip, DroneState.net.telemetryPort);
+        alarmObserver = new OnAlarmUpdate();
+        DroneAlarmCenter.instance().addObserver(alarmObserver);
+        printAlarm(DroneAlarmCenter.instance().getAlarm());
+    }
 
+    @Override
+    protected void onStop() {
+        DroneAlarmCenter.instance().deleteObserver(alarmObserver);
+        super.onStop();
     }
 
     public void updateSettingsView() {

@@ -3,7 +3,6 @@ package pdl;
 import java.util.ArrayList;
 
 import com.fazecast.jSerialComm.SerialPort;
-import com.fazecast.jSerialComm.SerialPortInvalidPortException;
 
 import pdl.DroneState.RemoteCtrl.MoveBy;
 import pdl.DroneState.RemoteCtrl.RotateBy;
@@ -415,6 +414,7 @@ public class DroneCommander
 		mWifiRate = DroneState.net.wifiRate;
 		mWifiTpwDbm = DroneState.net.wifiTxPowerDbm;
 		
+		// FIXME LostPackets param gets wrong If the drone were connected normally
 		// Reset net statistics
 		wlanRxPacketCounter = 0;
 		wlanLastRxPacketNum = 0;
@@ -786,8 +786,11 @@ public class DroneCommander
 		try
 		{
 			// Test modem connection
-			// FIXME Open com port doesn't work on Android. I have to use SerialPort.getCommPorts()[0], but it doesn't work in jserialcomm 2.11.0
 			SerialPort port = SerialPort.getCommPort(comPortName);
+			if(port == null)
+			{
+				throw new NullPointerException("Serial port is not found");
+			}
 			mdm = new WifiBroadcastModem(port);
 			if( mdm.connect() == true &&
 				mdm.ping(100) == true )
@@ -802,7 +805,7 @@ public class DroneCommander
 				DroneAlarmCenter.instance().setAlarm(Alarm.ALARM_WIFI_BROADCAST_MODEM_NOT_FOUND);
 			}
 		}
-		catch(SerialPortInvalidPortException e)
+		catch(Exception e)
 		{
 			DroneAlarmCenter.instance().setAlarm(Alarm.ALARM_CANT_OPEN_COM_PORT);
 		}

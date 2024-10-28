@@ -9,7 +9,7 @@
 #define DEFAULT_SUBNET_STR                        "255.255.255.0"
 #define DEFAULT_USE_DHCP_STR                      "n"
 
-#define DEFAULT_WIFI_STA_MODE_STR                 "n"
+#define DEFAULT_WIFI_STA_MODE_STR                 "y"
 // our param saving system supports only string literal
 #define DEFAULT_WIFI_CHANNEL_STR                  "7"
 #define DEFAULT_WIFI_TX_POWER_LEVEL_STR           "80"

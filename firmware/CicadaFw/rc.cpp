@@ -340,7 +340,7 @@ void pdlSetupRc(pdlDroneState*)
 
   if(!staMode)
   {
-    // FIXME Some devices can't communicate with the esp in SoftAP mode but before all devices can connect to AP without problems.
+    // FIXME Some devices can't communicate with the esp in SoftAP mode
     // https://github.com/esp8266/Arduino/issues/1094
     // https://github.com/OpenMYR/IoT_Motors/issues/19
     WiFi.disconnect(true);
@@ -364,7 +364,11 @@ void pdlSetupRc(pdlDroneState*)
       LOG_ERROR("Can't set ip,gateway,subnet of wifi access point");
     }
 
-    if(!WiFi.softAP(strSsid, strPsk, wifiChl, false, 1))
+    // I revealed the bug inside the esp core. There are devices if it is disconnected ESP softAP still considers that it is connected
+    // Even If I power down this device ESP softAP still considers that it is connected. For example, the some device is RTL8812AU
+    // Due to this I set max connections to 4 instead 1
+    // Also I guess that this bug related to the bug where some devices can't communicate with ESP softAP
+    if(!WiFi.softAP(strSsid, strPsk, wifiChl, false, 4))
     {
       LOG_ERROR("Can't start wifi access point");
     }

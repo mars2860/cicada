@@ -391,6 +391,7 @@ void pdlCmdSetTime(pdlDroneState *ds, uint8_t *packet)
 void pdlParseCommand(pdlDroneState *ds, uint8_t *packet)
 {
   uint8_t cmd = packet[0];
+  pdlNotifyHostIsAlive(ds);
   switch(cmd)
   {
     case PDL_CMD_SWITCH_MOTORS:

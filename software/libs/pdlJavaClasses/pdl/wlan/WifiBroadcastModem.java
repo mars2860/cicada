@@ -389,6 +389,11 @@ public class WifiBroadcastModem extends Modem
 		
 		return false;
 	}
+	
+	public boolean isConnected()
+	{
+		return (this.getVersion() > 0) ? true:false;
+	}
 
 	/**
 	 * @note data.length have to be less than 1372

@@ -9,6 +9,7 @@ char pdlLog[PDL_LOG_BUF_SIZE];
 int pdlLogPos = 0;
 uint64_t pdlRefTime = 0;
 uint32_t pdlRefTimestamp = 0;
+uint32_t pdlLastCmdTimestamp = 0;
 
 int pdl_printf(const char *format, ... )
 {
@@ -640,11 +641,17 @@ void pdlUpdateTime(pdlDroneState *ds)
 uint8_t pdlIsHostConnected(pdlDroneState* ds)
 {
   (void)ds;
-  // host have to send SET_TIME command every 1s
-  // if it is not then the connection is not alive
-  if(pdlGetDeltaTime(pdlMicros(),pdlRefTimestamp) <= 3000000 && pdlRefTimestamp > 0)
+  // we consider that the host is disconnected if there are no commands from its within PDL_DISCONNECT_PERIOD
+  if( pdlGetDeltaTime(pdlMicros(),pdlLastCmdTimestamp) <= PDL_DISCONNECT_TIMEOUT &&
+      pdlLastCmdTimestamp > 0)
   {
     return 1;
   }
   return 0;
+}
+
+void pdlNotifyHostIsAlive(pdlDroneState* ds)
+{
+  (void)ds;
+  pdlLastCmdTimestamp = pdlMicros();
 }

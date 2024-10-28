@@ -375,11 +375,6 @@ public class RemoteControlGui extends JSavedFrame
 				}
 			}
 			
-			if	(DroneTelemetry.instance().isDroneConnected() == false &&
-				DroneState.net.wifiBroadcastEnabled == false )
-			{
-				return; // can't execute code below if drone is disconnected but in the wifibroadcast mode the drone can hear us
-			}
 			
 			// get up
 			if(btnGetUp.getModel().isPressed())
@@ -478,6 +473,11 @@ public class RemoteControlGui extends JSavedFrame
 					if(stickRollActive == false)
 						rollCtrl = mRollAccelerator.getValue();
 				}
+			}
+			
+			if(DroneCommander.instance().isSendCmdsAllowed() == false)
+			{
+				return;
 			}
 			
 			DroneCommander.instance().liftDrone(liftCtrl);

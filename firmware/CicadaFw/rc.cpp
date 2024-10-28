@@ -686,7 +686,7 @@ void pdlCmdEnableWifiBroadcast(pdlDroneState* ds, const uint8_t* packet)
   (void)ds;
   uint8_t oldWifiBroadcastEnabled = wifiBroadcastEnabled;
   wifiBroadcastEnabled = packet[1];
-
+  // FIXME sometimes the drone resets if we send settings in wifi broadcast mode with delay between commands less than 100ms or if we try to switch back to normal wifi mode
   if(wifiBroadcastEnabled && !oldWifiBroadcastEnabled)
   {
     udp.stop();

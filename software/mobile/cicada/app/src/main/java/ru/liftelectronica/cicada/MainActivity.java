@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.InputDevice;
@@ -106,6 +108,13 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void run() {
                     DroneState ds = DroneTelemetry.instance().getDroneState();
+                    // update wifi rssi for AP mode (we can't do that at the firmware side)
+                    if( DroneState.net.wifiBroadcastEnabled == false &&
+                        DroneState.net.wifiStaMode == false ) {
+                        WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+                        WifiInfo info = wifiManager.getConnectionInfo();
+                        ds.rssi = info.getRssi();
+                    }
                     printDroneState(ds);
                     DroneTelemetry.instance().speakDroneState(ds,pdlSoundProvider);
                     mbtnDisarm.setChecked(DroneTelemetry.instance().getDroneState().motorsEnabled);
@@ -252,9 +261,7 @@ public class MainActivity extends AppCompatActivity {
                 rotateCtrl = mRotateAccelerator.normalize(dt);
             }
 
-            if( DroneTelemetry.instance().isDroneConnected() == false &&
-                DroneState.net.wifiBroadcastEnabled == false) {
-                // In the wifibroadcast mode the drone can hear us
+            if(DroneCommander.instance().isSendCmdsAllowed() == false) {
                 return;
             }
 
@@ -346,15 +353,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void processGamepadKey(int keyCode, boolean pressed) {
-
-        if( DroneTelemetry.instance().isDroneConnected() == false &&
-            DroneState.net.wifiBroadcastEnabled == false ) {
-            // In the wifibroadcast mode the drone can hear us
-            return;
-        }
-
-        DroneState ds = DroneTelemetry.instance().getDroneState();
-
         if(keyCode == keyTurnCw) {
             keyTurnCwPressed = pressed;
         }
@@ -385,6 +383,12 @@ public class MainActivity extends AppCompatActivity {
         if(keyCode == keyBackward) {
             keyBackwardPressed = pressed;
         }
+
+        if(DroneCommander.instance().isSendCmdsAllowed() == false) {
+            return;
+        }
+
+        DroneState ds = DroneTelemetry.instance().getDroneState();
 
         if(keyCode == keyDisarm && pressed) {
             CmdSwitchMotors cmd = new CmdSwitchMotors(!ds.motorsEnabled);

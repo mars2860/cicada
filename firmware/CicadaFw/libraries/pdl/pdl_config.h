@@ -64,6 +64,9 @@
 
 /// Lidar offset from gravity center along X-axis in meters
 #define PDL_LIDAR_OFFSET            0.055f
+
+/// The host is considered disconnected if there are no commands within this period (in microseconds)
+#define PDL_DISCONNECT_TIMEOUT      5000000
 /// @}
 
 #endif

@@ -91,12 +91,18 @@ public class DroneCommander
 	public static final double CTRL_ERR = 0.001;
 	public static final boolean LOG_CTRL_CMD = true;
 	
+	public static final int DRONE_DISCONNECT_TIMEOUT = 5000;
+	public static final int MODEM_RX_MIN_TIMEOUT = 100;	// Can't be 0 
+	
 	/** Delay in milliseconds between commands.
 	 *  This delay is needed for the drone have time to process last received command
 	 */
 	public static final int DELAY_BTW_CMDS = 20;
-	// FIXME It is strange but in wifi broadcast mode If we send to many commands the drone is reseted. This is noticed only when we invoke sendSettingsToDrone
-	public static final int DELAY_BTW_CMDS_BROADCAST_MODE = 50;
+	// FIXME It is strange but in wifi broadcast mode If we send settings with delay less 100ms between commands the drone resets.
+	//public static final int DELAY_BTW_CMDS_BROADCAST_MODE = 50; // delay 50ms causes the lags in control
+	public static final int DELAY_BTW_CMDS_BROADCAST_MODE = 20;
+	
+	public static final int DELAY_BTW_SETUP_CMD = 100;
 	
 	private static DroneCommander mSingleton;
 
@@ -148,7 +154,7 @@ public class DroneCommander
 		@Override
 		public void run()
 		{
-			int rxTimeout = 100;
+			int rxTimeout = MODEM_RX_MIN_TIMEOUT;
 			int pingErrCounter = 0;
 			int recvErrCounter = 0;
 			wlanRxPacketCounter = 0;
@@ -159,17 +165,18 @@ public class DroneCommander
 			while(mModemRxRun && mModem != null)
 			{
 				// select receive timeout
+				rxTimeout = MODEM_RX_MIN_TIMEOUT;
 				if(DroneTelemetry.instance().isDroneConnected())
 				{
 					DroneState ds = DroneTelemetry.instance().getDroneState();
 					int telemetryPeriod = 2*ds.telemetry.period / 1000; // convert microseconds to milliseconds
-					if(telemetryPeriod >= 100 && telemetryPeriod != rxTimeout)
+					if(telemetryPeriod >= MODEM_RX_MIN_TIMEOUT)
 					{
 						rxTimeout = telemetryPeriod;
 					}
 				}
-				// we assume that the drone is disconnected if it doesn't send any data in 3 seconds
-				int maxRecvErrCounter = Math.max(1, 3000 / rxTimeout);
+				// we assume that the drone is disconnected if it doesn't send any data in DRONE_DISCONNECT_TIMEOUT period
+				int maxRecvErrCounter = Math.max(1, DRONE_DISCONNECT_TIMEOUT / rxTimeout);
 				
 				byte[] data = mModem.receive(rxTimeout);
 				
@@ -514,6 +521,20 @@ public class DroneCommander
 		
 		return result;
 	}
+	
+	public boolean addCmdWithPostDelay(AbstractDroneCmd cmd, long delay)
+	{
+		boolean result = this.addCmd(cmd);
+		try
+		{
+			Thread.sleep(delay);
+		}
+		catch(Exception ex)
+		{
+			ex.printStackTrace();
+		}
+		return result;
+	}
 
 	public int getCmdCount()
 	{
@@ -544,7 +565,7 @@ public class DroneCommander
 			// wait for command execution
 			try
 			{
-				Thread.sleep(100);
+				Thread.sleep(DELAY_BTW_SETUP_CMD);
 			}
 			catch(Exception e)
 			{
@@ -680,24 +701,24 @@ public class DroneCommander
 		
 		// reset altitude
 		AbstractDroneCmd cmdResAlt = new CmdResetAltitude();
-		addCmd(cmdResAlt);
+		addCmdWithPostDelay(cmdResAlt,DELAY_BTW_SETUP_CMD);
 		
 		// setup WiFi
 		// ssid
 		AbstractDroneCmd netCmd = new CmdSetSsid(DroneState.net.ssid);
-		addCmd(netCmd);
+		addCmdWithPostDelay(netCmd,DELAY_BTW_SETUP_CMD);
 		// psk
 		netCmd = new CmdSetPsk(DroneState.net.psk);
-		addCmd(netCmd);
+		addCmdWithPostDelay(netCmd,DELAY_BTW_SETUP_CMD);
 		// ip
 		netCmd = new CmdSetIp(DroneState.net.ip);
-		addCmd(netCmd);
+		addCmdWithPostDelay(netCmd,DELAY_BTW_SETUP_CMD);
 		// gateway
 		netCmd = new CmdSetGateway(DroneState.net.gateway);
-		addCmd(netCmd);
+		addCmdWithPostDelay(netCmd,DELAY_BTW_SETUP_CMD);
 		// subnet
 		netCmd = new CmdSetSubnet(DroneState.net.subnet);
-		addCmd(netCmd);
+		addCmdWithPostDelay(netCmd,DELAY_BTW_SETUP_CMD);
 		// wifi settings
 		CmdSetupWifi wifiCmd = new CmdSetupWifi(
 				DroneState.net.wifiStaMode,
@@ -707,11 +728,11 @@ public class DroneCommander
 				DroneState.net.wifiPhy,
 				DroneState.net.wifiRate );
 		
-		addCmd(wifiCmd);
+		addCmdWithPostDelay(wifiCmd,DELAY_BTW_SETUP_CMD);
 		
 		// drone id
 		CmdSetDroneId droneIdCmd = new CmdSetDroneId(DroneState.net.droneId);
-		addCmd(droneIdCmd);
+		addCmdWithPostDelay(droneIdCmd,DELAY_BTW_SETUP_CMD);
 
 		// Switch the drone to wifi broadcast mode or back to wifi normal mode
 		if(DroneState.net.wifiBroadcastEnabled)
@@ -728,9 +749,9 @@ public class DroneCommander
 	{
 		CmdEnableWifiBroadcast cmd = new CmdEnableWifiBroadcast(wifiBroadcastEnabled);
 
-		DroneCommander.instance().addCmd(cmd);
-		DroneCommander.instance().addCmd(cmd);
-		DroneCommander.instance().addCmd(cmd);
+		DroneCommander.instance().addCmdWithPostDelay(cmd,DELAY_BTW_SETUP_CMD);
+		DroneCommander.instance().addCmdWithPostDelay(cmd,DELAY_BTW_SETUP_CMD);
+		DroneCommander.instance().addCmdWithPostDelay(cmd,DELAY_BTW_SETUP_CMD);
 
 		while(getCmdCount() > 0)	// wait until all commands are sent
 		{
@@ -1503,5 +1524,23 @@ public class DroneCommander
 	{
 		CmdTakePhoto cmd = new CmdTakePhoto();
 		this.addCmd(cmd);
+	}
+	
+	public boolean isSendCmdsAllowed()
+	{
+		if(this.isDroneConnected())
+		{
+			return true;
+		}
+		
+		// In the WifiBroadcast mode the drone can hear us but we can't hear the drone
+		// Always allowing to send commands in the WifiBroadcast mode
+		if(mModem instanceof WifiBroadcastModem)
+		{
+			WifiBroadcastModem mdm = (WifiBroadcastModem)mModem;
+			return mdm.isConnected();
+		}
+		
+		return false;
 	}
 }

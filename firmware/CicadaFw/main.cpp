@@ -5,9 +5,6 @@
 #include <Wire.h>
 #include <FS.h>
 
-// Exclude gps.cpp from build if you need debug over Serial
-//#define SERIAL_DEBUG_ENABLED
-
 //-----------------------------------------------------------------------------
 // INSTALL
 // 1. https://github.com/enjoyneering/ESP8266-I2C-Driver
@@ -151,21 +148,6 @@ void pdlLoadDefaultCfg(pdlDroneState *ds)
 
   SPIFFS.end();
 }
-
-//--------------------------------------------
-#ifdef SERIAL_DEBUG_ENABLED
-void pdlSetupGps(pdlDroneState* ds)
-{
-  (void)ds;
-}
-
-uint8_t pdlReadGps(pdlDroneState *ds)
-{
-  (void)ds;
-  return 0;
-}
-#endif
-//-------------------------------------------
 
 uint8_t oldHostConnected = 0;
 

@@ -1,6 +1,22 @@
 #include "pdl.h"
 #include "UbxGps.h"
 #include <Arduino.h>
+#include "main.h"
+
+#ifdef SERIAL_DEBUG_ENABLED
+
+void pdlSetupGps(pdlDroneState* ds)
+{
+  (void)ds;
+}
+
+uint8_t pdlReadGps(pdlDroneState *ds)
+{
+  (void)ds;
+  return 0;
+}
+
+#else
 
 void clearSerialRx()
 {
@@ -203,3 +219,5 @@ uint8_t pdlReadGps(pdlDroneState *ds)
   pdlSetError(ds,ERR_GPS_DATA_INVALID);
   return 0;
 }
+
+#endif

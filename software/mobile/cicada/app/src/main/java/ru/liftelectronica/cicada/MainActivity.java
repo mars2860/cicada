@@ -109,11 +109,13 @@ public class MainActivity extends AppCompatActivity {
                 public void run() {
                     DroneState ds = DroneTelemetry.instance().getDroneState();
                     // update wifi rssi for AP mode (we can't do that at the firmware side)
-                    if( DroneState.net.wifiBroadcastEnabled == false &&
+                    if( DroneCommander.instance().isWifiBroadcastActive() == false &&
                         DroneState.net.wifiStaMode == false ) {
                         WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
                         WifiInfo info = wifiManager.getConnectionInfo();
                         ds.rssi = info.getRssi();
+                        // check min rssi level
+                        DroneTelemetry.instance().checkDroneStateForAlarms(ds);
                     }
                     printDroneState(ds);
                     DroneTelemetry.instance().speakDroneState(ds,pdlSoundProvider);

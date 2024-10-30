@@ -111,7 +111,7 @@ public class DroneTelemetry extends java.util.Observable
 		oldTimestamp = mDroneState.timestamp;
 	}
 	
-	protected void checkDroneStateForAlarms(DroneState ds)
+	public void checkDroneStateForAlarms(DroneState ds)
 	{
 		int errors = (int)ds.errors;
 		if((errors & 0x1) > 0)

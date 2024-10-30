@@ -1543,4 +1543,10 @@ public class DroneCommander
 		
 		return false;
 	}
+
+	public boolean isWifiBroadcastActive() {
+		if(mModem instanceof WifiBroadcastModem)
+			return true;
+		return false;
+	}
 }

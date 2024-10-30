@@ -191,7 +191,7 @@ class Runcam: public RuncamBase
 {
 private:
   EspSoftwareSerial::UART rcSerial;
-  uint8_t rxBuf[8];
+  uint8_t rxBuf[16];
   bool available;
 public:
   Runcam()
@@ -235,19 +235,25 @@ public:
                     RUNCAM_UART_RX_PIN,
                     RUNCAM_UART_TX_PIN,
                     false);
-    reqDeviceInfo();
-    delay(100); // wait for answer
-    uint8_t len = readAnswer();
-    if(len > 0)
+    for(uint8_t i = 0; i < 3; i++)
     {
-      pdl_printf("Runcam Info=");
-      printAnswer(rxBuf,len);
-      available = true;
-      return true;
+      reqDeviceInfo();
+      delay(100); // wait for answer
+      uint8_t len = readAnswer();
+      if(len > 0 && rxBuf[0] == PACKET_HEADER)
+      {
+        pdl_printf("Runcam Info=");
+        printAnswer(rxBuf,len);
+        available = true;
+        break;
+      }
+      else
+      {
+        available = false;
+      }
     }
 
-    available = false;
-    return false;
+    return available;
   }
 
   bool isAvailable()

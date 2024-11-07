@@ -134,14 +134,13 @@
                 android:id="@+id/btnDisarm"
                 android:layout_width="wrap_content"
                 android:layout_height="48dp"
-                android:text="@string/armed"
+                android:text="@string/disarmed"
                 android:layout_alignParentBottom="true"
                 android:layout_centerHorizontal="true"
                 android:layout_marginBottom="5dp"
-                android:textOn="@string/disarmed"
-                android:textOff="@string/armed"
+                android:textOn="@string/armed"
+                android:textOff="@string/disarmed"
                 android:onClick="onBtnDisarm"/>
-
 
         </RelativeLayout>
 

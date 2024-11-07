@@ -719,6 +719,16 @@ public class MainActivity extends AppCompatActivity {
             rowCount = appendState(rssi,rowCount);
         }
 
+        if(DroneState.widgets.latency) {
+            String latency = "delay: " + fmt2.format(DroneCommander.instance().getWlanLatency()) + "\n";
+            rowCount = appendState(latency,rowCount);
+        }
+
+        if(DroneState.widgets.lostRxPackets) {
+            String lostRxPackets = "lostRx: " + fmt2.format(DroneCommander.instance().getLostRxPacketCounter()) + "\n";
+            rowCount = appendState(lostRxPackets,rowCount);
+        }
+
         if(DroneState.widgets.home) {
             String home = "home: " + fmt1.format(ds.distToHome) + "m/" + fmt2.format(ds.headToHome) + "\n";
             rowCount = appendState(home,rowCount);

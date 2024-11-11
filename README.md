@@ -1,6 +1,6 @@
 ### About
 
-The Cicada Project is the flight controller based on ESP8266 Wifi module. You can make it yourself to come in the world of drone developers. Cicada doesn't have a hardware pult with sticks. To control a drone there is desktop application developed on Java and mobile application for Android v7 and higher.
+The Cicada Project is the flight controller based on ESP8266 Wifi module. You can make it yourself to come in the world of drone developers. Cicada doesn't have a hardware pult with sticks. To control a drone there is desktop application developed on Java and mobile application for Android v7 and higher. You can connect a gamepad to your smartphone or desktop to control a drone. The flight controller can work in WiFi normal mode as WiFi station or WiFi Access Point. Also It can work in WiFi Broadcast mode (WiFi monitor mode). To work in broadcast mode you have to connect the special wifi broadcast serial modem to your smartphone or desktop. The serial modem is easy. You can do it yourself easy. Just ESP-07 module + UART-USB bridge. Flash in ESP-07 the modem firmware which is placed in the folder /firmware/WifiBroadcastModemFw.
 
 <img src="/photo/cicada-main-v4-top.png" width="50%" alt="cicada-main-v4"/>
 <img src="/photo/cicada-micro-v2-top.png" width="50%" alt="cicada-micro-v2"/>

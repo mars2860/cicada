@@ -1,0 +1,13 @@
+#ifndef DRIVERS_CAMERA_CAM_CICADA_MICRO_H_
+#define DRIVERS_CAMERA_CAM_CICADA_MICRO_H_
+
+#include "runcam.h"
+
+#define CAM_SERVO_PIN         14
+
+#define RUNCAM_UART_RX_PIN    12
+#define RUNCAM_UART_TX_PIN    13
+
+Runcam runcam(RUNCAM_UART_RX_PIN,RUNCAM_UART_TX_PIN);
+
+#endif /* DRIVERS_CAMERA_CAM_CICADA_MICRO_H_ */

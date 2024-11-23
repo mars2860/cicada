@@ -1,0 +1,1 @@
+d:\SloeberIDE-v4.4\arduinoPlugin\packages\esp32\tools\openocd-esp32\v0.12.0-esp32-20240821\bin\openocd.exe -f board/esp32s3-builtin.cfg

@@ -152,6 +152,20 @@ public class StartGui extends JSavedFrame
 			}
 		}
 	}
+	
+	private class OnBtnCamera implements ActionListener
+	{
+		@Override
+		public void actionPerformed(ActionEvent e)
+		{
+			if(mCameraGui == null)
+			{
+				mCameraGui = new CameraGui();
+			}
+			
+			mCameraGui.setVisible(true);
+		}
+	}
 		
 	private class OnAlarmUpdate implements Observer
 	{
@@ -232,6 +246,7 @@ public class StartGui extends JSavedFrame
 	private RemoteControlGui mRemoteControlGui;
 	private LogGui mLogGui;
 	private RadioGui mRadioGui;
+	private CameraGui mCameraGui;
 	
 	private JLabel mlbAlarmIcon;
 	private JLabel mlbAlarmText;
@@ -247,6 +262,7 @@ public class StartGui extends JSavedFrame
 	private JButton mbtnLog;
 	private JButton mbtnInfo;
 	private JButton mbtnRadioStatus;
+	private JButton mbtnCamera;
 	
 	private PDLSoundProvider pdlSoundProvider;
 	
@@ -335,6 +351,11 @@ public class StartGui extends JSavedFrame
 		mbtnRadioStatus.setMargin(zeroInsets);
 		mbtnRadioStatus.setToolTipText(ResBox.text("RADIO_STATUS"));
 		mbtnRadioStatus.addActionListener(new OnBtnRadioStatus());
+		
+		mbtnCamera = new JButton(ResBox.icon("CAMERA"));
+		mbtnCamera.setMargin(zeroInsets);
+		mbtnCamera.setToolTipText(ResBox.text("CAMERA"));
+		mbtnCamera.addActionListener(new OnBtnCamera());
 
 		tb.add(mbtnConnect);
 		tb.add(mbtnStatus);
@@ -345,6 +366,7 @@ public class StartGui extends JSavedFrame
 		tb.add(mbtnCharts);
 		tb.add(mbtnSettings);
 		tb.add(mbtnRemoteControl);
+		tb.add(mbtnCamera);
 		tb.add(mbtnLog);
 		tb.add(mbtnInfo);
 		

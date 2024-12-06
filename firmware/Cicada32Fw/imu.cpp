@@ -24,6 +24,12 @@ void pdlSetupGyro(pdlDroneState *ds)
     pGyro->setupGyro(ds);
     return;
   }
+  else
+  {
+    return; // TODO Gyro
+  }
+
+
   delay(500); // wait for power up of imu module
   // scan for MPU9250
   MPU9250Driver *mpu9250 = new MPU9250Driver();
@@ -69,6 +75,10 @@ void pdlSetupAccel(pdlDroneState *ds)
     pAccel->setupAccel(ds);
     return;
   }
+  else
+  {
+    return; // TODO accel
+  }
   pdlSetError(ds,ERR_IMU_DATA_NOT_READY);
   LOG_INFO("Accelerometer is not found");
 }
@@ -79,6 +89,10 @@ void pdlSetupMagneto(pdlDroneState* ds)
   {
     pMagneto->setupMagneto(ds);
     return;
+  }
+  else
+  {
+    return; // TODO Magneto
   }
   // scan for QMC5883
   pMagneto = new QMC5883Driver();

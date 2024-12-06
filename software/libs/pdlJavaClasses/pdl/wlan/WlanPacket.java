@@ -1,5 +1,7 @@
 package pdl.wlan;
 
+import pdl.BinaryParser;
+
 /**
  * The drone wlan packet structure
  * {
@@ -9,7 +11,7 @@ package pdl.wlan;
  *   various (Command data, DroneState size (4 bytes) + DroneState bytes, LOG size (4 bytes) + LOG bytes)
  * }
  */
-public abstract class WlanPacket
+public class WlanPacket
 {
 	protected int mTypeId;
 	protected int mDroneId;
@@ -35,5 +37,28 @@ public abstract class WlanPacket
 	public int getNum()
 	{
 		return mNum;
+	}
+	
+	public static WlanPacket parse(byte[] data)
+	{
+		BinaryParser parser = new BinaryParser();
+		
+		int pktDroneId = parser.getInt32t(data);
+		int pktNum = parser.getInt32t(data);
+		int packetType = parser.getUint8t(data);
+		
+		switch(packetType)
+		{
+		case WlanLogPacket.TYPE_ID:
+			return WlanLogPacket.parse(data);
+		case WlanTelemetryPacket.TYPE_ID:
+			return WlanTelemetryPacket.parse(data);
+		case WlanPictureStartPacket.TYPE_ID:
+			return WlanPictureStartPacket.parse(data);
+		case WlanPictureDataPacket.TYPE_ID:
+			return WlanPictureDataPacket.parse(data);
+		}
+		
+		return new WlanPacket(packetType,pktDroneId,pktNum);
 	}
 }

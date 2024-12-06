@@ -270,6 +270,7 @@ void pdlSetFrameType(pdlDroneState *ds, uint8_t frame);
 
 void pdlSetTime(pdlDroneState *ds, uint64_t t);
 void pdlUpdateTime(pdlDroneState *ds);
+uint64_t pdlSystemTimeToHostTime(uint32_t sysTimeUs);
 /** @return 1 if the host sends SET_TIME command every 1s */
 uint8_t pdlIsHostConnected(pdlDroneState* ds);
 void pdlNotifyHostIsAlive(pdlDroneState* ds);

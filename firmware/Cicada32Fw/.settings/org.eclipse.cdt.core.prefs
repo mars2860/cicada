@@ -15,6 +15,17 @@ environment/project/io.sloeber.core.sketch.0.2082524376.1613189797/build.variant
 environment/project/io.sloeber.core.sketch.0.2082524376.1613189797/runtime.os/delimiter=;
 environment/project/io.sloeber.core.sketch.0.2082524376.1613189797/runtime.os/operation=replace
 environment/project/io.sloeber.core.sketch.0.2082524376.1613189797/runtime.os/value=\\"FreeRTOS\\"
+environment/project/io.sloeber.core.sketch.0.2082524376.1827475629/append=true
+environment/project/io.sloeber.core.sketch.0.2082524376.1827475629/appendContributed=true
+environment/project/io.sloeber.core.sketch.0.2082524376.1827475629/build.fqbn/delimiter=;
+environment/project/io.sloeber.core.sketch.0.2082524376.1827475629/build.fqbn/operation=replace
+environment/project/io.sloeber.core.sketch.0.2082524376.1827475629/build.fqbn/value=\\"esp32\:esp32\:esp32s3\\"
+environment/project/io.sloeber.core.sketch.0.2082524376.1827475629/build.variant/delimiter=;
+environment/project/io.sloeber.core.sketch.0.2082524376.1827475629/build.variant/operation=replace
+environment/project/io.sloeber.core.sketch.0.2082524376.1827475629/build.variant/value=\\"XIAO_ESP32S3\\"
+environment/project/io.sloeber.core.sketch.0.2082524376.1827475629/runtime.os/delimiter=;
+environment/project/io.sloeber.core.sketch.0.2082524376.1827475629/runtime.os/operation=replace
+environment/project/io.sloeber.core.sketch.0.2082524376.1827475629/runtime.os/value=\\"FreeRTOS\\"
 environment/project/io.sloeber.core.sketch.0.2082524376/append=true
 environment/project/io.sloeber.core.sketch.0.2082524376/appendContributed=true
 environment/project/io.sloeber.core.sketch.0.2082524376/build.fqbn/delimiter=;

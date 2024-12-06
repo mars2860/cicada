@@ -4,6 +4,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -30,6 +32,7 @@ import pdl.commands.CmdEnableStabilization;
 import pdl.commands.CmdSetAltitude;
 import pdl.commands.CmdSetLoad;
 import pdl.commands.CmdSwitchMotors;
+import pdl.wlan.PictureBuffer;
 
 public class RemoteControlGui extends JSavedFrame
 {
@@ -534,6 +537,22 @@ public class RemoteControlGui extends JSavedFrame
 			{
 				ResBox.sound("PHOTO_TAKEN").play();
 				DroneCommander.instance().takePhoto();
+				//
+				PictureBuffer buf = DroneCommander.instance().getPicture();
+				if(buf != null)
+				{
+					File file = new File("photos/img_" + System.currentTimeMillis() + ".jpg");
+					try(FileOutputStream fos = new FileOutputStream(file))
+					{
+						fos.write(buf.getData());
+						fos.close();
+					}
+					catch(Exception e)
+					{
+						e.printStackTrace();
+					}
+					DroneCommander.instance().returnPicture(buf);
+				}
 				
 			}
 			oldBtnPhotoState = btnPhoto.getModel().isPressed();

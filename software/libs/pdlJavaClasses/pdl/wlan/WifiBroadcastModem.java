@@ -338,6 +338,8 @@ public class WifiBroadcastModem extends Modem
 			this.setWifiRate(wifiRate);
 			this.setChannel(wifiChannel);
 			this.setMaxTpw(wifiMaxTpw);
+			
+			clearStat();
 		}
 		return conn;
 	}
@@ -427,6 +429,9 @@ public class WifiBroadcastModem extends Modem
 			int written = comPort.writeBytes(mdmFrame, mdmFrame.length);
 			if(written != mdmFrame.length)
 				return false;
+		
+			mTxPacketsNum++;
+			updateBitrate(data.length);
 		}
 		
 		return true;
@@ -690,6 +695,8 @@ public class WifiBroadcastModem extends Modem
 					// return result
 					if(result != null)
 					{
+						mRxPacketsNum++;
+						updateBitrate(result.length);
 						return result;
 					}
 				}

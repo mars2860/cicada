@@ -71,11 +71,16 @@
 /// uncomment if you use RTOS
 #define PDL_LOCK_LOG pdlLockLog();
 #define PDL_UNLOCK_LOG pdlUnlockLog();
+#define PDL_LOCK_TIME pdlLockTime();
+#define PDL_UNLOCK_TIME pdlUnlockTime();
 
 /** Take access to log. Implement it if you use RTOS */
 void pdlLockLog();
 /** Give access to log. Implement it if you use RTOS */
 void pdlUnlockLog();
+
+void pdlLockTime();
+void pdlUnlockTime();
 
 /// @}
 

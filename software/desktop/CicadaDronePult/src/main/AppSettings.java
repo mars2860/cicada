@@ -201,6 +201,8 @@ public class AppSettings
 	@Expose
 	private WndState radioWnd;
 	@Expose
+	private WndState cameraWnd;
+	@Expose
 	private String lang;
 	@Expose
 	private String profile;
@@ -336,6 +338,16 @@ public class AppSettings
 	{
 		return radioWnd;
 	}
+	
+	public void setCameraWnd(WndState ws)
+	{
+		cameraWnd = ws;
+	}
+	
+	public WndState getCameraWnd()
+	{
+		return cameraWnd;
+	}
 
 	public void save()
 	{
@@ -373,6 +385,7 @@ public class AppSettings
 		rcSettingsWnd = new WndState();
 		logWnd = new WndState();
 		radioWnd = new WndState();
+		cameraWnd = new WndState();
 		profile = "default";
 		inputMap = new InputMap();
 	}

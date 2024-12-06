@@ -14,8 +14,6 @@
   #include <SPIFFS.h>
   #include <esp_wifi.h>
 
-  SemaphoreHandle_t semWlan = NULL;
-
   // Difference from ESP8266
   // 1. Can't use wifi broadcast because wifibroadcastmodem code is intended for ESP8266
   // 2. Can't setup PHY mode
@@ -39,14 +37,17 @@
 //   packetType = 1 byte (0 - Command, 1 - Telemetry, 2 - LOG, 3 - JPEG Chunk)
 //   various:
 //   0 - Command = {1 byte of cmd code, various size command data}
-//   1 - Telemetry = {4 byte of pdlDroneState size, whole struct pdlDroneState}
-//   2 - LOG = {4 byte of log size, various size log data}
-//   3 - JPEG Chunk = {1 byte (0 - start, 1 - mid, 2 - end), 8 byte - frame timestamp in host time, 1391 bytes of jpeg data}
+//   1 - Telemetry = {4 bytes of pdlDroneState size, whole struct pdlDroneState}
+//   2 - LOG = {4 bytes of log size, various size log data}
+//   3 - Picture First Chunk = {uint16_t width, uint16_t height, uint8_t pixformat, uint8_t quality, uint64_t timestamp, size_t dataLen, uint8_t *data}
+//   4 - Picture Data Chunk = {uint16_t chunkNum,data bytes}
 // }
 
-#define WLAN_COMMAND_PACKET     0
-#define WLAN_TELEMETRY_PACKET   1
-#define WLAN_LOG_PACKET         2
+#define WLAN_COMMAND_PACKET          0
+#define WLAN_TELEMETRY_PACKET        1
+#define WLAN_LOG_PACKET              2
+#define WLAN_PICTURE_START_PACKET    3
+#define WLAN_PICTURE_DATA_PACKET     4
 
 #define WLAN_MAX_PAYLOAD_SIZE   1400
 
@@ -92,9 +93,11 @@ ESP8266HTTPUpdateServer httpUpdater;
 #elif ARDUINO_ARCH_ESP32
 WebServer httpServer(80);
 HTTPUpdateServer httpUpdater;
+SemaphoreHandle_t semWlan = NULL;
 #endif
 
 WiFiUDP udp;
+
 uint8_t wlanTxBuf[WLAN_TX_BUF_SIZE];
 uint8_t wlanRxBuf[WLAN_RX_BUF_SIZE];
 uint16_t wlanRxBufLen = 0;
@@ -102,7 +105,6 @@ uint8_t wlanRxBufBusy = 0;  // onWifiBroadcastRx will skip received packet if th
 uint32_t wlanRxPacketNum = 0;
 uint32_t wlanTxPacketNum = 0;
 
-uint32_t udpPort;
 uint32_t droneId; // we use droneId to avoid collisions when many drones work at the same channel
 
 static uint8_t wifiChl;
@@ -116,6 +118,10 @@ uint8_t wifiBroadcastEnabled = 0;	// inherited from Cicada for ESP8266. WiFiBroa
 
 /// Writes data to wlan packet at given position. Returns new position to write
 uint16_t writeWlanPacket(uint16_t pos, byte *packet, void *value, size_t valueSize);
+
+bool sendWlanPacket(uint8_t *data, uint16_t data_len);
+bool sendWlanLogPacket(pdlDroneState *ds);
+bool sendWlanTelemetryPacket(pdlDroneState *ds);
 
 void printParam(const char *param, const char *value)
 {
@@ -227,15 +233,15 @@ void pdlSetupRc(pdlDroneState*)
   char strRate[4];
   char strDroneId[8];
 
+  uint8_t staMode = 0;
+  uint8_t connectionResult;
+
 #ifdef ARDUINO_ARCH_ESP32
   if(!semWlan)
   {
     semWlan = xSemaphoreCreateMutex();
   }
 #endif
-
-  uint8_t staMode = 0;
-  uint8_t connectionResult;
 
   if(SPIFFS.begin() == false)
   {
@@ -270,8 +276,6 @@ void pdlSetupRc(pdlDroneState*)
 
   SPIFFS.end();
 
-  udpPort = DEFAULT_UDP_PORT;
-
   droneId = atoi(strDroneId);
 
   setWifiParams( atoi(strChl),
@@ -293,14 +297,18 @@ void pdlSetupRc(pdlDroneState*)
 
   if(staMode)
   {
-    WiFi.softAPdisconnect(true);
+    /*
     WiFi.disconnect(true);
+    WiFi.softAPdisconnect(true);
+
+    delay(100);
 
     connectionResult = WiFi.waitForConnectResult(5000);
     if(connectionResult != WL_DISCONNECTED)
     {
       LOG_ERROR("Old WiFi is not disconnected,stat=%i",connectionResult);
     }
+    */
 
     LOG_INFO("Start WIFI_STA");
 
@@ -373,14 +381,18 @@ void pdlSetupRc(pdlDroneState*)
 
   if(!staMode)
   {
+    /*
     WiFi.disconnect(true);
     WiFi.softAPdisconnect(true);
+
+    delay(100);
 
     connectionResult = WiFi.waitForConnectResult(5000);
     if(connectionResult != WL_DISCONNECTED)
     {
       LOG_ERROR("Old WiFi is not disconnected,stat=%i",connectionResult);
     }
+    */
 
     LOG_INFO("Start WIFI_AP");
 
@@ -389,10 +401,7 @@ void pdlSetupRc(pdlDroneState*)
       LOG_ERROR("Can't set WIFI_AP mode");
     }
 
-    if(!WiFi.softAPConfig(ip, gateway, subnet))
-    {
-      LOG_ERROR("Can't set ip,gateway,subnet of wifi access point");
-    }
+    delay(100);
 
     // I revealed the bug inside the esp core. There are devices if it is disconnected ESP softAP still considers that it is connected
     // Even If I power down this device ESP softAP still considers that it is connected. For example, the some device is RTL8812AU
@@ -402,6 +411,24 @@ void pdlSetupRc(pdlDroneState*)
     {
       LOG_ERROR("Can't start wifi access point");
     }
+
+    // for esp32 we have to call softApConfig after softAp and after AP_START event
+    // this delay waits AP_START event
+    delay(200);
+
+    IPAddress dhcpStart = ip;
+    dhcpStart[3] = dhcpStart[3] + 1;
+
+    // NOTE: if you connect to softAP from PC having internet connection
+    // the gateway has to be the same as your in inet connection
+    // else you lose inet connection and can't access softAp network!
+    if(!WiFi.softAPConfig(ip, gateway, subnet, dhcpStart))
+    {
+      LOG_ERROR("Can't set ip,gateway,subnet of wifi access point");
+    }
+
+    IPAddress myIP = WiFi.softAPIP();
+    LOG_INFO("WIFI_AP IP address=%s",myIP.toString().c_str());
   }
 
 #ifdef ARDUINO_ARCH_ESP8266
@@ -454,13 +481,48 @@ void pdlSetupRc(pdlDroneState*)
 
 #endif
 
-  udp.begin(udpPort);
+  udp.begin(DEFAULT_UDP_PORT);
 
   httpUpdater.setup(&httpServer);
   httpServer.begin();
+
+#ifdef SERIAL_DEBUG_ENABLED
+  //WiFi.printDiag(Serial);
+#endif
 }
 
 void pdlSetupTelemetry(pdlDroneState*) {}
+
+bool sendWlanLogPacket(pdlDroneState *ds)
+{
+  uint16_t pos = 0;
+  bool result = false;
+
+#ifdef ARDUINO_ARCH_ESP32
+  xSemaphoreTake(semWlan,portMAX_DELAY);
+#endif
+
+  uint32_t logSize = pdlGetLogSize();
+  // prepare wifi packet
+  pos = writeWlanPacket(pos, wlanTxBuf, &droneId, sizeof(droneId));
+  pos = writeWlanPacket(pos, wlanTxBuf, &wlanTxPacketNum, sizeof(wlanTxPacketNum));
+  wlanTxBuf[pos++] = WLAN_LOG_PACKET; // log packet type
+  pos = writeWlanPacket(pos, wlanTxBuf, pdlGetLog(), logSize);
+  if(pos < WLAN_TX_BUF_SIZE)
+    wlanTxBuf[pos++] = 0;   // string termination symbol
+
+  if(sendWlanPacket(wlanTxBuf,pos))
+  {
+    pdlResetLog();
+    result = true;
+  }
+
+#ifdef ARDUINO_ARCH_ESP32
+  xSemaphoreGive(semWlan);
+#endif
+
+  return result;
+}
 
 void pdlRemoteControl(pdlDroneState *ds)
 {
@@ -476,19 +538,7 @@ void pdlRemoteControl(pdlDroneState *ds)
     logSize = pdlGetLogSize();
     if(logSize < WLAN_TX_BUF_SIZE)
     {
-      uint16_t pos = 0;
-      // prepare wifi packet
-      pos = writeWlanPacket(pos, wlanTxBuf, &droneId, sizeof(droneId));
-      pos = writeWlanPacket(pos, wlanTxBuf, &wlanTxPacketNum, sizeof(wlanTxPacketNum));
-      wlanTxBuf[pos++] = WLAN_LOG_PACKET; // log packet type
-      pos = writeWlanPacket(pos, wlanTxBuf, pdlGetLog(), logSize);
-      if(pos < WLAN_TX_BUF_SIZE)
-        wlanTxBuf[pos++] = 0;   // string termination symbol
-
-      if(sendWlanPacket(wlanTxBuf,pos))
-      {
-        pdlResetLog();
-      }
+      sendWlanLogPacket(ds);
     }
   }
   // receive udp packets in normal wifi mode
@@ -575,18 +625,18 @@ int32_t getRssi()
 #endif
 }
 
-void pdlUpdateTelemetry(pdlDroneState *ds)
+bool sendWlanTelemetryPacket(pdlDroneState *ds)
 {
-  if(!hostIsSet())
-  {
-    return;
-  }
-
   uint16_t pos = 0;
   size_t sz = sizeof(pdlDroneState);
+  bool result = false;
 
   pdlUpdateTime(ds);
   ds->rc.rssi = getRssi();
+
+#ifdef ARDUINO_ARCH_ESP32
+  xSemaphoreTake(semWlan,portMAX_DELAY);
+#endif
 
   // prepare wifi broadcast packet
   pos = writeWlanPacket(pos, wlanTxBuf, &droneId, sizeof(droneId));
@@ -597,12 +647,28 @@ void pdlUpdateTelemetry(pdlDroneState *ds)
   // DroneState
   pos = writeWlanPacket(pos, wlanTxBuf, ds, sz);
   // Send packet
-  sendWlanPacket(wlanTxBuf,pos);
+  result = sendWlanPacket(wlanTxBuf,pos);
+
+#ifdef ARDUINO_ARCH_ESP32
+  xSemaphoreGive(semWlan);
+#endif
+
+  return result;
+}
+
+void pdlUpdateTelemetry(pdlDroneState *ds)
+{
+  if(!hostIsSet())
+  {
+    return;
+  }
+
+  sendWlanTelemetryPacket(ds);
 }
 
 uint16_t writeWlanPacket(uint16_t pos, byte *packet, void *value, size_t valueSize)
 {
-  if(pos + valueSize >= WLAN_MAX_PAYLOAD_SIZE)
+  if(pos + valueSize > WLAN_MAX_PAYLOAD_SIZE)
     return pos;
 
   memcpy(&packet[pos], value, valueSize);
@@ -736,6 +802,7 @@ void pdlCmdEnableWifiBroadcast(pdlDroneState* ds, const uint8_t* packet)
   if(wifiBroadcastEnabled && !oldWifiBroadcastEnabled)
   {
     udp.stop();
+    picUdp.stop();
     httpServer.stop();
     httpServer.close();
 
@@ -771,21 +838,23 @@ void pdlCmdEnableWifiBroadcast(pdlDroneState* ds, const uint8_t* packet)
 #endif
 }
 
+bool sendUdpPacket(uint8_t *data, uint16_t data_len)
+{
+  udp.beginPacket(host,DEFAULT_UDP_PORT);
+  udp.write(data,data_len);
+
+  return (udp.endPacket())?true:false;
+}
+
 bool sendWlanPacket(uint8_t *data, uint16_t data_len)
 {
   bool result = false;
 
+  if(hostIsSet() == false)
+    return false;
+
 #ifdef ARDUINO_ARCH_ESP32
-  xSemaphoreTake(semWlan,portMAX_DELAY);
-
-  udp.beginPacket(host,udpPort);
-  udp.write(data,data_len);
-  udp.endPacket();
-
-  wlanTxPacketNum++;
-  result = true;
-
-  xSemaphoreGive(semWlan);
+  result = sendUdpPacket(data,data_len);
 #elif ARDUINO_ARCH_ESP8266
 
   if(wifiBroadcastEnabled)
@@ -796,21 +865,86 @@ bool sendWlanPacket(uint8_t *data, uint16_t data_len)
       if(wbmSendPktFreedom(data,data_len))
       {
         result = true;
-        wlanTxPacketNum++;
       }
     }
   }
   else
   {
-    wlanTxPacketNum++;
-
-    result = true;
-
-    udp.beginPacket(host,udpPort);
-    udp.write(data,data_len);
-    udp.endPacket();
+    result = sendUdpPacket(port,data,data_len);
   }
 #endif
 
+  if(result)
+  {
+    wlanTxPacketNum++;
+  }
+
   return result;
 }
+
+size_t sendWlanPictureStartPacket(  uint16_t width,
+                                    uint16_t height,
+                                    uint8_t pixformat,
+                                    uint8_t quality,
+                                    uint64_t timestamp,
+                                    size_t dataLen,
+                                    uint8_t *data)
+{
+#ifdef ARDUINO_ARCH_ESP32
+  xSemaphoreTake(semWlan,portMAX_DELAY);
+#endif
+
+  size_t pos = 0;
+  // prepare packet
+  pos = writeWlanPacket(pos, wlanTxBuf, &droneId, sizeof(droneId));
+  pos = writeWlanPacket(pos, wlanTxBuf, &wlanTxPacketNum, sizeof(wlanTxPacketNum));
+  wlanTxBuf[pos++] = WLAN_PICTURE_START_PACKET;
+  pos = writeWlanPacket(pos, wlanTxBuf, &width, sizeof(width));
+  pos = writeWlanPacket(pos, wlanTxBuf, &height, sizeof(height));
+  pos = writeWlanPacket(pos, wlanTxBuf, &pixformat, sizeof(pixformat));
+  pos = writeWlanPacket(pos, wlanTxBuf, &quality, sizeof(quality));
+  pos = writeWlanPacket(pos, wlanTxBuf, &timestamp, sizeof(timestamp));
+  pos = writeWlanPacket(pos, wlanTxBuf, &dataLen, sizeof(dataLen));
+  size_t len = WLAN_TX_BUF_SIZE - pos;
+  if(dataLen < len)
+    len = dataLen;
+  pos = writeWlanPacket(pos, wlanTxBuf, data, len);
+  if(sendWlanPacket(wlanTxBuf, pos) == false)
+  {
+    len = 0;
+  }
+
+#ifdef ARDUINO_ARCH_ESP32
+  xSemaphoreGive(semWlan);
+#endif
+
+  return len;
+}
+
+size_t sendWlanPictureDataPacket(size_t dataOffset, size_t dataLen, uint8_t *data, uint16_t chunkNum)
+{
+#ifdef ARDUINO_ARCH_ESP32
+  xSemaphoreTake(semWlan,portMAX_DELAY);
+#endif
+  size_t pos = 0;
+  // prepare packet
+  pos = writeWlanPacket(pos, wlanTxBuf, &droneId, sizeof(droneId));
+  pos = writeWlanPacket(pos, wlanTxBuf, &wlanTxPacketNum, sizeof(wlanTxPacketNum));
+  wlanTxBuf[pos++] = WLAN_PICTURE_DATA_PACKET;
+  pos = writeWlanPacket(pos, wlanTxBuf, &chunkNum, sizeof(chunkNum));
+  size_t len = WLAN_TX_BUF_SIZE - pos;
+  if( (dataLen - dataOffset) < len)
+    len = dataLen - dataOffset;
+  pos = writeWlanPacket(pos, wlanTxBuf, &data[dataOffset], len);
+  if(sendWlanPacket(wlanTxBuf, pos) == false)
+  {
+    len = 0;
+  }
+
+#ifdef ARDUINO_ARCH_ESP32
+  xSemaphoreGive(semWlan);
+#endif
+
+  return len;
+}
+

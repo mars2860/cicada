@@ -17,10 +17,10 @@ public class WifiUdpModem extends Modem
 	private String mIp;
 	private InetAddress mAddr;
 	private DatagramSocket mSocket;
-	
+
 	private Object rxLock = new Object();
 	private Object txLock = new Object();
-	
+		
 	public WifiUdpModem(String ip, int port)
 	{
 		mPort = port;
@@ -43,6 +43,7 @@ public class WifiUdpModem extends Modem
 			mSocket = new DatagramSocket(mPort);
 			mSocket.setSoTimeout(TIMEOUT);
 			result = true;
+			clearStat();
 		}
 		catch(UnknownHostException | SocketException e)
 		{
@@ -98,6 +99,8 @@ public class WifiUdpModem extends Modem
 			{
 				mSocket.send(packet);
 				result = true;
+				mTxPacketsNum++;
+				updateBitrate(data.length);
 			}
 			catch(IOException e)
 			{
@@ -131,6 +134,8 @@ public class WifiUdpModem extends Modem
 				if(receivedPacket.getAddress().equals(mAddr))
 				{	
 					result = Arrays.copyOf(receivedPacket.getData(),receivedPacket.getLength());
+					mRxPacketsNum++;
+					updateBitrate(result.length);
 				}
 			
 			}

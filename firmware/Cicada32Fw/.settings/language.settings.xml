@@ -2,7 +2,7 @@
 <project>
 	<configuration id="io.sloeber.core.sketch.0.2082524376" name="cicada32-tiny-whoop-debug">
 		<extension point="org.eclipse.cdt.core.LanguageSettingsProvider">
-			<provider class="io.sloeber.core.toolchain.ArduinoLanguageProvider" console="false" env-hash="-1821885879986712528" id="io.sloeber.languageSettingsProvider" keep-relative-paths="false" name="Arduino Compiler Settings" parameter="${COMMAND} -E -P -v -dD -D__IN_ECLIPSE__ &quot;${INPUTS}&quot;" prefer-non-shared="true">
+			<provider class="io.sloeber.core.toolchain.ArduinoLanguageProvider" console="false" env-hash="-1814298872962216718" id="io.sloeber.languageSettingsProvider" keep-relative-paths="false" name="Arduino Compiler Settings" parameter="${COMMAND} -E -P -v -dD -D__IN_ECLIPSE__ &quot;${INPUTS}&quot;" prefer-non-shared="true">
 				<language-scope id="org.eclipse.cdt.core.gcc"/>
 				<language-scope id="org.eclipse.cdt.core.g++"/>
 			</provider>
@@ -11,6 +11,14 @@
 	<configuration id="io.sloeber.core.sketch.0.2082524376.1613189797" name="cicada-micro-esp12">
 		<extension point="org.eclipse.cdt.core.LanguageSettingsProvider">
 			<provider class="io.sloeber.core.toolchain.ArduinoLanguageProvider" console="false" env-hash="-449522748899126669" id="io.sloeber.languageSettingsProvider" keep-relative-paths="false" name="Arduino Compiler Settings" parameter="${COMMAND} -E -P -v -dD -D__IN_ECLIPSE__ &quot;${INPUTS}&quot;" prefer-non-shared="true">
+				<language-scope id="org.eclipse.cdt.core.gcc"/>
+				<language-scope id="org.eclipse.cdt.core.g++"/>
+			</provider>
+		</extension>
+	</configuration>
+	<configuration id="io.sloeber.core.sketch.0.2082524376.1827475629" name="cicada32-tiny-whoop-release">
+		<extension point="org.eclipse.cdt.core.LanguageSettingsProvider">
+			<provider class="io.sloeber.core.toolchain.ArduinoLanguageProvider" console="false" env-hash="-1845394144192000556" id="io.sloeber.languageSettingsProvider" keep-relative-paths="false" name="Arduino Compiler Settings" parameter="${COMMAND} -E -P -v -dD -D__IN_ECLIPSE__ &quot;${INPUTS}&quot;" prefer-non-shared="true">
 				<language-scope id="org.eclipse.cdt.core.gcc"/>
 				<language-scope id="org.eclipse.cdt.core.g++"/>
 			</provider>

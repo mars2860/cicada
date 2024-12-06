@@ -143,6 +143,8 @@ public class TextBundle extends ListResourceBundle
             {"CLEAR_BLACK_BOX","Clear BlackBox"},
             {"DRAW_TRACK","Draw track"},
             
+            {"CAMERA","Camera"},
+            
             {"ALARMS", "Alarms"},
             {"COLLECT_DATA", "Collect Data"},
             {"DATA_COUNT", "Data Count"},

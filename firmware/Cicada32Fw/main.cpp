@@ -23,13 +23,30 @@ pdlDroneState droneState;
 // This sets Arduino Stack Size - comment this line to use default 8K stack size
 // SET_LOOP_TASK_STACK_SIZE(16 * 1024);  // 16KB
 
+// change to next settings in sdkconfig.h of your arduino
+// CONFIG_ESP_SYSTEM_EVENT_TASK_STACK_SIZE 4096
+// CONFIG_LWIP_IRAM_OPTIMIZATION 1
+// CONFIG_LWIP_TCPIP_TASK_PRIO 23
+// comment CONFIG_ESP_WIFI_STATIC_TX_BUFFER 1
+// CONFIG_ESP_WIFI_DYNAMIC_TX_BUFFER 1
+// CONFIG_ESP_WIFI_TX_BUFFER_TYPE 1
+// CONFIG_ESP_WIFI_DYNAMIC_TX_BUFFER_NUM 64
+// CONFIG_ESP_WIFI_AMPDU_TX_ENABLED 1
+// CONFIG_ESP_WIFI_TX_BA_WIN 32
+// CONFIG_ESP_WIFI_AMPDU_RX_ENABLED 1
+
+// change settings on Arduino
+// https://github.com/espressif/arduino-esp32/issues/4529
+// https://esp32.com/viewtopic.php?t=18432
+
 // TASKS
 // ARDUINO - CORE1
-// EVENTS - CORE1
+// EVENTS - CORE0
 // ESC - CORE0
 // CAMERA - CORE0
 
 SemaphoreHandle_t semLog = NULL;
+SemaphoreHandle_t semTime = NULL;
 
 void pdlLockLog()
 {
@@ -39,6 +56,16 @@ void pdlLockLog()
 void pdlUnlockLog()
 {
   xSemaphoreGive(semLog);
+}
+
+void pdlLockTime()
+{
+  xSemaphoreTake(semTime,portMAX_DELAY);
+}
+
+void pdlUnlockTime()
+{
+  xSemaphoreGive(semTime);
 }
 
 #endif
@@ -118,6 +145,7 @@ void setup()
 
 #ifdef ARDUINO_ARCH_ESP32
   semLog =  xSemaphoreCreateMutex();
+  semTime = xSemaphoreCreateMutex();
 #endif
 
   pdlResetLog();
@@ -223,11 +251,11 @@ void pdlLoadDefaultCfg(pdlDroneState *ds)
     {
       memcpy(ds,&cfg,sizeof(pdlDroneState));
       LOG_INFO("default.cfg has been loaded");
-    }
 
-    if(ds->version != PDL_VERSION)
-    {
-      LOG_ERROR("invalid firmware version of default.cfg");
+      if(ds->version != PDL_VERSION)
+      {
+        LOG_ERROR("invalid firmware version of default.cfg");
+      }
     }
   }
   file.close();

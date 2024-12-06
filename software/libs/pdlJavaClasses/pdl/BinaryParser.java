@@ -130,4 +130,9 @@ public class BinaryParser
 		
 		return result;
 	}
+	
+	public int getPos()
+	{
+		return mParsePos;
+	}
 }

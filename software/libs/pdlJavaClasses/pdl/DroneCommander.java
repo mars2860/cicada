@@ -70,12 +70,16 @@ import pdl.commands.CmdVeloZTakeoff;
 import pdl.res.Profile;
 import pdl.wlan.Modem;
 import pdl.wlan.ModemType;
+import pdl.wlan.PictureBuffer;
 import pdl.wlan.WifiBroadcastModem;
 import pdl.wlan.WifiBroadcastModem.WifiPhy;
 import pdl.wlan.WifiBroadcastModem.WifiRate;
 import pdl.wlan.WifiUdpModem;
 import pdl.wlan.WlanCommandPacket;
 import pdl.wlan.WlanLogPacket;
+import pdl.wlan.WlanPacket;
+import pdl.wlan.WlanPictureDataPacket;
+import pdl.wlan.WlanPictureStartPacket;
 import pdl.wlan.WlanTelemetryPacket;
 
 public class DroneCommander
@@ -139,7 +143,30 @@ public class DroneCommander
 	private int wlanLastRxPacketNum;
 	private int wlanTxPacketCounter;
 	private int wlanLatency;
+	private int wlanFirstRxPacketNum;
 	private long wlanLastSetTime;
+	private int wlanPictureLastChunkNum;
+	
+	private PictureBuffer mPictureBuf[];
+	private int mSelPictureBuf;
+	
+	private Object mPictureBufSync;
+	private Object mPictureListenerSync;
+	
+	public interface PictureListener
+	{
+		public void onPictureReceived(PictureBuffer buf);
+	}
+	
+	private PictureListener mPictureListener;
+	
+	public void setPictureListener(PictureListener listener)
+	{
+		synchronized(mPictureListenerSync)
+		{
+			mPictureListener = listener;
+		}
+	}
 	
 	private DroneCommander() 
 	{
@@ -147,10 +174,103 @@ public class DroneCommander
 		mCmdLock = new Object();
 		mNewCmdLock = new Object();
 		connectTimestamp = System.currentTimeMillis();
+		mPictureBuf = new PictureBuffer[2];
+		for(int i = 0; i < mPictureBuf.length; i++)
+		{
+			mPictureBuf[i] = new PictureBuffer();
+		}
+		mPictureBufSync = new Object();
+		mPictureListenerSync = new Object();
 	};
 	
 	private class OnModemRx implements Runnable
 	{				
+		private void parsePacket(WlanPacket packet)
+		{
+			if(packet.getDroneId() != mDroneId)
+				return;
+			
+			switch(packet.getTypeId())
+			{
+			case WlanLogPacket.TYPE_ID:
+				WlanLogPacket logPacket = (WlanLogPacket)packet;
+				DroneLog.instance().append(logPacket);
+				break;
+			case WlanTelemetryPacket.TYPE_ID:
+				WlanTelemetryPacket telemetryPacket = (WlanTelemetryPacket)packet;
+				DroneTelemetry.instance().append(telemetryPacket);
+				// FIXME sometimes droneTime is bigger than current time I think this is because System.currentTimeMillis() is not precise
+				wlanLatency = Math.max(0,(int)(System.currentTimeMillis() - telemetryPacket.getDroneState().time));
+				break;
+			case WlanPictureStartPacket.TYPE_ID:
+				WlanPictureStartPacket picPacket1 = (WlanPictureStartPacket)packet;
+				synchronized(mPictureBufSync)
+				{
+					// Select buffer to store new picture
+					for(int i = 0; i < mPictureBuf.length; i++)
+					{
+						mSelPictureBuf++;
+						if(mSelPictureBuf >= mPictureBuf.length)
+						{
+							mSelPictureBuf = 0;
+						}
+						if(mPictureBuf[mSelPictureBuf].isLocked() == false)
+						{
+							break;
+						}
+					}
+					wlanPictureLastChunkNum = 0;
+					mPictureBuf[mSelPictureBuf].start(	picPacket1.getWidth(),
+						   								picPacket1.getHeight(),
+						   								picPacket1.getPixelFormat(),
+						   								picPacket1.getQuality(),
+						   								picPacket1.getTimestamp(),
+						   								picPacket1.getLen(),
+						   								picPacket1.getData());
+				}
+				break;
+			case WlanPictureDataPacket.TYPE_ID:
+				WlanPictureDataPacket picPacket2 = (WlanPictureDataPacket)packet;
+				byte dataChunk[] = picPacket2.getData();
+				synchronized(mPictureBufSync)
+				{
+					PictureBuffer buf = mPictureBuf[mSelPictureBuf];
+					
+					if(picPacket2.getChunkNum() != wlanPictureLastChunkNum)
+					{
+						//if(buf.isFilled())
+						//{
+						//	System.out.println("Invalid wlan picture chunk num");
+						//}
+						
+						buf.stop();
+					}
+					else
+					{
+						wlanPictureLastChunkNum++;
+						for(int i = 0; i < dataChunk.length; i++)
+						{
+							buf.append(dataChunk[i]);
+						}
+						
+						synchronized(mPictureListenerSync)
+						{
+							if(buf.isReadyDraw())
+							{
+								buf.lock();
+								if(mPictureListener != null)
+								{
+									mPictureListener.onPictureReceived(buf);
+								}
+								buf.unlock();
+							}
+						}
+					}
+				}
+				break;
+			}	
+		}
+		
 		@Override
 		public void run()
 		{
@@ -198,37 +318,21 @@ public class DroneCommander
 				{
 					pingErrCounter = 0;
 					
-					WlanLogPacket logPacket = WlanLogPacket.parse(data);
+					WlanPacket packet = WlanPacket.parse(data);
 					
-					if(logPacket != null)
+					if(packet.getDroneId() == mDroneId)
 					{
-						if(logPacket.getDroneId() == mDroneId)
+						wlanLastRxPacketNum = packet.getNum();
+						if(wlanRxPacketCounter == 0)
 						{
-							DroneLog.instance().append(logPacket);
-							recvErrCounter = 0;
-							wlanLastRxPacketNum = logPacket.getNum();
+							wlanFirstRxPacketNum = wlanLastRxPacketNum;
 						}
-						else
-						{
-							recvErrCounter++;
-						}
+						recvErrCounter = 0;
+						parsePacket(packet);
 					}
 					else
 					{
-						WlanTelemetryPacket telemetryPacket = WlanTelemetryPacket.parse(data);
-						
-						if(telemetryPacket.getDroneId() == mDroneId)
-						{
-							DroneTelemetry.instance().append(telemetryPacket);
-							recvErrCounter = 0;
-							wlanLastRxPacketNum = telemetryPacket.getNum();
-							// sometimes droneTime is bigger than current time I think this is because System.currentTimeMillis() is not precise
-							wlanLatency = Math.max(0,(int)(System.currentTimeMillis() - telemetryPacket.getDroneState().time));
-						}
-						else
-						{
-							recvErrCounter++;
-						}
+						recvErrCounter++;
 					}
 				}
 				
@@ -389,7 +493,7 @@ public class DroneCommander
 	
 	public int getLostRxPacketCounter()
 	{
-		return (wlanLastRxPacketNum > 0)?(wlanLastRxPacketNum + 1 - wlanRxPacketCounter):0;
+		return (wlanLastRxPacketNum > 0)?(wlanLastRxPacketNum - wlanFirstRxPacketNum + 1 - wlanRxPacketCounter):0;
 	}
 	
 	public int getWlanLatency()
@@ -421,9 +525,9 @@ public class DroneCommander
 		mWifiRate = DroneState.net.wifiRate;
 		mWifiTpwDbm = DroneState.net.wifiTxPowerDbm;
 		
-		// FIXME LostPackets param gets wrong If the drone were connected normally
 		// Reset net statistics
 		wlanRxPacketCounter = 0;
+		wlanFirstRxPacketNum = 0;
 		wlanLastRxPacketNum = 0;
 		wlanTxPacketCounter = 0;
 		wlanLatency = 0;
@@ -436,7 +540,8 @@ public class DroneCommander
 				DroneState ds = Profile.instance().getDroneSettings();
 				// We always have to start with UDP modem!
 				// Start UDP modem
-				mModem = connectWifiUdpModem(DroneState.net.ip,DroneState.net.udpPort);
+				mModem = connectWifiUdpModem(	DroneState.net.ip,
+												DroneState.net.udpPort );
 				// Connect
 				if(mModem == null)
 				{
@@ -845,7 +950,8 @@ public class DroneCommander
 		switch(t)
 		{
 		case WIFI_UDP_MODEM:
-			mdm = connectWifiUdpModem(DroneState.net.ip,DroneState.net.udpPort);
+			mdm = connectWifiUdpModem(	DroneState.net.ip,
+										DroneState.net.udpPort );
 			wifiBroadcastEnabled = false;
 			err = Alarm.ALARM_UDP_MODEM_CONNECTION_ERROR;
 			break;
@@ -1548,5 +1654,43 @@ public class DroneCommander
 		if(mModem instanceof WifiBroadcastModem)
 			return true;
 		return false;
+	}
+	
+	public PictureBuffer getPicture()
+	{
+		PictureBuffer buf = null;
+
+		synchronized(mPictureBufSync)
+		{
+			for(int i = 0; i < mPictureBuf.length; i++)
+			{
+				buf = mPictureBuf[i];
+				if(buf.isLocked() == false && buf.isFilled() == false)
+				{
+					buf.lock();
+					break;
+				}
+			}
+		}
+		
+		return buf;
+	}
+	
+	public void returnPicture(PictureBuffer buf)
+	{
+		synchronized(mPictureBufSync)
+		{
+			buf.unlock();
+		}
+	}
+	
+	public int getBitrate()
+	{
+		if(mModem != null)
+		{
+			return mModem.getBitrate();
+		}
+		
+		return 0;
 	}
 }

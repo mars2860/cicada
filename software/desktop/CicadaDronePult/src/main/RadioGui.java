@@ -2,6 +2,7 @@ package main;
 
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.text.DecimalFormat;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -22,6 +23,7 @@ public class RadioGui extends JSavedFrame
 	private JLabel mlbLostRxPackets;
 	private JLabel mlbTxPackets;
 	private JLabel mlbLatency;
+	private JLabel mlbBitrate;
 	
 	private Timer mTimer;
 	
@@ -43,6 +45,12 @@ public class RadioGui extends JSavedFrame
 			mlbLostRxPackets.setText(Integer.toString(DroneCommander.instance().getLostRxPacketCounter()));
 			mlbTxPackets.setText(Integer.toString(DroneCommander.instance().getTxPacketCounter()));
 			mlbLatency.setText(Integer.toString(DroneCommander.instance().getWlanLatency()));
+			
+			float bitrate = DroneCommander.instance().getBitrate();
+			DecimalFormat fmt = new DecimalFormat();
+			fmt.setMaximumFractionDigits(3);
+			fmt.setMinimumFractionDigits(3);
+			mlbBitrate.setText(fmt.format(bitrate/1000000.f));
 		}
 	}
 	
@@ -94,6 +102,7 @@ public class RadioGui extends JSavedFrame
 		mlbLostRxPackets = new JLabel();
 		mlbTxPackets = new JLabel();
 		mlbLatency = new JLabel();
+		mlbBitrate = new JLabel();
 		
 		JPanel pnl = new JPanel(new MigLayout("","[][100]"));
 
@@ -105,8 +114,10 @@ public class RadioGui extends JSavedFrame
 		pnl.add(mlbLostRxPackets,"wrap");
 		pnl.add(new JLabel("TxPackets: "));
 		pnl.add(mlbTxPackets,"wrap");
-		pnl.add(new JLabel("Latency: "));
+		pnl.add(new JLabel("Latency(ms): "));
 		pnl.add(mlbLatency,"wrap");
+		pnl.add(new JLabel("Bitrate(MBit/s):"));
+		pnl.add(mlbBitrate,"wrap");
 
 		this.add(pnl);
 	}

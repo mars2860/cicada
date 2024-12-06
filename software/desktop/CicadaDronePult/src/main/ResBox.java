@@ -101,6 +101,7 @@ public class ResBox
 		icons.put("HOR_VELO",loadIcon("images/horvelo.png"));
 		icons.put("VERT_VELO",loadIcon("images/vertvelo.png"));
 		icons.put("INFO",loadIcon("images/info.png"));
+		icons.put("CAMERA",loadIcon("images/camera.png"));
 	}
 	
 	private static void loadSounds()

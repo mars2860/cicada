@@ -15,6 +15,10 @@ uint32_t oldMicros;
 int32_t targetAngle = 0;
 const int32_t firstAngle = 30;
 
+#ifdef ARDUINO_XIAO_ESP32S3
+uint8_t jpegQuality;
+#endif
+
 void pdlSetupCamera(pdlDroneState *ds)
 {
   angleInMicroSecs = 0;
@@ -61,17 +65,25 @@ void pdlSetupCamera(pdlDroneState *ds)
   config.pin_sccb_scl = SIOC_GPIO_NUM;
   config.pin_pwdn = PWDN_GPIO_NUM;
   config.pin_reset = RESET_GPIO_NUM;
-#ifdef SENSOR_OV5640
+
   config.xclk_freq_hz = 20000000;
-#else
-  config.xclk_freq_hz = 12000000; //real frequency will be 80Mhz/6 = 13,333Mhz and we use clk2x
-#endif
+
   config.pixel_format = PIXFORMAT_JPEG;
-  config.frame_size = FRAMESIZE_QVGA;
-  config.jpeg_quality = 36;
-  config.fb_count = 2;
+
+  jpegQuality = 8; // if I set start quality to 0 I get "Stack canary watchpoint triggered (camTask)"
+  // jpegQuality = 20;
+
+  // FPS=25 for OV2640
+  //config.frame_size = FRAMESIZE_SVGA;
+  //config.frame_size = FRAMESIZE_VGA;
+  // FPS=50 for OV2640
+  config.frame_size = FRAMESIZE_CIF;
+
+  config.jpeg_quality = jpegQuality;
+  config.fb_count = 3;
   config.grab_mode = CAMERA_GRAB_LATEST;
-  config.fb_location = CAMERA_FB_IN_DRAM;
+  //config.fb_location = CAMERA_FB_IN_DRAM;
+  config.fb_location = CAMERA_FB_IN_PSRAM; // My investigation says that is no difference in frame delay if I change it to DRAM
 
   //config.data_available_callback = camera_data_available;
 
@@ -80,15 +92,32 @@ void pdlSetupCamera(pdlDroneState *ds)
 
   if(err != ESP_OK)
   {
-    LOG_ERROR("ESP32S3 camera init failed with error 0x%x", err);
+    LOG_ERROR("esp32-camera init failed with error 0x%x", err);
   }
   else
   {
-    LOG_INFO("ESP32S3 camera is ok");
+    sensor_t *pCamSens = esp_camera_sensor_get();
+
+    if(pCamSens)
+    {
+      camera_sensor_info_t *pCamInfo = esp_camera_sensor_get_info(&pCamSens->id);
+      if(pCamInfo)
+      {
+        LOG_INFO("esp32-camera:%s is ok",pCamInfo->name);
+      }
+      else
+      {
+        LOG_ERROR("Unknown esp32-camera");
+      }
+    }
+    else
+    {
+      LOG_INFO("esp32-camera is not found");
+    }
 
     if(!hCamTask)
     {
-      xTaskCreatePinnedToCore(camTask,"camTask",2048,ds,5,&hCamTask,0);
+      xTaskCreatePinnedToCore(camTask,"camTask",4096,ds,1,&hCamTask,0);
     }
   }
 
@@ -187,12 +216,177 @@ void pdlUpdateCamera(pdlDroneState *ds)
 void camTask(void* pvParameters)
 {
   pdlDroneState *ds = (pdlDroneState*)pvParameters;
+
+  bool updStat = false;
+  uint32_t fbTimestamp;
+  uint64_t frameTime;
+  uint32_t frameTimestamp;
+  size_t maxFrameSize;
+  uint32_t fps;
+  uint32_t minFps;
+  uint32_t maxFps;
+  uint32_t avgFps;
+  uint32_t fpsTimestamp;
+  uint32_t frameDelay;
+  size_t sent;
+  size_t dataOffset;
+  uint16_t chunkNum;
+
+  maxFrameSize = 0;
+  minFps = 100;
+  maxFps = 0;
+  avgFps = 0;
+  fps = 0;
+  frameDelay = 0;
+  frameTimestamp = pdlMicros();
+  fpsTimestamp = pdlMicros();
+
+  sensor_t *pCamSens = esp_camera_sensor_get();
+  camera_sensor_info_t *pCamInfo = NULL;
+
+  if(pCamSens)
+  {
+     pCamInfo = esp_camera_sensor_get_info(&pCamSens->id);
+  }
+
   for(;;)
   {
-    delay(1000);
     // get camera buffer
-    // check frame timestamp
-    // send jpeg in loop
+    camera_fb_t* fb = esp_camera_fb_get();
+
+    if(fb)
+    {
+      chunkNum = 0;
+      fbTimestamp = fb->timestamp.tv_sec*1000000UL + fb->timestamp.tv_usec;
+    }
+
+    if(fb && fbTimestamp != frameTimestamp)
+    {
+      frameTimestamp = fbTimestamp;
+      frameDelay = pdlGetDeltaTime(pdlMicros(),frameTimestamp);
+      // convert frame timestamp to host time
+      frameTime = pdlSystemTimeToHostTime(frameTimestamp);
+      // log frame size
+      if(fb->len > maxFrameSize)
+      {
+        maxFrameSize = fb->len;
+        updStat = true;
+      }
+      // send jpeg to host
+      if(hostIsSet())
+      {
+        sent = sendWlanPictureStartPacket( fb->width,
+                                           fb->height,
+                                           fb->format,
+                                           jpegQuality,
+                                           frameTime,
+                                           fb->len,
+                                           fb->buf);
+
+        dataOffset = sent;
+
+        while(dataOffset < fb->len && sent > 0)
+        {
+          // on ESP32 platforme endPacket says err 12 (ENOMEM) if I send packets very often
+          // forums say increase CONFIG_ESP_WIFI_STATIC_TX_BUFFER_NUM
+          // but increasing this param in sdkconfig.h in esp-idf placed in Arduino folder has no effects
+          // also see parameters of esp-idf for max throughput https://github.com/espressif/esp-idf/tree/v5.2.3/examples/wifi/iperf
+          // to change CONFIG_ESP_WIFI_STATIC_TX_BUFFER_NUM it is need to recompile the whole arduino-esp32-lib
+          // to do this see https://github.com/espressif/esp32-arduino-lib-builder
+          // upd: rebuilding of arduino-lib gave nothing, bitrate is low
+          for(uint8_t i = 0; i < 5; i++)
+          {
+            sent = sendWlanPictureDataPacket(dataOffset,fb->len,fb->buf,chunkNum);
+            if(sent > 0)
+            {
+              chunkNum++;
+              break;
+            }
+            else
+            {
+              // the only recommended method to fight with err 12 (ENOMEM) it is delay and send again
+              // https://esp32.com/viewtopic.php?t=5340
+              delay(3);
+            }
+          }
+          dataOffset += sent;
+        }
+
+        //if(!sent)
+        //{
+        //  LOG_ERROR("Can't sent a picture chunk");
+        //}
+
+        if(dataOffset >= fb->len) // count fps if picture has been sent successfully
+        {
+          fps++;
+        }
+      }
+      else
+      {
+        // count offline fps
+        fps++;
+      }
+    }
+    // return buffer
+    if(fb)
+    {
+      esp_camera_fb_return(fb);
+    }
+
+    // statistics
+    if(pdlGetDeltaTime(pdlMicros(),fpsTimestamp) >= 1000000)
+    {
+      fpsTimestamp = pdlMicros();
+      if(fps < minFps)
+      {
+        minFps = fps;
+        updStat = true;
+      }
+      if(fps > maxFps)
+      {
+        maxFps = fps;
+        updStat = true;
+      }
+
+      /*uint32_t f = (avgFps + fps) / 2;
+
+      if(avgFps != f)
+      {
+        avgFps = f;
+        updStat = true;
+      }*/
+
+      avgFps = (avgFps + fps) / 2;
+
+      // apply adaptive quality for OV2640
+      if(hostIsSet() && pCamSens && pCamInfo)
+      {
+        if(pCamInfo->model == CAMERA_OV2640)
+        {
+          if(fb->height <= 296 && avgFps < 30 && jpegQuality < 63)
+          {
+            jpegQuality++;
+            pCamSens->set_quality(pCamSens,jpegQuality);
+          }
+          if(fb->height > 296 && fb->height <= 600 && avgFps < 22 && jpegQuality < 63)
+          {
+            jpegQuality++;
+            pCamSens->set_quality(pCamSens,jpegQuality);
+          }
+        }
+      }
+
+      //LOG_INFO("esp_cam: maxFrameSize=%i,minFps=%i,fps=%i,maxFps=%i,delay=%i",maxFrameSize,minFpv,fpv,maxFpv,frameDelay);
+
+      fps = 0;
+    }
+    if(updStat)
+    {
+      // about FPS of esp32-camera https://github.com/espressif/esp32-camera/issues/201
+      LOG_INFO("esp_cam: maxFrameSize=%i,minFps=%i,avgFps=%i,maxFps=%i,delay=%i",maxFrameSize,minFps,avgFps,maxFps,frameDelay);
+      updStat = false;
+    }
   }
 }
 

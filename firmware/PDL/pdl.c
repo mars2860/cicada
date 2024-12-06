@@ -8,10 +8,12 @@
 
 #ifndef PDL_LOCK_LOG
   #define PDL_LOCK_LOG
+  #define PDL_UNLOCK_LOG
 #endif
 
-#ifndef PDL_UNLOCK_LOG
-  #define PDL_UNLOCK_LOG
+#ifndef PDL_LOCK_TIME
+  #define PDL_LOCK_TIME
+  #define PDL_UNLOCK_TIME
 #endif
 
 char pdlLog[PDL_LOG_BUF_SIZE];
@@ -643,14 +645,39 @@ void pdlSetFrameType(pdlDroneState *ds, uint8_t frame)
 void pdlSetTime(pdlDroneState *ds, uint64_t t)
 {
   (void)ds;
+
+  PDL_LOCK_TIME
+
   pdlRefTime = t;
   pdlRefTimestamp = pdlMicros();
+
+  PDL_UNLOCK_TIME
 }
 
 void pdlUpdateTime(pdlDroneState *ds)
 {
   ds->timestamp = pdlMicros();
-  ds->localTime = pdlRefTime + (uint64_t)(pdlGetDeltaTime(pdlMicros(),pdlRefTimestamp) / 1000);
+  ds->localTime = pdlSystemTimeToHostTime(ds->timestamp);
+}
+
+uint64_t pdlSystemTimeToHostTime(uint32_t sysTimeUs)
+{
+  uint64_t t = 0;
+
+  PDL_LOCK_TIME
+
+  if(sysTimeUs > pdlRefTimestamp)
+  {
+    t = pdlRefTime + (uint64_t)((sysTimeUs - pdlRefTimestamp) / 1000);
+  }
+  else
+  {
+    t = pdlRefTime - (uint64_t)((pdlRefTimestamp - sysTimeUs) / 1000);
+  }
+
+  PDL_UNLOCK_TIME
+
+  return t;
 }
 
 uint8_t pdlIsHostConnected(pdlDroneState* ds)

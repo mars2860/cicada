@@ -4,7 +4,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Rect;
+import android.media.Image;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
@@ -12,11 +18,14 @@ import android.util.Log;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.File;
@@ -25,6 +34,7 @@ import java.io.InputStream;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Observable;
 import java.util.Observer;
@@ -47,6 +57,7 @@ import pdl.DroneCommander;
 import pdl.DroneState;
 import pdl.DroneTelemetry;
 import pdl.commands.CmdResetAltitude;
+import pdl.wlan.PictureBuffer;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -54,9 +65,8 @@ public class MainActivity extends AppCompatActivity {
 
     Timer mtmDroneMoveUpdater;
 
-    TextView mtvAlarm;
-    TextView mtvStatus1;
-    TextView mtvStatus2;
+    private SurfaceView mFpvView;
+    private FpvRenderer mFpvRenderer;
 
     ToggleButton mbtnDisarm;
 
@@ -91,7 +101,7 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void run() {
                     Alarm alarm = DroneAlarmCenter.instance().getAlarm();
-                    printAlarm(alarm);
+                    //printAlarm(alarm);
                     DroneState ds = DroneTelemetry.instance().getDroneState();
                     DroneTelemetry.instance().speakDroneState(ds,pdlSoundProvider);
                 }
@@ -109,15 +119,8 @@ public class MainActivity extends AppCompatActivity {
                 public void run() {
                     DroneState ds = DroneTelemetry.instance().getDroneState();
                     // update wifi rssi for AP mode (we can't do that at the firmware side)
-                    if( DroneCommander.instance().isWifiBroadcastActive() == false &&
-                        DroneState.net.wifiStaMode == false ) {
-                        WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-                        WifiInfo info = wifiManager.getConnectionInfo();
-                        ds.rssi = info.getRssi();
-                        // check min rssi level
-                        DroneTelemetry.instance().checkDroneStateForAlarms(ds);
-                    }
-                    printDroneState(ds);
+                    correctDroneStateRssi(ds);
+                    //printDroneState(ds);
                     DroneTelemetry.instance().speakDroneState(ds,pdlSoundProvider);
                     mbtnDisarm.setChecked(DroneTelemetry.instance().getDroneState().motorsEnabled);
                 }
@@ -270,6 +273,407 @@ public class MainActivity extends AppCompatActivity {
             DroneCommander.instance().liftDrone(liftCtrl);
             DroneCommander.instance().rotateDrone(rotateCtrl);
             DroneCommander.instance().moveDrone(pitchCtrl, rollCtrl);
+        }
+    }
+
+    private class FpvRenderer implements SurfaceHolder.Callback, Runnable, DroneCommander.PictureListener
+    {
+        private static final int OSD_TEXT_LEFT_GAP = 15;
+        private Thread mRenderThread;
+        private boolean mRenderRun;
+        private SurfaceHolder mHolder;
+        private int mFpsCounter;
+        private float mFps;
+        private long mFpsTimestamp;
+        private long mFrameDelayTimestamp;
+        private long mFrameDelay;
+        private long mFrameDelaySum;
+        private int mFrameDelayCounter;
+        private int mFrameQuality;
+
+        private ArrayList<PictureBuffer> mImgList = new ArrayList<PictureBuffer>();
+        private Object mImgListSync = new Object();
+
+        @Override
+        public void surfaceCreated(@NonNull SurfaceHolder holder) {
+            mRenderThread = new Thread(this,"FpvRenderer");
+            mRenderRun = true;
+            mHolder = holder;
+            mRenderThread.start();
+        }
+
+        @Override
+        public void surfaceChanged(@NonNull SurfaceHolder holder, int format, int width, int height) {
+
+        }
+
+        @Override
+        public void surfaceDestroyed(@NonNull SurfaceHolder holder) {
+            boolean retry = true;
+            mRenderRun = false;
+
+            while(retry) {
+                try {
+                    mRenderThread.join(); //ждет окончательной остановки процесса
+                    retry = false;
+                }
+                catch (InterruptedException e) {
+                    //не более чем формальность
+                }
+            }
+
+            mRenderThread = null;
+        }
+
+        @Override
+        public void run() {
+            Canvas canvas = null;
+            PictureBuffer buf = null;
+            Bitmap imgFrame = null;
+            boolean isNewFrame = false;
+            int imgWidth = 0;
+            int imgHeight = 0;
+            int imgQuality = 0;
+            long imgTimestamp = System.currentTimeMillis();
+            while(mRenderRun) {
+                try {
+                    synchronized(mImgListSync)  {
+                        mImgListSync.wait(20);
+                        if(mImgList.isEmpty() == false)  {
+                            // get only last image to draw it
+                            buf = mImgList.get(mImgList.size() - 1);
+                            // we don't need other images
+                            mImgList.clear();
+                            isNewFrame = true;
+                        } else {
+                            isNewFrame = false;
+                        }
+                    }
+                    // convert buffer to java image
+                    if(isNewFrame && buf != null) {
+                        BitmapFactory.Options options = new BitmapFactory.Options();
+                        options.inMutable = true;
+                        imgFrame = BitmapFactory.decodeByteArray(buf.getData(), 0, buf.getData().length, options);
+                        imgWidth = buf.getWidth();
+                        imgHeight = buf.getHeight();
+                        imgTimestamp = buf.getTimestamp();
+                        imgQuality = buf.getQuality();
+                    }
+
+                    canvas = mHolder.lockCanvas();
+                    synchronized (mHolder) {
+                        drawFrame(canvas,imgFrame,imgQuality,imgWidth,imgHeight,imgTimestamp,isNewFrame);
+                    }
+                }
+                catch (Exception e) {
+                    e.printStackTrace();
+                }
+                finally {
+                    if (canvas != null) {
+                        mHolder.unlockCanvasAndPost(canvas);
+                        canvas = null;
+                    }
+                }
+            }
+        }
+
+        private void drawFrame(Canvas canvas, Bitmap imgFrame, int quality, int width, int height, long timestamp, boolean isNewFrame)
+        {
+            Paint paint = new Paint();
+            paint.setAntiAlias(false);
+            paint.setStyle(Paint.Style.FILL);
+            paint.setColor(Color.BLACK);
+
+            int canvasWidth = canvas.getWidth();
+            int canvasHeight = canvas.getHeight();
+
+            canvas.drawRect(0,0,canvasWidth,canvasHeight, paint);
+
+            Canvas osdCanvas = canvas;
+
+            if(imgFrame != null) {
+                osdCanvas = new Canvas(imgFrame);
+            }
+
+            printAlarm(osdCanvas,DroneAlarmCenter.instance().getAlarm());
+            printDroneState(DroneTelemetry.instance().getDroneState(),osdCanvas);
+
+            try {
+                if(imgFrame != null) {
+
+                    float scaleX = (float)canvasWidth / (float)width;
+                    float scaleY = (float)canvasHeight / (float)height;
+                    float scale = scaleX;
+                    if(scaleY < scale)
+                    {
+                        scale = scaleY;
+                    }
+                    int nWidth = (int)((float)width*scale);
+                    int nHeight = (int)((float)height*scale);
+                    int x = (canvasWidth - nWidth)/2;
+                    int y = (canvasHeight - nHeight)/2;
+
+                    // TODO Fullscreen/Split screen
+
+                    canvas.drawBitmap(imgFrame,null,new Rect(x,y,x+nWidth,y+nHeight),null);
+                }
+
+                if(isNewFrame) {
+                    mFpsCounter++;
+                }
+            }
+            catch(Exception e) {
+                e.printStackTrace();
+            }
+
+            if(System.currentTimeMillis() - mFpsTimestamp >= 1000) {
+                mFps = System.currentTimeMillis() - mFpsTimestamp;
+                mFps = (float)(mFpsCounter*1000) / mFps;
+                mFpsTimestamp = System.currentTimeMillis();
+                mFpsCounter = 0;
+            }
+
+            DecimalFormat fmt = new DecimalFormat();
+            fmt.setMaximumFractionDigits(1);
+
+            mFrameDelaySum += (System.currentTimeMillis() - timestamp);
+            mFrameDelayCounter++;
+
+            if((System.currentTimeMillis() - mFrameDelayTimestamp) >= 250 && mFrameDelayCounter > 0) {
+                mFrameDelay = mFrameDelaySum / mFrameDelayCounter;
+                mFrameDelayTimestamp = System.currentTimeMillis();
+                mFrameDelayCounter = 0;
+                mFrameDelaySum = 0;
+            }
+
+            /*
+            Paint txtPaint = new Paint();
+            txtPaint.setColor(Color.WHITE);
+            txtPaint.setTextSize(24);
+
+            String info = "JPEG " + width + "x" + height + " Quality:" + quality + " FPS:" + fmt.format(mFps) + " Delay:" + mFrameDelay;
+            canvas.drawText(info,15,40,txtPaint);
+            */
+        }
+
+        @Override
+        public void onPictureReceived(PictureBuffer buf) {
+            if(buf == null)
+                return;
+
+            synchronized(mImgListSync)
+            {
+                mImgList.add(buf.clone());
+                mImgListSync.notifyAll();
+                mFrameQuality = buf.getQuality();
+            }
+        }
+
+        private int drawState(String txt, int row, Canvas canvas, Paint txtPaint) {
+            int textHeight = this.getOsdTextHeight(canvas);
+            canvas.drawText(txt,OSD_TEXT_LEFT_GAP,row*textHeight,txtPaint);
+            row++;
+            return row;
+        }
+
+        private void printDroneState(DroneState ds, Canvas canvas) {
+            int row = 4;
+
+            DecimalFormat fmt1 = new DecimalFormat();
+            fmt1.setMaximumFractionDigits(2);
+            fmt1.setMinimumFractionDigits(0);
+            fmt1.setGroupingUsed(false);
+
+            DecimalFormat fmt2 = new DecimalFormat();
+            fmt2.setMaximumFractionDigits(0);
+            fmt2.setGroupingUsed(false);
+
+            DecimalFormat fmt3 = new DecimalFormat();
+            fmt3.setMaximumFractionDigits(3);
+            fmt3.setGroupingUsed(false);
+
+            DecimalFormat fmt5 = new DecimalFormat();
+            fmt5.setMinimumIntegerDigits(2);
+
+            DecimalFormat fmt6 = new DecimalFormat();
+            fmt6.setMinimumIntegerDigits(2);
+
+            int textHeight = this.getOsdTextHeight(canvas);
+
+            Paint txtPaint = new Paint();
+            txtPaint.setColor(Color.WHITE);
+            txtPaint.setTextSize(textHeight);
+
+            correctDroneStateRssi(ds);
+
+            String armed = (ds.motorsEnabled)?"motors: armed":"motors: disarmed";
+            row = this.drawState(armed,row,canvas,txtPaint);
+
+            if(DroneState.widgets.flyTime) {
+                int secs = (int)(DroneTelemetry.instance().getFlyTime() / 1000000.0);
+                int mins = secs / 60;
+                secs = secs - mins*60;
+                String flyTime = "flyTime: " + fmt5.format(mins) + ":" + fmt6.format(secs);
+                row = this.drawState(flyTime,row,canvas,txtPaint);
+            }
+
+            if(DroneState.widgets.battery) {
+                String bat = "battery: " + fmt1.format(ds.battery.voltage) + "V/" + fmt2.format(ds.battery.percent) + "%";
+                row = this.drawState(bat,row,canvas,txtPaint);
+            }
+
+            if(DroneState.widgets.rssi) {
+                String rssi = "rssi: " + fmt2.format(ds.rssi);
+                row = this.drawState(rssi,row,canvas,txtPaint);
+            }
+
+            if(DroneState.widgets.latency) {
+                String latency = "delay: " + fmt2.format(DroneCommander.instance().getWlanLatency());
+                row = this.drawState(latency,row,canvas,txtPaint);
+            }
+
+            if(DroneState.widgets.lostRxPackets) {
+                String lostRxPackets = "lostRx: " + fmt2.format(DroneCommander.instance().getLostRxPacketCounter());
+                row = this.drawState(lostRxPackets,row,canvas,txtPaint);
+            }
+
+            if(DroneState.widgets.home) {
+                String home = "home: " + fmt1.format(ds.distToHome) + "m/" + fmt2.format(ds.headToHome);
+                row = this.drawState(home,row,canvas,txtPaint);
+            }
+
+            if(DroneState.widgets.yaw) {
+                String yaw = "yaw: " + fmt2.format(ds.yawDeg);
+                row = this.drawState(yaw,row,canvas,txtPaint);
+            }
+
+            if(DroneState.widgets.pitch) {
+                String pitch = "pitch: " + fmt1.format(ds.pitchDeg);
+                row = this.drawState(pitch,row,canvas,txtPaint);
+            }
+
+            if(DroneState.widgets.roll) {
+                String roll = "roll: " + fmt1.format(ds.rollDeg);
+                row = this.drawState(roll,row,canvas,txtPaint);
+            }
+
+            if(DroneState.widgets.alt) {
+                String alt = "alt: " + fmt1.format(ds.altitude);
+                row = this.drawState(alt,row,canvas,txtPaint);
+            }
+
+            if(DroneState.widgets.vertSpeed) {
+                String vertSpeed = "verSpd: " + fmt1.format(ds.velUp);
+                row = this.drawState(vertSpeed,row,canvas,txtPaint);
+            }
+
+            if(DroneState.widgets.horSpeed) {
+                String horSpeed = "horSpd: " + fmt1.format(ds.velGnd);
+                row = this.drawState(horSpeed,row,canvas,txtPaint);
+            }
+
+            if(DroneState.widgets.temperature) {
+                String temperature = "temp: " + fmt1.format(ds.temperature);
+                row = this.drawState(temperature,row,canvas,txtPaint);
+            }
+
+            if(DroneState.widgets.pressure) {
+                String pressure = "press: " + fmt1.format(ds.baro.pressure);
+                row = this.drawState(pressure,row,canvas,txtPaint);
+            }
+
+            if(DroneState.widgets.gx) {
+                String gx = "gx: " + fmt2.format(ds.gyro.rawX);
+                row = this.drawState(gx,row,canvas,txtPaint);
+            }
+
+            if(DroneState.widgets.gy) {
+                String gy = "gy: " + fmt2.format(ds.gyro.rawY);
+                row = this.drawState(gy,row,canvas,txtPaint);
+            }
+
+            if(DroneState.widgets.gz) {
+                String gz = "gz: " + fmt2.format(ds.gyro.rawZ);
+                row = this.drawState(gz,row,canvas,txtPaint);
+            }
+
+            if(DroneState.widgets.ax) {
+                String ax = "ax: " + fmt2.format(ds.accel.rawX);
+                row = this.drawState(ax,row,canvas,txtPaint);
+            }
+
+            if(DroneState.widgets.ay) {
+                String ay = "ay: " + fmt2.format(ds.accel.rawY);
+                row = this.drawState(ay,row,canvas,txtPaint);
+            }
+
+            if(DroneState.widgets.az) {
+                String az = "az: " + fmt2.format(ds.accel.rawZ);
+                row = this.drawState(az,row,canvas,txtPaint);
+            }
+
+            DecimalFormat fmtLatLon = new DecimalFormat();
+            fmtLatLon.setMinimumIntegerDigits(3);
+            fmtLatLon.setMinimumFractionDigits(6);
+            fmtLatLon.setMaximumFractionDigits(6);
+            if(DroneState.widgets.lat) {
+                String lat = "lat: " + fmtLatLon.format(ds.gps.lat);
+                row = this.drawState(lat,row,canvas,txtPaint);
+            }
+
+            if(DroneState.widgets.lon) {
+                String lon = "lon: " + fmtLatLon.format(ds.gps.lon);
+                row = this.drawState(lon,row,canvas,txtPaint);
+            }
+
+            if(DroneState.widgets.sattels) {
+                String sat = "sat: " + fmt2.format(ds.gps.numSV);
+                row = this.drawState(sat,row,canvas,txtPaint);
+            }
+
+            if(DroneState.widgets.videoFps) {
+                String fps = "vFps: " + fmt2.format(mFps);
+                row = this.drawState(fps,row,canvas,txtPaint);
+            }
+
+            if(DroneState.widgets.videoDelay) {
+                String fps = "vDelay: " + fmt2.format(mFrameDelay);
+                row = this.drawState(fps,row,canvas,txtPaint);
+            }
+
+            if(DroneState.widgets.videoQuality) {
+                String fps = "vQual: " + fmt2.format(mFrameQuality);
+                row = this.drawState(fps,row,canvas,txtPaint);
+            }
+        }
+
+        private int getOsdTextHeight(Canvas canvas) {
+            return canvas.getHeight()/20;
+        }
+
+        private void printAlarm(Canvas canvas, Alarm alarm) {
+            String board = "";
+
+            int textHeight = this.getOsdTextHeight(canvas);
+
+            Paint txtPaint = new Paint();
+            txtPaint.setTextSize(textHeight);
+
+            if(DroneAlarmCenter.instance().getAlarm(Alarm.ALARM_CONNECTING)) {
+                board = TextBox.get("ALARM_CONNECTING");
+                txtPaint.setColor(Color.YELLOW);
+            } else if(DroneAlarmCenter.instance().getAlarm(Alarm.ALARM_UNSUPPORTED_FIRMWARE)) {
+                board = TextBox.get("ALARM_UNSUPPORTED_FIRMWARE");
+                txtPaint.setColor(Color.RED);
+            } else if (alarm == null) {
+                board = TextBox.get("SYSTEM_OK");
+                txtPaint.setColor(Color.GREEN);
+            } else {
+                board = TextBox.get(alarm.name());
+                txtPaint.setColor(Color.RED);
+            }
+
+            canvas.drawText(board,OSD_TEXT_LEFT_GAP,textHeight*2,txtPaint);
         }
     }
 
@@ -480,6 +884,7 @@ public class MainActivity extends AppCompatActivity {
 
         DroneAlarmCenter.instance().deleteObserver(alarmObserver);
         DroneTelemetry.instance().deleteObserver(telemetryObserver);
+        DroneCommander.instance().setPictureListener(null);
     }
 
     private void myResCreate() {
@@ -545,12 +950,13 @@ public class MainActivity extends AppCompatActivity {
         telemetryObserver = new OnTelemetryUpdate();
         DroneAlarmCenter.instance().addObserver(alarmObserver);
         DroneTelemetry.instance().addObserver(telemetryObserver);
+        DroneCommander.instance().setPictureListener(mFpvRenderer);
 
         if(DroneTelemetry.instance().isDroneConnected() == false) { // for first run
             DroneAlarmCenter.instance().setAlarm(Alarm.ALARM_DRONE_NOT_FOUND);
         }
-        printAlarm(DroneAlarmCenter.instance().getAlarm());
-        printDroneState(DroneTelemetry.instance().getDroneState());
+        //printAlarm(DroneAlarmCenter.instance().getAlarm());
+        //printDroneState(DroneTelemetry.instance().getDroneState());
         updateJoysticks();
         loadGamepadSettings(this);
         // to implement acceleration/deceleration by key_down we need to poll key state
@@ -577,11 +983,11 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
         // find widgets
-        mtvAlarm = (TextView)findViewById(R.id.tvAlarm);
         mbtnDisarm = (ToggleButton)findViewById(R.id.btnDisarm);
 
-        mtvStatus1 = (TextView)findViewById(R.id.tvStatus1);
-        mtvStatus2 = (TextView)findViewById(R.id.tvStatus2);
+        mFpvView = (SurfaceView)findViewById(R.id.fpvView);
+        mFpvRenderer = new FpvRenderer();
+        mFpvView.getHolder().addCallback(mFpvRenderer);
     }
 
     @Override
@@ -666,6 +1072,7 @@ public class MainActivity extends AppCompatActivity {
         v.getContext().startActivity(intent);
     }
 
+    /*
     private int appendState(String text, int rowCount) {
         if(rowCount < DroneState.widgets.maxRowCount) {
             mtvStatus1.append(text);
@@ -845,6 +1252,7 @@ public class MainActivity extends AppCompatActivity {
         mtvAlarm.setText(TextBox.get(alarm.name()));
         mtvAlarm.setTextColor(Color.RED);
     }
+    */
 
     public static int keyTurnCw;
     public static int keyTurnCcw;
@@ -952,5 +1360,16 @@ public class MainActivity extends AppCompatActivity {
         editor.putInt(context.getString(R.string.key_video), keyVideo);
         editor.putInt(context.getString(R.string.key_photo), keyPhoto);
         editor.apply();
+    }
+
+    public void correctDroneStateRssi(DroneState ds) {
+        if( DroneCommander.instance().isWifiBroadcastActive() == false &&
+                DroneState.net.wifiStaMode == false ) {
+            WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+            WifiInfo info = wifiManager.getConnectionInfo();
+            ds.rssi = info.getRssi();
+            // check min rssi level
+            DroneTelemetry.instance().checkDroneStateForAlarms(ds);
+        }
     }
 }

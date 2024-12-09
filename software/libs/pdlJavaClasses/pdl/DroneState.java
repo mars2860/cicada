@@ -316,6 +316,22 @@ public class DroneState implements Cloneable
 		@NoChart
 		@Expose
 		public boolean lostRxPackets = false;
+
+		@Setting
+		@NoChart
+		@Expose
+		public boolean videoFps = false;
+
+		@Setting
+		@NoChart
+		@Expose
+		public boolean videoQuality = false;
+
+
+		@Setting
+		@NoChart
+		@Expose
+		public boolean videoDelay = false;
 		
 		@Override
 		public Object clone() throws CloneNotSupportedException

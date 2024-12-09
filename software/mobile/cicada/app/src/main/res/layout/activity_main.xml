@@ -6,19 +6,14 @@
     android:background="#0099cc"
     tools:context=".MainActivity">
 
+    <SurfaceView
+        android:id="@+id/fpvView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-
-        <TextView
-            android:id="@+id/tvAppVersion"
-            android:layout_alignParentBottom="true"
-            android:layout_alignParentRight="true"
-            android:text="app_ver"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="5dp"
-        />
 
         <RelativeLayout
             android:layout_width="wrap_content"
@@ -27,6 +22,7 @@
             android:layout_alignParentTop="true"
             android:layout_alignParentRight="true"
             android:layout_marginTop="5dp">
+
             <ImageButton
                 android:id="@+id/btnConnect"
                 android:gravity="left"
@@ -64,41 +60,19 @@
                 android:scaleType="fitCenter"
                 android:onClick="onBtnGamepad"/>
 
+            <TextView
+                android:id="@+id/tvAppVersion"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
+                android:layout_alignBottom="@+id/btnConnect"
+                android:layout_marginLeft="20dp"
+                android:layout_marginRight="5dp"
+                android:layout_toEndOf="@+id/btnGamepad"
+                android:gravity="center_vertical"
+                android:textColor="#ffffffff"
+                android:text="app_ver" />
+
         </RelativeLayout>
-
-        <TextView
-            android:id="@+id/tvAlarm"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentLeft="true"
-            android:text="The drone is not found"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="5dp"
-            android:layout_marginTop="5dp"
-            android:layout_marginBottom="5dp"
-            android:layout_toLeftOf="@id/pnlButtons"
-            />
-
-        <TextView
-            android:id="@+id/tvStatus1"
-            android:layout_below="@id/tvAlarm"
-            android:text="bat:0.0V/0%\nrrsi:-100 dbi\nflyTime: 00:00"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignLeft="@id/tvAlarm"
-            />
-
-        <TextView
-            android:id="@+id/tvStatus2"
-            android:layout_below="@id/tvAlarm"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="yaw:000\n\pitch:000\nroll:000\n"
-            android:layout_marginRight="5dp"
-            android:layout_alignTop="@id/tvStatus1"
-            android:layout_centerHorizontal="true"
-
-            />
 
         <RelativeLayout
             android:layout_width="match_parent"

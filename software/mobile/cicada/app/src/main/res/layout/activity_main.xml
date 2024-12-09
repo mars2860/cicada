@@ -60,6 +60,19 @@
                 android:scaleType="fitCenter"
                 android:onClick="onBtnGamepad"/>
 
+            <ImageButton
+                android:id="@+id/btnVR"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_alignBottom="@+id/btnConnect"
+                android:layout_toEndOf="@+id/btnGamepad"
+                android:src="@drawable/vr"
+                android:paddingLeft="1dp"
+                android:paddingRight="1dp"
+                android:adjustViewBounds="true"
+                android:scaleType="fitCenter"
+                android:onClick="onBtnVR"/>
+
             <TextView
                 android:id="@+id/tvAppVersion"
                 android:layout_width="wrap_content"
@@ -67,7 +80,7 @@
                 android:layout_alignBottom="@+id/btnConnect"
                 android:layout_marginLeft="20dp"
                 android:layout_marginRight="5dp"
-                android:layout_toEndOf="@+id/btnGamepad"
+                android:layout_toEndOf="@+id/btnVR"
                 android:gravity="center_vertical"
                 android:textColor="#ffffffff"
                 android:text="app_ver" />

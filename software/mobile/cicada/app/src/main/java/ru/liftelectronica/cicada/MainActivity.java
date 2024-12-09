@@ -3,14 +3,12 @@ package ru.liftelectronica.cicada;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
-import android.media.Image;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
@@ -21,6 +19,7 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
@@ -31,8 +30,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
-import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Locale;
@@ -42,7 +39,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import com.fazecast.jSerialComm.SerialPort;
-import com.fazecast.jSerialComm.android.AndroidPort;
 
 import io.github.controlwear.virtual.joystick.android.JoystickView;
 import pdl.Accelerator;
@@ -56,12 +52,12 @@ import pdl.DroneAlarmCenter;
 import pdl.DroneCommander;
 import pdl.DroneState;
 import pdl.DroneTelemetry;
-import pdl.commands.CmdResetAltitude;
 import pdl.wlan.PictureBuffer;
 
 public class MainActivity extends AppCompatActivity {
 
     public static final int JOYSTICK_UPDATE_TIME = 40;
+    private static final double STICK_FLAT = 0.09;
 
     Timer mtmDroneMoveUpdater;
 
@@ -69,6 +65,8 @@ public class MainActivity extends AppCompatActivity {
     private FpvRenderer mFpvRenderer;
 
     ToggleButton mbtnDisarm;
+    RelativeLayout mpnlButtons;
+    RelativeLayout mpnlVirtualGamepad;
 
     PDLSoundProvider pdlSoundProvider;
     OnAlarmUpdate alarmObserver;
@@ -91,8 +89,6 @@ public class MainActivity extends AppCompatActivity {
     private double rollCtrl = 0;
     private double pitchCtrl = 0;
     private double rotateCtrl = 0;
-
-    private static final double STICK_FLAT = 0.09;
 
     private class OnAlarmUpdate implements Observer {
         @Override
@@ -276,9 +272,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private class FpvRenderer implements SurfaceHolder.Callback, Runnable, DroneCommander.PictureListener
-    {
-        private static final int OSD_TEXT_LEFT_GAP = 15;
+    private class FpvRenderer implements SurfaceHolder.Callback, Runnable, DroneCommander.PictureListener {
         private Thread mRenderThread;
         private boolean mRenderRun;
         private SurfaceHolder mHolder;
@@ -290,6 +284,7 @@ public class MainActivity extends AppCompatActivity {
         private long mFrameDelaySum;
         private int mFrameDelayCounter;
         private int mFrameQuality;
+        private boolean mVRMode;
 
         private ArrayList<PictureBuffer> mImgList = new ArrayList<PictureBuffer>();
         private Object mImgListSync = new Object();
@@ -403,19 +398,34 @@ public class MainActivity extends AppCompatActivity {
 
                     float scaleX = (float)canvasWidth / (float)width;
                     float scaleY = (float)canvasHeight / (float)height;
+
+                    if(mVRMode) {
+                        scaleX /= 2.0;
+                    }
+
                     float scale = scaleX;
                     if(scaleY < scale)
                     {
                         scale = scaleY;
                     }
+
                     int nWidth = (int)((float)width*scale);
                     int nHeight = (int)((float)height*scale);
-                    int x = (canvasWidth - nWidth)/2;
-                    int y = (canvasHeight - nHeight)/2;
 
                     // TODO Fullscreen/Split screen
+                    if(mVRMode) {
+                        int x1 = (canvasWidth/2 - nWidth)/2;
+                        int y = (canvasHeight - nHeight)/2;
+                        int x2 = x1 + canvasWidth/2;
 
-                    canvas.drawBitmap(imgFrame,null,new Rect(x,y,x+nWidth,y+nHeight),null);
+                        canvas.drawBitmap(imgFrame, null, new Rect(x1, y, x1 + nWidth, y + nHeight), null);
+                        canvas.drawBitmap(imgFrame, null, new Rect(x2, y, x2 + nWidth, y + nHeight), null);
+                    } else {
+                        int x = (canvasWidth - nWidth)/2;
+                        int y = (canvasHeight - nHeight)/2;
+
+                        canvas.drawBitmap(imgFrame, null, new Rect(x, y, x + nWidth, y + nHeight), null);
+                    }
                 }
 
                 if(isNewFrame) {
@@ -456,6 +466,10 @@ public class MainActivity extends AppCompatActivity {
             */
         }
 
+        public void toggleVRMode() {
+            mVRMode = !mVRMode;
+        }
+
         @Override
         public void onPictureReceived(PictureBuffer buf) {
             if(buf == null)
@@ -471,7 +485,7 @@ public class MainActivity extends AppCompatActivity {
 
         private int drawState(String txt, int row, Canvas canvas, Paint txtPaint) {
             int textHeight = this.getOsdTextHeight(canvas);
-            canvas.drawText(txt,OSD_TEXT_LEFT_GAP,row*textHeight,txtPaint);
+            canvas.drawText(txt,this.getOsdTextLeftGap(),row*textHeight,txtPaint);
             row++;
             return row;
         }
@@ -651,6 +665,10 @@ public class MainActivity extends AppCompatActivity {
             return canvas.getHeight()/20;
         }
 
+        private int getOsdTextLeftGap() {
+            return (mVRMode)?40:15;
+        }
+
         private void printAlarm(Canvas canvas, Alarm alarm) {
             String board = "";
 
@@ -673,7 +691,7 @@ public class MainActivity extends AppCompatActivity {
                 txtPaint.setColor(Color.RED);
             }
 
-            canvas.drawText(board,OSD_TEXT_LEFT_GAP,textHeight*2,txtPaint);
+            canvas.drawText(board,this.getOsdTextLeftGap(),textHeight*2,txtPaint);
         }
     }
 
@@ -957,7 +975,7 @@ public class MainActivity extends AppCompatActivity {
         }
         //printAlarm(DroneAlarmCenter.instance().getAlarm());
         //printDroneState(DroneTelemetry.instance().getDroneState());
-        updateJoysticks();
+        updateVirtualGamepad();
         loadGamepadSettings(this);
         // to implement acceleration/deceleration by key_down we need to poll key state
         mtmDroneMoveUpdater = new Timer("DroneMoveUpdater");
@@ -984,6 +1002,8 @@ public class MainActivity extends AppCompatActivity {
         }
         // find widgets
         mbtnDisarm = (ToggleButton)findViewById(R.id.btnDisarm);
+        mpnlVirtualGamepad = (RelativeLayout)findViewById(R.id.pnlGamepad);
+        mpnlButtons = (RelativeLayout)findViewById(R.id.pnlButtons);
 
         mFpvView = (SurfaceView)findViewById(R.id.fpvView);
         mFpvRenderer = new FpvRenderer();
@@ -1009,7 +1029,7 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
-    public void updateJoysticks() {
+    public void updateVirtualGamepad() {
         DroneState ds = Profile.instance().getDroneSettings();
         JoystickView leftJoystick = (JoystickView)findViewById(R.id.joystickView_left);
         JoystickView rightJoystick = (JoystickView)findViewById(R.id.joystickView_right);
@@ -1022,17 +1042,17 @@ public class MainActivity extends AppCompatActivity {
         leftJoystick.setOnMoveListener(new OnLeftJoystick(), JOYSTICK_UPDATE_TIME);
         rightJoystick.setOnMoveListener(new OnRightJoystick(), JOYSTICK_UPDATE_TIME);
 
+        /*
+        leftJoystick.setEnabled(true);
+        leftJoystick.setVisibility(View.VISIBLE);
+        rightJoystick.setEnabled(true);
+        rightJoystick.setVisibility(View.VISIBLE);
+         */
+
         if(DroneState.rc.virtualGamepad) {
-            leftJoystick.setEnabled(true);
-            leftJoystick.setVisibility(View.VISIBLE);
-            rightJoystick.setEnabled(true);
-            rightJoystick.setVisibility(View.VISIBLE);
-        }
-        else {
-            leftJoystick.setEnabled(false);
-            leftJoystick.setVisibility(View.INVISIBLE);
-            rightJoystick.setEnabled(false);
-            rightJoystick.setVisibility(View.INVISIBLE);
+            mpnlVirtualGamepad.setVisibility(View.VISIBLE);
+        } else {
+            mpnlVirtualGamepad.setVisibility(View.GONE);
         }
     }
 
@@ -1040,7 +1060,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
 
-        updateJoysticks();
+        updateVirtualGamepad();
     }
 
     public void onBtnConnect(View v) {
@@ -1070,6 +1090,10 @@ public class MainActivity extends AppCompatActivity {
     public void onBtnGamepad(View v) {
         Intent intent = new Intent(v.getContext(), GamepadActivity.class);
         v.getContext().startActivity(intent);
+    }
+
+    public void onBtnVR(View v) {
+        mFpvRenderer.toggleVRMode();
     }
 
     /*
@@ -1371,5 +1395,21 @@ public class MainActivity extends AppCompatActivity {
             // check min rssi level
             DroneTelemetry.instance().checkDroneStateForAlarms(ds);
         }
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+
+        if(event.getAction() == MotionEvent.ACTION_DOWN) {
+            if (mpnlButtons.getVisibility() == View.GONE) {
+                mpnlButtons.setVisibility(View.VISIBLE);
+                updateVirtualGamepad();
+            } else {
+                mpnlButtons.setVisibility(View.GONE);
+                mpnlVirtualGamepad.setVisibility(View.GONE);
+            }
+        }
+
+        return super.onTouchEvent(event);
     }
 }

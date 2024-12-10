@@ -11,6 +11,7 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.InputDevice;
@@ -286,6 +287,12 @@ public class MainActivity extends AppCompatActivity {
         private int mFrameQuality;
         private boolean mVRMode;
 
+        private Paint pntClearScreen;
+        private Paint pntStatus;
+        private Paint pntGreenAlarm;
+        private Paint pntYellowAlarm;
+        private Paint pntRedAlarm;
+
         private ArrayList<PictureBuffer> mImgList = new ArrayList<PictureBuffer>();
         private Object mImgListSync = new Object();
 
@@ -330,6 +337,9 @@ public class MainActivity extends AppCompatActivity {
             int imgHeight = 0;
             int imgQuality = 0;
             long imgTimestamp = System.currentTimeMillis();
+
+            mHolder.setFormat(0x00000004); //RGB_565
+
             while(mRenderRun) {
                 try {
                     synchronized(mImgListSync)  {
@@ -346,8 +356,14 @@ public class MainActivity extends AppCompatActivity {
                     }
                     // convert buffer to java image
                     if(isNewFrame && buf != null) {
+                        if(imgFrame != null) {
+                            imgFrame.recycle();
+                            imgFrame = null;
+                        }
                         BitmapFactory.Options options = new BitmapFactory.Options();
-                        options.inMutable = true;
+                        options.inMutable = false;// true; if it is needed to render in bitmap canvas
+                        options.inScaled = false;
+                        options.inPreferredConfig = Bitmap.Config.RGB_565;
                         imgFrame = BitmapFactory.decodeByteArray(buf.getData(), 0, buf.getData().length, options);
                         imgWidth = buf.getWidth();
                         imgHeight = buf.getHeight();
@@ -355,7 +371,12 @@ public class MainActivity extends AppCompatActivity {
                         imgQuality = buf.getQuality();
                     }
 
-                    canvas = mHolder.lockCanvas();
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        canvas = mHolder.lockHardwareCanvas();
+                    } else {
+                        canvas = mHolder.lockCanvas();
+                    }
+
                     synchronized (mHolder) {
                         drawFrame(canvas,imgFrame,imgQuality,imgWidth,imgHeight,imgTimestamp,isNewFrame);
                     }
@@ -374,16 +395,20 @@ public class MainActivity extends AppCompatActivity {
 
         private void drawFrame(Canvas canvas, Bitmap imgFrame, int quality, int width, int height, long timestamp, boolean isNewFrame)
         {
-            Paint paint = new Paint();
-            paint.setAntiAlias(false);
-            paint.setStyle(Paint.Style.FILL);
-            paint.setColor(Color.BLACK);
+            if(pntClearScreen == null) {
+                pntClearScreen = new Paint();
+                pntClearScreen.setAntiAlias(false);
+                pntClearScreen.setStyle(Paint.Style.FILL);
+                pntClearScreen.setColor(Color.BLACK);
+            }
 
             int canvasWidth = canvas.getWidth();
             int canvasHeight = canvas.getHeight();
 
-            canvas.drawRect(0,0,canvasWidth,canvasHeight, paint);
+            canvas.drawRect(0,0,canvasWidth,canvasHeight,pntClearScreen);
 
+            /* it is better to draw over canvas because drawing on bitmap is not hw accelerated
+               also drawing over bitmap gives image artefacts on some devices
             Canvas osdCanvas = canvas;
 
             if(imgFrame != null) {
@@ -391,7 +416,8 @@ public class MainActivity extends AppCompatActivity {
             }
 
             printAlarm(osdCanvas,DroneAlarmCenter.instance().getAlarm());
-            printDroneState(DroneTelemetry.instance().getDroneState(),osdCanvas);
+            printDroneState(osdCanvas,DroneTelemetry.instance().getDroneState());
+            */
 
             try {
                 if(imgFrame != null) {
@@ -412,7 +438,6 @@ public class MainActivity extends AppCompatActivity {
                     int nWidth = (int)((float)width*scale);
                     int nHeight = (int)((float)height*scale);
 
-                    // TODO Fullscreen/Split screen
                     if(mVRMode) {
                         int x1 = (canvasWidth/2 - nWidth)/2;
                         int y = (canvasHeight - nHeight)/2;
@@ -456,14 +481,18 @@ public class MainActivity extends AppCompatActivity {
                 mFrameDelaySum = 0;
             }
 
+            printAlarm(canvas,DroneAlarmCenter.instance().getAlarm());
+            printDroneState(canvas,DroneTelemetry.instance().getDroneState());
+
             /*
             Paint txtPaint = new Paint();
             txtPaint.setColor(Color.WHITE);
             txtPaint.setTextSize(24);
+            txtPaint.setAntiAlias(false);
 
             String info = "JPEG " + width + "x" + height + " Quality:" + quality + " FPS:" + fmt.format(mFps) + " Delay:" + mFrameDelay;
             canvas.drawText(info,15,40,txtPaint);
-            */
+             */
         }
 
         public void toggleVRMode() {
@@ -485,12 +514,17 @@ public class MainActivity extends AppCompatActivity {
 
         private int drawState(String txt, int row, Canvas canvas, Paint txtPaint) {
             int textHeight = this.getOsdTextHeight(canvas);
-            canvas.drawText(txt,this.getOsdTextLeftGap(),row*textHeight,txtPaint);
+            if(mVRMode) {
+                canvas.drawText(txt, this.getOsdTextLeftGap(), row * textHeight, txtPaint);
+                canvas.drawText(txt, this.getOsdTextLeftGap() + canvas.getWidth()/2, row * textHeight, txtPaint);
+            } else {
+                canvas.drawText(txt, this.getOsdTextLeftGap(), row * textHeight, txtPaint);
+            }
             row++;
             return row;
         }
 
-        private void printDroneState(DroneState ds, Canvas canvas) {
+        private void printDroneState(Canvas canvas, DroneState ds) {
             int row = 4;
 
             DecimalFormat fmt1 = new DecimalFormat();
@@ -512,11 +546,15 @@ public class MainActivity extends AppCompatActivity {
             DecimalFormat fmt6 = new DecimalFormat();
             fmt6.setMinimumIntegerDigits(2);
 
-            int textHeight = this.getOsdTextHeight(canvas);
+            if(pntStatus == null) {
+                int textHeight = this.getOsdTextHeight(canvas);
+                pntStatus = new Paint();
+                pntStatus.setColor(Color.WHITE);
+                pntStatus.setTextSize(textHeight);
+                pntStatus.setAntiAlias(false);
+            }
 
-            Paint txtPaint = new Paint();
-            txtPaint.setColor(Color.WHITE);
-            txtPaint.setTextSize(textHeight);
+            Paint txtPaint = pntStatus;
 
             correctDroneStateRssi(ds);
 
@@ -671,27 +709,51 @@ public class MainActivity extends AppCompatActivity {
 
         private void printAlarm(Canvas canvas, Alarm alarm) {
             String board = "";
-
             int textHeight = this.getOsdTextHeight(canvas);
 
-            Paint txtPaint = new Paint();
-            txtPaint.setTextSize(textHeight);
+            if(pntGreenAlarm == null) {
+                pntGreenAlarm = new Paint();
+                pntGreenAlarm.setColor(Color.GREEN);
+                pntGreenAlarm.setTextSize(textHeight);
+                pntGreenAlarm.setAntiAlias(false);
+            }
+
+            if(pntYellowAlarm == null) {
+                pntYellowAlarm = new Paint();
+                pntYellowAlarm.setColor(Color.YELLOW);
+                pntYellowAlarm.setTextSize(textHeight);
+                pntYellowAlarm.setAntiAlias(false);
+            }
+
+            if(pntRedAlarm == null) {
+                pntRedAlarm = new Paint();
+                pntRedAlarm.setColor(Color.RED);
+                pntRedAlarm.setTextSize(textHeight);
+                pntRedAlarm.setAntiAlias(false);
+            }
+
+            Paint txtPaint = pntRedAlarm;
 
             if(DroneAlarmCenter.instance().getAlarm(Alarm.ALARM_CONNECTING)) {
                 board = TextBox.get("ALARM_CONNECTING");
-                txtPaint.setColor(Color.YELLOW);
+                txtPaint = pntYellowAlarm;
             } else if(DroneAlarmCenter.instance().getAlarm(Alarm.ALARM_UNSUPPORTED_FIRMWARE)) {
                 board = TextBox.get("ALARM_UNSUPPORTED_FIRMWARE");
-                txtPaint.setColor(Color.RED);
+                txtPaint = pntRedAlarm;
             } else if (alarm == null) {
                 board = TextBox.get("SYSTEM_OK");
-                txtPaint.setColor(Color.GREEN);
+                txtPaint = pntGreenAlarm;
             } else {
                 board = TextBox.get(alarm.name());
-                txtPaint.setColor(Color.RED);
+                txtPaint = pntRedAlarm;
             }
 
-            canvas.drawText(board,this.getOsdTextLeftGap(),textHeight*2,txtPaint);
+            if(mVRMode) {
+                canvas.drawText(board, this.getOsdTextLeftGap(), textHeight * 2, txtPaint);
+                canvas.drawText(board, this.getOsdTextLeftGap() + canvas.getWidth()/2, textHeight * 2, txtPaint);
+            } else {
+                canvas.drawText(board, this.getOsdTextLeftGap(), textHeight * 2, txtPaint);
+            }
         }
     }
 

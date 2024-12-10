@@ -349,30 +349,46 @@ void camTask(void* pvParameters)
         updStat = true;
       }
 
-      /*uint32_t f = (avgFps + fps) / 2;
+      uint32_t f = (avgFps + fps) / 2;
 
       if(avgFps != f)
       {
         avgFps = f;
         updStat = true;
-      }*/
+      }
 
-      avgFps = (avgFps + fps) / 2;
+      //avgFps = (avgFps + fps) / 2;
 
       // apply adaptive quality for OV2640
       if(hostIsSet() && pCamSens && pCamInfo)
       {
         if(pCamInfo->model == CAMERA_OV2640)
         {
-          if(fb->height <= 296 && avgFps < 30 && jpegQuality < 63)
+          if(fb->height <= 296)
           {
-            jpegQuality++;
-            pCamSens->set_quality(pCamSens,jpegQuality);
+            if(avgFps < 30 && jpegQuality < 63)
+            {
+              jpegQuality++;
+              pCamSens->set_quality(pCamSens,jpegQuality);
+            }
+            else if(avgFps >= 45 && jpegQuality > 8)
+            {
+              jpegQuality--;
+              pCamSens->set_quality(pCamSens,jpegQuality);
+            }
           }
-          if(fb->height > 296 && fb->height <= 600 && avgFps < 22 && jpegQuality < 63)
+          else if(fb->height <= 600)
           {
-            jpegQuality++;
-            pCamSens->set_quality(pCamSens,jpegQuality);
+            if(avgFps < 22 && jpegQuality < 63)
+            {
+              jpegQuality++;
+              pCamSens->set_quality(pCamSens,jpegQuality);
+            }
+            else if(avgFps >= 24 && jpegQuality > 8)
+            {
+              jpegQuality--;
+              pCamSens->set_quality(pCamSens,jpegQuality);
+            }
           }
         }
       }

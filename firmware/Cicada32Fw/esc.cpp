@@ -196,7 +196,7 @@ void pdlSetupEsc(pdlDroneState *ds)
 
   if(!hEscTask)
   {
-    xTaskCreatePinnedToCore(escTask,"escTask",2048,ds,10,&hEscTask,0);
+    xTaskCreatePinnedToCore(escTask,"escTask",2048,ds,5,&hEscTask,1);
   }
 #endif
 }
@@ -297,11 +297,6 @@ void pdlUpdateEsc(pdlDroneState* ds)
 
 void escTask(void* pvParameters)
 {
-  for(;;)
-  {
-    delay(1000);
-  }
-  /*
   pdlDroneState *ds = (pdlDroneState*)pvParameters;
 
   if(!ds)
@@ -326,13 +321,12 @@ void escTask(void* pvParameters)
         break;
       default:
         pdlUpdateDefaultDshotEsc(ds);
-      }
+    }
 
     xSemaphoreGive(semEsc);
 
     delay(1);
   }
-  */
 }
 
 void pdlSetMotorsDir(pdlDroneState *ds, uint8_t dir)

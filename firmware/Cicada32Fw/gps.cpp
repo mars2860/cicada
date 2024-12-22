@@ -2,7 +2,7 @@
 #include "main.h"
 #include "UbxGps.h"
 
-#ifdef SERIAL_DEBUG_ENABLED
+#if defined SERIAL_DEBUG_ENABLED || defined CICADA32_0802
 
 void pdlSetupGps(pdlDroneState* ds)
 {

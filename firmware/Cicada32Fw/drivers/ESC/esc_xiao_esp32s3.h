@@ -4,10 +4,17 @@
 #include "pdl.h"
 #include "DShotRMT.h"
 
+#ifdef CICADA32_0802
+#define DSHOT_M0_PIN        D7
+#define DSHOT_M1_PIN        D10
+#define DSHOT_M2_PIN        D0
+#define DSHOT_M3_PIN        D6
+#else
 #define DSHOT_M0_PIN        D0
 #define DSHOT_M1_PIN        D1
 #define DSHOT_M2_PIN        D2
 #define DSHOT_M3_PIN        D3
+#endif
 
 // Teeny pro 5A Esc
 #define M1_CICADA_0703_PIN              DSHOT_M0_PIN
@@ -101,25 +108,36 @@ bool pdlSetupPwmEsc(pdlDroneState*, int32_t maxGas, int32_t nullGas, int32_t min
 
 void pdlUpdateDefaultDshotEsc(pdlDroneState *ds)
 {
-  uint8_t i;
+  static uint8_t oldMotorsEnabled = 0;
 
-  for(i = 0; i < PDL_MOTOR_COUNT ; i++)
+  if(!ds->motorsEnabled && oldMotorsEnabled)
   {
-    if(ds->motorsEnabled)
+    // STOP MOTORS
+    for(uint8_t i = 0; i < 5; i++)
     {
-      pDShotM0->sendThrottleValue(ds->motorGas[0] + 48);
-      pDShotM1->sendThrottleValue(ds->motorGas[1] + 48);
-      pDShotM2->sendThrottleValue(ds->motorGas[2] + 48);
-      pDShotM3->sendThrottleValue(ds->motorGas[3] + 48);
-    }
-    else
-    {
-      digitalWrite(DSHOT_M0_PIN, LOW);
-      digitalWrite(DSHOT_M1_PIN, LOW);
-      digitalWrite(DSHOT_M2_PIN, LOW);
-      digitalWrite(DSHOT_M3_PIN, LOW);
+      pDShotM0->sendThrottleValue(48);
+      pDShotM1->sendThrottleValue(48);
+      pDShotM2->sendThrottleValue(48);
+      pDShotM3->sendThrottleValue(48);
+      delay(1);
     }
   }
+  else if(ds->motorsEnabled)
+  {
+    pDShotM0->sendThrottleValue(ds->motorGas[0] + 48);
+    pDShotM1->sendThrottleValue(ds->motorGas[1] + 48);
+    pDShotM2->sendThrottleValue(ds->motorGas[2] + 48);
+    pDShotM3->sendThrottleValue(ds->motorGas[3] + 48);
+  }
+  else
+  {
+    digitalWrite(DSHOT_M0_PIN, LOW);
+    digitalWrite(DSHOT_M1_PIN, LOW);
+    digitalWrite(DSHOT_M2_PIN, LOW);
+    digitalWrite(DSHOT_M3_PIN, LOW);
+  }
+
+  oldMotorsEnabled = ds->motorsEnabled;
 }
 
 void pdlUpdatePwmEsc(pdlDroneState *ds)

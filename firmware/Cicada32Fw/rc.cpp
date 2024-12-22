@@ -338,6 +338,7 @@ void pdlSetupRc(pdlDroneState*)
     // Try to connect default wifi
     if(connectionResult != WL_CONNECTED)
     {
+      LOG_INFO("Try to connect to default ssid=%s as wifi_sta", DEFAULT_SSID_STR);
       ip.fromString(DEFAULT_IP_ADDRESS_STR);
       gateway.fromString(DEFAULT_GATEWAY_ADDRESS_STR);
       subnet.fromString(DEFAULT_SUBNET_STR);

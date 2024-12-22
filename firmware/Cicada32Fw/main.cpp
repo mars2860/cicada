@@ -23,18 +23,6 @@ pdlDroneState droneState;
 // This sets Arduino Stack Size - comment this line to use default 8K stack size
 // SET_LOOP_TASK_STACK_SIZE(16 * 1024);  // 16KB
 
-// change to next settings in sdkconfig.h of your arduino
-// CONFIG_ESP_SYSTEM_EVENT_TASK_STACK_SIZE 4096
-// CONFIG_LWIP_IRAM_OPTIMIZATION 1
-// CONFIG_LWIP_TCPIP_TASK_PRIO 23
-// comment CONFIG_ESP_WIFI_STATIC_TX_BUFFER 1
-// CONFIG_ESP_WIFI_DYNAMIC_TX_BUFFER 1
-// CONFIG_ESP_WIFI_TX_BUFFER_TYPE 1
-// CONFIG_ESP_WIFI_DYNAMIC_TX_BUFFER_NUM 64
-// CONFIG_ESP_WIFI_AMPDU_TX_ENABLED 1
-// CONFIG_ESP_WIFI_TX_BA_WIN 32
-// CONFIG_ESP_WIFI_AMPDU_RX_ENABLED 1
-
 // change settings on Arduino
 // https://github.com/espressif/arduino-esp32/issues/4529
 // https://esp32.com/viewtopic.php?t=18432
@@ -42,8 +30,8 @@ pdlDroneState droneState;
 // TASKS
 // ARDUINO - CORE1
 // EVENTS - CORE0
-// ESC - CORE0
-// CAMERA - CORE0
+// ESC - CORE1
+// CAMERA - CORE1
 
 SemaphoreHandle_t semLog = NULL;
 SemaphoreHandle_t semTime = NULL;
@@ -176,7 +164,7 @@ void setup()
 #endif
 
   Wire.begin();
-  Wire.setClock(400000UL);  // In reality I observe 200 kHz by oscilloscope
+  Wire.setClock(400000UL);  // In reality I observe 200 kHz by oscilloscope for ESP8266 and 363kHZ for ESP32S3
 
 #ifdef SERIAL_DEBUG_ENABLED
   printLog();

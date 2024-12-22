@@ -2,7 +2,7 @@
 <?fileVersion 4.0.0?><cproject storage_type_id="org.eclipse.cdt.core.XmlProjectDescriptionStorage">
 	<storageModule moduleId="org.eclipse.cdt.core.settings">
 		<cconfiguration id="io.sloeber.core.sketch.0.2082524376">
-			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="io.sloeber.core.sketch.0.2082524376" moduleId="org.eclipse.cdt.core.settings" name="cicada32-tiny-whoop-debug">
+			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="io.sloeber.core.sketch.0.2082524376" moduleId="org.eclipse.cdt.core.settings" name="cicada32-0802-debug">
 				<externalSettings/>
 				<extensions>
 					<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
@@ -12,7 +12,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildProperties="" cleanCommand="rm -f" description="" id="io.sloeber.core.sketch.0.2082524376" name="cicada32-tiny-whoop-debug" parent="io.sloeber.core.configuration.release">
+				<configuration artifactName="${ProjName}" buildProperties="" cleanCommand="rm -f" description="" id="io.sloeber.core.sketch.0.2082524376" name="cicada32-0802-debug" parent="io.sloeber.core.configuration.release">
 					<folderInfo id="io.sloeber.core.sketch.0.2082524376." name="/" resourcePath="">
 						<toolChain id="io.sloeber.core.toolChain.release.1536686838" name="Arduino Toolchain (Sloeber edition)" superClass="io.sloeber.core.toolChain.release">
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="io.sloeber.targetplatform.1427262678" name="Arduino Target" osList="all" superClass="io.sloeber.targetplatform"/>
@@ -368,7 +368,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 		</cconfiguration>
 		<cconfiguration id="io.sloeber.core.sketch.0.2082524376.1827475629">
-			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="io.sloeber.core.sketch.0.2082524376.1827475629" moduleId="org.eclipse.cdt.core.settings" name="cicada32-tiny-whoop-release">
+			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="io.sloeber.core.sketch.0.2082524376.1827475629" moduleId="org.eclipse.cdt.core.settings" name="cicada32-0802-release">
 				<externalSettings/>
 				<extensions>
 					<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
@@ -378,7 +378,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildProperties="" cleanCommand="rm -f" description="" id="io.sloeber.core.sketch.0.2082524376.1827475629" name="cicada32-tiny-whoop-release" parent="io.sloeber.core.configuration.release">
+				<configuration artifactName="${ProjName}" buildProperties="" cleanCommand="rm -f" description="" id="io.sloeber.core.sketch.0.2082524376.1827475629" name="cicada32-0802-release" parent="io.sloeber.core.configuration.release">
 					<folderInfo id="io.sloeber.core.sketch.0.2082524376.1827475629." name="/" resourcePath="">
 						<toolChain id="io.sloeber.core.toolChain.release.2123865263" name="Arduino Toolchain (Sloeber edition)" superClass="io.sloeber.core.toolChain.release">
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="io.sloeber.targetplatform.306462621" name="Arduino Target" osList="all" superClass="io.sloeber.targetplatform"/>

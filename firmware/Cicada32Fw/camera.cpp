@@ -29,21 +29,9 @@ void pdlSetupCamera(pdlDroneState *ds)
   {
     LOG_INFO("Runcam is not available");
   }
+#endif
 
-  if(ds->esc >= 20 && ds->esc <= 30)
-  {
-    servOk = false;
-    LOG_INFO("Camera servo is not available");
-    return;
-  }
-
-  pinMode(CAM_SERVO_PIN,OUTPUT);
-  digitalWrite(CAM_SERVO_PIN,LOW);
-
-  servOk = true;
-
-  LOG_INFO("Camera servo is ok");
-#elif ARDUINO_XIAO_ESP32S3
+#ifdef ARDUINO_XIAO_ESP32S3
   // ESP camera
   camera_config_t config;
 
@@ -67,6 +55,7 @@ void pdlSetupCamera(pdlDroneState *ds)
   config.pin_reset = RESET_GPIO_NUM;
 
   config.xclk_freq_hz = 20000000;
+  //config.xclk_freq_hz = 12000000;
 
   config.pixel_format = PIXFORMAT_JPEG;
 
@@ -83,9 +72,9 @@ void pdlSetupCamera(pdlDroneState *ds)
   config.fb_count = 3;
   config.grab_mode = CAMERA_GRAB_LATEST;
   //config.fb_location = CAMERA_FB_IN_DRAM;
-  config.fb_location = CAMERA_FB_IN_PSRAM; // My investigation says that is no difference in frame delay if I change it to DRAM
+  config.fb_location = CAMERA_FB_IN_PSRAM; // My investigation says there is no difference in frame delay if I change it to DRAM
 
-  //config.data_available_callback = camera_data_available;
+  //config.data_available_callback = NULL;
 
   // camera init
   esp_err_t err = esp_camera_init(&config);
@@ -120,9 +109,18 @@ void pdlSetupCamera(pdlDroneState *ds)
       xTaskCreatePinnedToCore(camTask,"camTask",4096,ds,1,&hCamTask,0);
     }
   }
+#endif
 
-  pinMode(CAM_SERVO_PIN, OUTPUT);
-  digitalWrite(CAM_SERVO_PIN, LOW);
+#ifdef CICADA_MICRO
+  if(ds->esc >= 20 && ds->esc <= 30)
+  {
+    servOk = false;
+    LOG_INFO("Camera servo is not available");
+    return;
+  }
+
+  pinMode(CAM_SERVO_PIN,OUTPUT);
+  digitalWrite(CAM_SERVO_PIN,LOW);
 
   servOk = true;
 
@@ -180,7 +178,7 @@ void pdlTakePhoto(pdlDroneState *ds)
   LOG_INFO("Take photo");
 }
 
-void updateServo(pdlDroneState *ds)
+void updateCamPitchServo(pdlDroneState *ds)
 {
   if(!hostIsSet() || !servOk)
     return;
@@ -206,8 +204,8 @@ void updateServo(pdlDroneState *ds)
 
 void pdlUpdateCamera(pdlDroneState *ds)
 {
-#if defined CICADA_MICRO || defined ARDUINO_XIAO_ESP32S3
-  updateServo(ds);
+#if defined CICADA_MICRO
+  updateCamPitchServo(ds);
 #endif
 }
 
@@ -221,13 +219,15 @@ void camTask(void* pvParameters)
   uint32_t fbTimestamp;
   uint64_t frameTime;
   uint32_t frameTimestamp;
+  uint16_t frameHeight;
+  uint32_t frameDelay;
   size_t maxFrameSize;
   uint32_t fps;
   uint32_t minFps;
   uint32_t maxFps;
   uint32_t avgFps;
   uint32_t fpsTimestamp;
-  uint32_t frameDelay;
+
   size_t sent;
   size_t dataOffset;
   uint16_t chunkNum;
@@ -257,6 +257,7 @@ void camTask(void* pvParameters)
     if(fb)
     {
       chunkNum = 0;
+      frameHeight = fb->height;
       fbTimestamp = fb->timestamp.tv_sec*1000000UL + fb->timestamp.tv_usec;
     }
 
@@ -364,7 +365,7 @@ void camTask(void* pvParameters)
       {
         if(pCamInfo->model == CAMERA_OV2640)
         {
-          if(fb->height <= 296)
+          if(frameHeight <= 296)
           {
             if(avgFps < 30 && jpegQuality < 63)
             {
@@ -377,7 +378,7 @@ void camTask(void* pvParameters)
               pCamSens->set_quality(pCamSens,jpegQuality);
             }
           }
-          else if(fb->height <= 600)
+          else if(frameHeight <= 600)
           {
             if(avgFps < 22 && jpegQuality < 63)
             {
@@ -403,6 +404,8 @@ void camTask(void* pvParameters)
       LOG_INFO("esp_cam: maxFrameSize=%i,minFps=%i,avgFps=%i,maxFps=%i,delay=%i",maxFrameSize,minFps,avgFps,maxFps,frameDelay);
       updStat = false;
     }
+    // give other processes some cpu time
+    delay(1);
   }
 }
 

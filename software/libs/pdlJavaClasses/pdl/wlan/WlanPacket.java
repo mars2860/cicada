@@ -57,6 +57,8 @@ public class WlanPacket
 			return WlanPictureStartPacket.parse(data);
 		case WlanPictureDataPacket.TYPE_ID:
 			return WlanPictureDataPacket.parse(data);
+		case WlanPictureLastPacket.TYPE_ID:
+			return WlanPictureLastPacket.parse(data);
 		}
 		
 		return new WlanPacket(packetType,pktDroneId,pktNum);

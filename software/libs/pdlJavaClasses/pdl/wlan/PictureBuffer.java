@@ -10,9 +10,9 @@ public class PictureBuffer implements Cloneable
 	private int quality;
 	private long timestamp;
 	private byte data[];
-	private boolean isLocked;
-	private boolean isFilled;
 	private int pos;
+	private boolean started;
+	private boolean aborted;
 	
 	public PictureBuffer()
 	{
@@ -21,10 +21,8 @@ public class PictureBuffer implements Cloneable
 	
 	public void start(int w, int h, int fmt, int qual, long tm, int len, byte dataChunk[])
 	{
-		if(isLocked)
-			return;
-		
-		isFilled = true;
+		started = true;
+		aborted = false;
 		
 		pos = 0;
 		width = w;
@@ -32,6 +30,10 @@ public class PictureBuffer implements Cloneable
 		pixelformat = fmt;
 		quality = qual;
 		timestamp = tm;
+		if(len == 0)
+		{
+			len = 240000;
+		}
 		data = new byte[len];
 		for(int i = 0; i < dataChunk.length; i++)
 		{
@@ -41,46 +43,38 @@ public class PictureBuffer implements Cloneable
 	
 	public void append(byte b)
 	{
-		if(!isFilled || isLocked || pos >= data.length)
+		if(started == false || aborted || pos >= data.length)
+		{
 			return;
+		}
 		
 		data[pos] = b;
 		pos++;
 		
 		if(pos >= data.length)
 		{
-			isFilled = false;
+			stop();
 		}
 	}
 	
 	public void stop()
 	{
-		isFilled = false;
+		started = false;
+		
+		if(pos < data.length)
+		{
+			data = Arrays.copyOf(data,pos);
+		}
+	}
+	
+	public void abort()
+	{
+		aborted = true;
 	}
 	
 	public boolean isReadyDraw()
 	{
-		return isFilled == false && data != null && data.length > 0 && pos == data.length;
-	}
-	
-	public boolean isLocked()
-	{
-		return this.isLocked;
-	}
-	
-	public void lock()
-	{
-		isLocked = true;
-	}
-	
-	public void unlock()
-	{
-		isLocked = false;
-	}
-	
-	public boolean isFilled()
-	{
-		return this.isFilled;
+		return !started && !aborted && data != null && data.length > 0 && pos == data.length;
 	}
 	
 	public int getWidth()

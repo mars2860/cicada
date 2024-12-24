@@ -79,6 +79,7 @@ import pdl.wlan.WlanCommandPacket;
 import pdl.wlan.WlanLogPacket;
 import pdl.wlan.WlanPacket;
 import pdl.wlan.WlanPictureDataPacket;
+import pdl.wlan.WlanPictureLastPacket;
 import pdl.wlan.WlanPictureStartPacket;
 import pdl.wlan.WlanTelemetryPacket;
 
@@ -147,8 +148,8 @@ public class DroneCommander
 	private long wlanLastSetTime;
 	private int wlanPictureLastChunkNum;
 	
-	private PictureBuffer mPictureBuf[];
-	private int mSelPictureBuf;
+	private PictureBuffer mPictureBuf;
+	private PictureBuffer mOldPictureBuf;
 	
 	private Object mPictureBufSync;
 	private Object mPictureListenerSync;
@@ -174,11 +175,7 @@ public class DroneCommander
 		mCmdLock = new Object();
 		mNewCmdLock = new Object();
 		connectTimestamp = System.currentTimeMillis();
-		mPictureBuf = new PictureBuffer[2];
-		for(int i = 0; i < mPictureBuf.length; i++)
-		{
-			mPictureBuf[i] = new PictureBuffer();
-		}
+		mPictureBuf = new PictureBuffer();
 		mPictureBufSync = new Object();
 		mPictureListenerSync = new Object();
 	};
@@ -199,70 +196,74 @@ public class DroneCommander
 			case WlanTelemetryPacket.TYPE_ID:
 				WlanTelemetryPacket telemetryPacket = (WlanTelemetryPacket)packet;
 				DroneTelemetry.instance().append(telemetryPacket);
-				// FIXME sometimes droneTime is bigger than current time I think this is because System.currentTimeMillis() is not precise
 				wlanLatency = Math.max(0,(int)(System.currentTimeMillis() - telemetryPacket.getDroneState().time));
 				break;
 			case WlanPictureStartPacket.TYPE_ID:
 				WlanPictureStartPacket picPacket1 = (WlanPictureStartPacket)packet;
 				synchronized(mPictureBufSync)
 				{
-					// Select buffer to store new picture
-					for(int i = 0; i < mPictureBuf.length; i++)
-					{
-						mSelPictureBuf++;
-						if(mSelPictureBuf >= mPictureBuf.length)
-						{
-							mSelPictureBuf = 0;
-						}
-						if(mPictureBuf[mSelPictureBuf].isLocked() == false)
-						{
-							break;
-						}
-					}
-					wlanPictureLastChunkNum = 0;
-					mPictureBuf[mSelPictureBuf].start(	picPacket1.getWidth(),
-						   								picPacket1.getHeight(),
-						   								picPacket1.getPixelFormat(),
-						   								picPacket1.getQuality(),
-						   								picPacket1.getTimestamp(),
-						   								picPacket1.getLen(),
-						   								picPacket1.getData());
+					wlanPictureLastChunkNum = 1;
+					mPictureBuf.start(	picPacket1.getWidth(),
+						   				picPacket1.getHeight(),
+						   				picPacket1.getPixelFormat(),
+						   				picPacket1.getQuality(),
+						   				picPacket1.getTimestamp(),
+						   				picPacket1.getLen(),
+						   				picPacket1.getData());
 				}
 				break;
 			case WlanPictureDataPacket.TYPE_ID:
-				WlanPictureDataPacket picPacket2 = (WlanPictureDataPacket)packet;
-				byte dataChunk[] = picPacket2.getData();
+			case WlanPictureLastPacket.TYPE_ID:
+				byte dataChunk[] = null;
+				int chunkNum = 0;
+				boolean last = false;
+				if(packet instanceof WlanPictureDataPacket)
+				{
+					WlanPictureDataPacket picPacket2 = (WlanPictureDataPacket)packet;
+					dataChunk = picPacket2.getData();
+					chunkNum = picPacket2.getChunkNum();
+				}
+				if(packet instanceof WlanPictureLastPacket)
+				{
+					WlanPictureLastPacket picPacket2 = (WlanPictureLastPacket)packet;
+					dataChunk = picPacket2.getData();
+					chunkNum = picPacket2.getChunkNum();
+					last = true;
+				}
+				
 				synchronized(mPictureBufSync)
 				{
-					PictureBuffer buf = mPictureBuf[mSelPictureBuf];
-					
-					if(picPacket2.getChunkNum() != wlanPictureLastChunkNum)
+					if(chunkNum != wlanPictureLastChunkNum)
 					{
 						//if(buf.isFilled())
 						//{
 						//	System.out.println("Invalid wlan picture chunk num");
 						//}
 						
-						buf.stop();
+						mPictureBuf.abort();
 					}
 					else
 					{
 						wlanPictureLastChunkNum++;
 						for(int i = 0; i < dataChunk.length; i++)
 						{
-							buf.append(dataChunk[i]);
+							mPictureBuf.append(dataChunk[i]);
+						}
+						
+						if(last)
+						{
+							mPictureBuf.stop();
 						}
 						
 						synchronized(mPictureListenerSync)
 						{
-							if(buf.isReadyDraw())
+							if(mPictureBuf.isReadyDraw())
 							{
-								buf.lock();
 								if(mPictureListener != null)
 								{
-									mPictureListener.onPictureReceived(buf);
+									mPictureListener.onPictureReceived(mPictureBuf);
 								}
-								buf.unlock();
+								mOldPictureBuf = mPictureBuf.clone();
 							}
 						}
 					}
@@ -1662,28 +1663,12 @@ public class DroneCommander
 
 		synchronized(mPictureBufSync)
 		{
-			for(int i = 0; i < mPictureBuf.length; i++)
-			{
-				buf = mPictureBuf[i];
-				if(buf.isLocked() == false && buf.isFilled() == false)
-				{
-					buf.lock();
-					break;
-				}
-			}
+			buf = mOldPictureBuf.clone();
 		}
 		
 		return buf;
 	}
-	
-	public void returnPicture(PictureBuffer buf)
-	{
-		synchronized(mPictureBufSync)
-		{
-			buf.unlock();
-		}
-	}
-	
+		
 	public int getBitrate()
 	{
 		if(mModem != null)

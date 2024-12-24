@@ -41,13 +41,15 @@
 //   2 - LOG = {4 bytes of log size, various size log data}
 //   3 - Picture First Chunk = {uint16_t width, uint16_t height, uint8_t pixformat, uint8_t quality, uint64_t timestamp, size_t dataLen, uint8_t *data}
 //   4 - Picture Data Chunk = {uint16_t chunkNum,data bytes}
+//   5 - Picture Last Data Chunk = {uint16_t chunkNum,data bytes}
 // }
 
-#define WLAN_COMMAND_PACKET          0
-#define WLAN_TELEMETRY_PACKET        1
-#define WLAN_LOG_PACKET              2
-#define WLAN_PICTURE_START_PACKET    3
-#define WLAN_PICTURE_DATA_PACKET     4
+#define WLAN_COMMAND_PACKET             0
+#define WLAN_TELEMETRY_PACKET           1
+#define WLAN_LOG_PACKET                 2
+#define WLAN_PICTURE_START_PACKET       3
+#define WLAN_PICTURE_DATA_PACKET        4
+#define WLAN_PICTURE_LAST_DATA_PACKET   5
 
 #define WLAN_MAX_PAYLOAD_SIZE   1400
 
@@ -473,6 +475,9 @@ void pdlSetupRc(pdlDroneState*)
   uint8_t curWifiChl;
   int8_t curTxPwr;
   wifi_second_chan_t curSecWifiChl;
+
+  // reducing tx power improves throughput in low range
+  esp_wifi_set_max_tx_power(wifiTpw);
 
   esp_wifi_get_channel(&curWifiChl,&curSecWifiChl);
   esp_wifi_get_max_tx_power(&curTxPwr);
@@ -949,3 +954,100 @@ size_t sendWlanPictureDataPacket(size_t dataOffset, size_t dataLen, uint8_t *dat
   return len;
 }
 
+size_t sendWlanPictureStartPacketV2(  uint16_t width,
+                                      uint16_t height,
+                                      uint8_t pixformat,
+                                      uint8_t quality,
+                                      uint64_t timestamp,
+                                      size_t dataLen,
+                                      uint8_t *data,
+                                      size_t chunkSize)
+{
+#ifdef ARDUINO_ARCH_ESP32
+  xSemaphoreTake(semWlan,portMAX_DELAY);
+#endif
+
+  size_t pos = 0;
+  // prepare packet
+  pos = writeWlanPacket(pos, wlanTxBuf, &droneId, sizeof(droneId));
+  pos = writeWlanPacket(pos, wlanTxBuf, &wlanTxPacketNum, sizeof(wlanTxPacketNum));
+  wlanTxBuf[pos++] = WLAN_PICTURE_START_PACKET;
+  pos = writeWlanPacket(pos, wlanTxBuf, &width, sizeof(width));
+  pos = writeWlanPacket(pos, wlanTxBuf, &height, sizeof(height));
+  pos = writeWlanPacket(pos, wlanTxBuf, &pixformat, sizeof(pixformat));
+  pos = writeWlanPacket(pos, wlanTxBuf, &quality, sizeof(quality));
+  pos = writeWlanPacket(pos, wlanTxBuf, &timestamp, sizeof(timestamp));
+  pos = writeWlanPacket(pos, wlanTxBuf, &dataLen, sizeof(dataLen));
+  size_t len = WLAN_TX_BUF_SIZE - pos;
+  if(chunkSize < len)
+    len = chunkSize;
+  pos = writeWlanPacket(pos, wlanTxBuf, data, len);
+  if(sendWlanPacket(wlanTxBuf, pos) == false)
+  {
+    len = 0;
+  }
+
+#ifdef ARDUINO_ARCH_ESP32
+  xSemaphoreGive(semWlan);
+#endif
+
+  return len;
+}
+
+size_t sendWlanPictureDataPacketV2( uint8_t *data,
+                                    size_t chunkSize,
+                                    uint16_t chunkNum )
+{
+#ifdef ARDUINO_ARCH_ESP32
+  xSemaphoreTake(semWlan,portMAX_DELAY);
+#endif
+  size_t pos = 0;
+  // prepare packet
+  pos = writeWlanPacket(pos, wlanTxBuf, &droneId, sizeof(droneId));
+  pos = writeWlanPacket(pos, wlanTxBuf, &wlanTxPacketNum, sizeof(wlanTxPacketNum));
+  wlanTxBuf[pos++] = WLAN_PICTURE_DATA_PACKET;
+  pos = writeWlanPacket(pos, wlanTxBuf, &chunkNum, sizeof(chunkNum));
+  size_t len = WLAN_TX_BUF_SIZE - pos;
+  if(chunkSize < len)
+    len = chunkSize;
+  pos = writeWlanPacket(pos, wlanTxBuf, &data[0], len);
+  if(sendWlanPacket(wlanTxBuf, pos) == false)
+  {
+    len = 0;
+  }
+
+#ifdef ARDUINO_ARCH_ESP32
+  xSemaphoreGive(semWlan);
+#endif
+
+  return len;
+}
+
+size_t sendWlanPictureLastDataPacketV2( uint8_t *data,
+                                        size_t chunkSize,
+                                        uint16_t chunkNum )
+{
+#ifdef ARDUINO_ARCH_ESP32
+  xSemaphoreTake(semWlan,portMAX_DELAY);
+#endif
+  size_t pos = 0;
+  // prepare packet
+  pos = writeWlanPacket(pos, wlanTxBuf, &droneId, sizeof(droneId));
+  pos = writeWlanPacket(pos, wlanTxBuf, &wlanTxPacketNum, sizeof(wlanTxPacketNum));
+  wlanTxBuf[pos++] = WLAN_PICTURE_LAST_DATA_PACKET;
+  pos = writeWlanPacket(pos, wlanTxBuf, &chunkNum, sizeof(chunkNum));
+  size_t len = WLAN_TX_BUF_SIZE - pos;
+  if(chunkSize < len)
+    len = chunkSize;
+  pos = writeWlanPacket(pos, wlanTxBuf, &data[0], len);
+  if(sendWlanPacket(wlanTxBuf, pos) == false)
+  {
+    len = 0;
+  }
+
+#ifdef ARDUINO_ARCH_ESP32
+  xSemaphoreGive(semWlan);
+#endif
+
+  return len;
+}

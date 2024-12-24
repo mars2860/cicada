@@ -551,7 +551,6 @@ public class RemoteControlGui extends JSavedFrame
 					{
 						e.printStackTrace();
 					}
-					DroneCommander.instance().returnPicture(buf);
 				}
 				
 			}
